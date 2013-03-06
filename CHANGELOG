@@ -1,0 +1,32 @@
+# Version 1.5.1
+- Implemented a small try-catch routine for gdal driver related issues
+
+# Version 1.5
+- Small Fixes. Implemented some error catching routines
+
+# Version 1.4.9
+- Fixed Errors resulting from the QGIS API Changes
+
+# Version 1.4
+- Added the options to calculate the median, upper and lower quantile, the minimum and the maximum as well
+as the standard deviation from unclassified raster shapes in the polygon overlay tool
+
+# Version 1.3
+- Created the Polygon Landcover Overlay tool, which is capable of extracting values per polygon feature from 
+underlying raster shapes. Both classified and non-classified raster shapes are supported. 
+
+# Version 1.2
+- Switched to a object orientied programming style. However parts of the code are still extremely slow :-(
+- Added several new metrics including Total edge length, Edge Density, Landscape Division Index,
+Splitting Index and Effective Mesh Size
+- Fixed an Error with the Greatest Patch Size detection
+- Added no-data field in the selection menu
+- Removed Custom tab for now (maybe an implementation fill follow later if i have time)
+
+# Version 1.1
+- Moved Plugin completely to the raster toolbar
+- Info Button moved to LecoS GUI
+- Other Gui related things
+
+# Version 1.0
+First Release

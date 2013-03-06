@@ -1,0 +1,7 @@
+<RCC>
+  <qresource>
+    <file>../icons/icon.png</file>
+    <file>../icons/icon_diversity.png</file>
+  </qresource>
+</RCC>
+
