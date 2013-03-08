@@ -25,8 +25,8 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 
-import csv
-from osgeo import ogr
+import csv, numpy, sys
+from osgeo import gdal, gdalnumeric, ogr, osr
 
 # Save results to CSV
 def saveToCSV( results, titles, filePath ):
@@ -181,4 +181,44 @@ def addAttributeToLayer(layer,cmd,results):
     return False
   layer.commitChanges()
   return True
-    
+
+# Save a rasterfile as geotiff to a given directory
+# Need the previous raster (for output size and projection)
+# and a path with writing permissions
+def exportRaster(array,rasterSource,path):
+  raster = gdal.Open(str(rasterSource))
+  rows = raster.RasterYSize
+  cols = raster.RasterXSize
+  nodata = 0#raster.GetRasterBand(1).GetNoDataValue()
+  
+  driver = gdal.GetDriverByName('GTiff')
+  # Create File based in path
+  outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Float32)
+  if outDs is None:
+      QMessageBox.warning(QDialog(),"Could not create output File. Check permissions!")
+      sys.exit(1)
+
+  band = outDs.GetRasterBand(1)
+  band.WriteArray(array)
+  
+  # flush data to disk, set the NoData value
+  band.FlushCache()
+  band.SetNoDataValue(nodata)
+  
+  # georeference the image and set the projection
+  outDs.SetGeoTransform(raster.GetGeoTransform())
+  outDs.SetProjection(raster.GetProjection())
+  
+  band = outDs = None # Close writing
+
+# Adds a generated Raster to the QGis table of contents
+def rasterInQgis(rasterPath):
+  fileName = str(rasterPath)
+  fileInfo = QFileInfo(fileName)
+  baseName = fileInfo.baseName()
+  rlayer = QgsRasterLayer(fileName, baseName)
+  if not rlayer.isValid():
+    QMessageBox.warning(QDialog(),"Failed to add the generated Layer to QGis")
+  
+  QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+

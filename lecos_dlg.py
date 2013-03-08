@@ -30,14 +30,14 @@ from qgis.analysis import *
 from ui.dlg_landscapestatistics import Ui_Lecos
 from ui.dlg_PolygonPerLandCover import Ui_BatchDialog
 from ui.dlg_DiversityDialog import Ui_DivDialog
-from ui.dlg_RasterIndexer import Ui_RasterIndexer
+from ui.dlg_LandscapeModifier import Ui_LandMod
 
 # Import functions and metrics
 import lecos_functions as func
 import landscape_statistics as lcs
 import landscape_diversity as ldiv
 import landscape_polygonoverlay as pov 
-import rasterIndexer as rip
+import landscape_modifier as lmod
 
 # Dependencies
 import numpy, scipy, gdal, ogr
@@ -241,7 +241,7 @@ class LecosDialog(QDialog, Ui_Lecos):
         cellsize = self.sp_cellsize.value()
         nodata = float(self.NoDataVal.text())
         
-        ## Calculate Single, several or custom metric
+        ## Calculate Single Metric
         what = self.MetricTab.currentIndex()
         # Single
         if(what == 0):
@@ -278,7 +278,7 @@ class LecosDialog(QDialog, Ui_Lecos):
                 QMessageBox.warning( self, self.tr( "LecoS: Warning" ),
                            self.tr( "Please select a valid single metric" ) )
 
-        # Several
+        ## Several Metrics
         elif(what == 1):
             metrics = []
             allitems = self.list_right.findItems("*", Qt.MatchWrap | Qt.MatchWildcard)
@@ -561,23 +561,21 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             QMessageBox.warning( self, self.tr( "Batch computing: Warning" ),
                            self.tr( "There appeared an error while trying to save your values to the vector layers attribute-table" ) )
 
-# Gui for generating a Rasterindex out of a rasterized map
-class RasterIndDialog(QDialog, Ui_RasterIndexer):
+# Gui for generating a LandMod out of a rasterized map
+class LandMod(QDialog, Ui_LandMod):
     def __init__(self, iface):
         # Initialize the Dialog
         QDialog.__init__( self )
         self.setupUi(self)
         self.iface = iface
         
-        # Add Methods
-        self.me = ["Riitters Fragmentation Index"]
-        self.cb_method.addItems( self.me )
-        
         # Configure Connectors
         self.AcceptButton = self.buttonBox.button( QDialogButtonBox.Ok )
         self.closeButton = self.buttonBox.button( QDialogButtonBox.Cancel )
         QObject.connect( self.AcceptButton, SIGNAL( "clicked()" ), self.go )
-        QObject.connect( self.cb_method, SIGNAL( "currentIndexChanged( QString )" ), self.setInfo)
+        QObject.connect( self.btn_Save, SIGNAL( "clicked()" ), self.selectSaveFile )# Save File
+        QObject.connect( self.cb_Raster, SIGNAL( "currentIndexChanged( QString )" ), self.cellSizer)
+        QObject.connect( self.cb_Raster, SIGNAL( "currentIndexChanged( QString )" ), self.loadClasses)
         
         self.startup()
     
@@ -585,33 +583,97 @@ class RasterIndDialog(QDialog, Ui_RasterIndexer):
     def startup(self):
         # Load in raster files
         self.cb_Raster.addItems( func.getRasterLayersNames() )
-        self.setInfo()
-
+        if(self.cb_Raster.count()!=0):
+            self.loadClasses()
+            self.cellSizer(self.cb_Raster.currentText())
     
-    # Set Info-Text for current Method
-    def setInfo(self,ind=0):
-        if(self.cb_method.currentIndex() == 0):
-            text = "Riitters, K., J. Wickham, R. O'Neill, B. Jones, and E. Smith. 2000. Global-scale patterns of forest fragmentation. Conservation Ecology 4(2): 3. [online] URL: http://www.consecol.org/vol4/iss2/art3/ "
-            self.methodSource.setText(QString(text))            
+    # Set the cellsizer value 
+    def cellSizer(self,rasterName):
+        ras = func.getRasterLayerByName( rasterName )
+        pixelSize = ras.rasterUnitsPerPixel()
+        self.CellsizeLine.setEnabled( True )
+        self.CellsizeLine.setText( QString(str(pixelSize)) ) 
     
-    # Calculates new Index raster
+    # Where to save the raster output
+    def selectSaveFile( self ):   
+        lastUsedDir = func.lastUsedDir()
+        fileName = QFileDialog.getSaveFileName( self, self.tr( "Save raster as" ),\
+        lastUsedDir, "GeoTIFF files (*.tif *.TIF)" )
+        if fileName.isEmpty():
+            return
+        func.setLastUsedDir( fileName )
+        # ensure the user never ommited the extension from the file name
+        if not fileName.toLower().endsWith( ".tif" ):
+            fileName += ".tif"
+        self.where2Save.setText( fileName )
+        self.where2Save.setEnabled( True ) 
+    
+    # Get Raster classes
+    def loadClasses(self,rasterName=None):
+        rasterName = func.getRasterLayerByName( self.cb_Raster.currentText() )
+        if rasterName != "":
+            rasterPath = rasterName.source()
+            raster = gdal.Open(str(rasterPath))
+            band = raster.GetRasterBand(1)
+            nodata = band.GetNoDataValue()
+            array = band.ReadAsArray()
+            self.classes = sorted(numpy.unique(array)) # get array of classes
+            try:
+                self.classes.remove(nodata) # Remove nodata-values from classes array
+            except ValueError:
+                try:
+                    self.classes.remove(0)
+                except ValueError:
+                    pass
+            classes = [str(numeric_cl) for numeric_cl in self.classes]
+            self.cb_SelClass.clear()
+            self.cb_SelClass.addItems( classes )
+        else:
+            self.cb_SelClass.clear()
+            self.cb_SelClass.addItems( [""] )
+    
+    # Calculate new raster
     def go(self):
-        if self.cbRaster.currentIndex() == -1:
+        if self.cb_Raster.currentIndex() == -1:
             QMessageBox.warning( self, self.tr( "LecoS: Warning" ),
                            self.tr( "Please load and select a classified raster first" ) )
             return
+        if self.where2Save.text().isEmpty():
+                QMessageBox.warning( self, self.tr( "LecoS: Warning" ),
+                            self.tr( "Please give a destination where to save the results" ) )
+                return
+        # Get basic input
         raster = func.getRasterLayerByName( self.cb_Raster.currentText() )
         rasterPath = raster.source()
-        ind = self.cbDivselect.currentIndex()
-        MWsiz = self.sb_movWin.value()
+        cl = int(self.classes[self.cb_SelClass.currentIndex()]) # Get selected class
+        savePath = str(self.where2Save.text())
+        what = self.box_RasCalc.currentIndex()
         
+        mod = lmod.LandscapeMod(rasterPath,cl)
+        # Create class object
+        if what == 0: # Patch Edges
+            size = self.sp_EdgeMult.value()
+            results = mod.extractEdges(size)
+        elif what == 1: # Isolate smallest or greatest patch
+            if self.rb_MaxMin1.isChecked():
+                which = "min"
+            else:
+                which = "max"
+            results = mod.getPatch(which)
+        elif what == 2: # Increase/decrease landscape patches
+            which = self.cb_IncDec.currentIndex()
+            amount = self.sp_IncDecAm.value()
+            results = mod.InDecPatch(which,amount)
+        elif what == 3: # Fill holes inside landscape patches
+            results = mod.closeHoles()
+        elif what == 4: # Clean raster
+            iter = self.sp_CleanIter.value()
+            results = mod.cleanRaster(iter)
         
-        div_cl = ldiv.LandscapeDiversity(rasterPath)
-        if seldiv == "Shannon Index":
-            r = div_cl.f_returnDiversity("shannon")
-        elif seldiv == "Simpson Index":
-            r = div_cl.f_returnDiversity("simpson")
-        elif seldiv == "Eveness":
-            r = div_cl.f_returnDiversity("eveness")
+        # Save the results
+        func.exportRaster(results,rasterPath,savePath)
+        # Add to QGis if specified
+        if self.addToToc.isChecked():
+            func.rasterInQgis( savePath )
+
         
-        self.output(r,seldiv)

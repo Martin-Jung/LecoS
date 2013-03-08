@@ -33,11 +33,10 @@ import Image, ImageDraw
 from scipy import ndimage
 try:
     gdal.AllRegister() # register all gdal drivers
+    gdal.UseExceptions()
+    ogr.UseExceptions()
 except AttributeError:
     QMessageBox.warning(QDialog(),"LecoS: Warning","The gdal driver register command failed. LecoS might still work, but there is a chance of non working gdal file support.")
-
-gdal.UseExceptions()
-ogr.UseExceptions()
 
 # Many functions stolen from here :-)
 # http://geospatialpython.com/2011/02/clip-raster-using-shapefile.html 

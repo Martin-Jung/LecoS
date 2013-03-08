@@ -19,7 +19,7 @@ tags=Ecology,Landscape,Analytical tools,Statistics,Land Cover
 
 homepage=http://conservationecology.wordpress.com/lecos-land-cover-statistics/
 tracker=http://hub.qgis.org/projects/lecos
-repository=
+repository=https://github.com/Curlew/LecoS
 icon=icons/icon.png
 # experimental flag
 experimental=True

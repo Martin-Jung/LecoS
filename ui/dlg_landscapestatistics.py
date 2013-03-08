@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_landscapestatistics.ui'
 #
-# Created: Mon Feb 18 21:40:35 2013
+# Created: Fri Mar  8 18:22:27 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -24,7 +24,7 @@ class Ui_Lecos(object):
         sizePolicy.setHeightForWidth(Lecos.sizePolicy().hasHeightForWidth())
         Lecos.setSizePolicy(sizePolicy)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8("icons/icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/Icons/icons/icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         Lecos.setWindowIcon(icon)
         Lecos.setAutoFillBackground(False)
         self.gridLayoutWidget = QtGui.QWidget(Lecos)

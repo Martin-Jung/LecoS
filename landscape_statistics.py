@@ -209,7 +209,8 @@ class LandCoverAnalysis():
     
         s = ndimage.generate_binary_structure(2,2)
         a = numpy.zeros((6,6), dtype=numpy.int)
-        a[1:5, 1:5] = 1;a[3,3] = 0
+        for i in range(0,6):
+            a[i,i] = 1
         print a
         c = ndimage.binary_dilation(a,s).astype(a.dtype)
         print c
@@ -217,7 +218,7 @@ class LandCoverAnalysis():
         print b
         c = ndimage.distance_transform_cdt(a == 0,metric='taxicab') == 1
         c = c.astype(int)
-        plt.imshow(c,interpolation='nearest')
+        plt.imshow(a,interpolation='nearest')
         plt.axis('on')
         plt.show()
         

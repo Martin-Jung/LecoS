@@ -31,8 +31,8 @@ from lecos_dlg import LecosDialog
 from lecos_dlg import DivDialog
 # Import Batch Dialog
 from lecos_dlg import BatchDialog
-# Import RasterIndexer Dialog
-from lecos_dlg import RasterIndDialog
+# Import RasterModifier Dialog
+from lecos_dlg import LandMod
 
 # Import functions for about Dialog
 import lecos_functions as func
@@ -61,10 +61,10 @@ class LecoS( object ):
             u"Diversity indices for Raster", self.iface.mainWindow())
         QObject.connect(self.actionDivDlg, SIGNAL("triggered()"), self.runDiv)
         
-        # Create action for small RasterIndexer dialog
-        self.actionRastInd = QAction(QIcon(self.plugin_dir+"/icons/icon_diversity.png"),\
-            u"Create Fragmentation Index Map", self.iface.mainWindow())
-        QObject.connect(self.actionRastInd, SIGNAL("triggered()"), self.runRasI)
+        # Create action for small RasterModifier dialog
+        self.actionLMod = QAction(QIcon(self.plugin_dir+"/icons/icon_LandMod.png"),\
+            u"Landscape Modifier", self.iface.mainWindow())
+        QObject.connect(self.actionLMod, SIGNAL("triggered()"), self.runLMod)
 
         # check if Raster menu available
         if hasattr(self.iface, "addPluginToRasterMenu"):
@@ -72,21 +72,21 @@ class LecoS( object ):
             self.iface.addRasterToolBarIcon(self.actionLecoS)
             self.iface.addRasterToolBarIcon(self.actionBatch)
             self.iface.addRasterToolBarIcon(self.actionDivDlg)
-            self.iface.addRasterToolBarIcon(self.actionRastInd)
+            self.iface.addRasterToolBarIcon(self.actionLMod)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionLecoS)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionBatch)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionDivDlg)
-            #self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionRastInd)
+            self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionLMod)
         else:
             # no menu, place plugin under Plugins menu and toolbox as usual
             self.iface.addToolBarIcon(self.actionLecoS)
             self.iface.addToolBarIcon(self.actionBatch)
             self.iface.addToolBarIcon(self.actionDivDlg)
-            self.iface.addToolBarIcon(self.actionRastInd)
+            self.iface.addToolBarIcon(self.actionLMod)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionLecoS)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionBatch)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionDivDlg)
-            #self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionRastInd)
+            self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionLMod)
 
     
     def unload(self):
@@ -95,21 +95,21 @@ class LecoS( object ):
             self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionLecoS)
             self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionBatch)
             self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionDivDlg)
-            #self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionRastInd)            
+            self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionLMod)            
             self.iface.removeRasterToolBarIcon(self.actionLecoS)
             self.iface.removeRasterToolBarIcon(self.actionBatch)
             self.iface.removeRasterToolBarIcon(self.actionDivDlg)
-            #self.iface.removeRasterToolBarIcon(self.actionRastInd)
+            self.iface.removeRasterToolBarIcon(self.actionLMod)
         else:
             # Remove the plugin menu item and icon
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLecoS)
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionBatch)
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionDivDlg)
-            #self.iface.removePluginMenu(u"&Landscape Ecology",self.actionRastInd)            
+            self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLMod)            
             self.iface.removeToolBarIcon(self.actionLecoS)
             self.iface.removeToolBarIcon(self.actionBatch)
             self.iface.removeToolBarIcon(self.actionDivDlg)
-            #self.iface.removeToolBarIcon(self.actionRastInd)
+            self.iface.removeToolBarIcon(self.actionLMod)
 
     # run method that performs all the real work
     def run(self):
@@ -131,9 +131,9 @@ class LecoS( object ):
         dlg.show()
         result = dlg.exec_()
     
-    # Executes small RasterIndex gui
-    def runRasI(self):
-        dlg = RasterIndDialog( self.iface )
+    # Executes small LandscapeMod gui
+    def runLMod(self):
+        dlg = LandMod( self.iface )
         dlg.show()
         result = dlg.exec_()
     

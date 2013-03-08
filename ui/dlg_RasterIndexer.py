@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_RasterIndexer.ui'
 #
-# Created: Mon Feb 18 21:40:35 2013
+# Created: Fri Mar  8 18:22:28 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!

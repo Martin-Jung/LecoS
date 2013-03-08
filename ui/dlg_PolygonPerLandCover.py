@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_PolygonPerLandCover.ui'
 #
-# Created: Mon Feb 18 21:40:35 2013
+# Created: Fri Mar  8 18:22:27 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -18,13 +18,16 @@ class Ui_BatchDialog(object):
     def setupUi(self, BatchDialog):
         BatchDialog.setObjectName(_fromUtf8("BatchDialog"))
         BatchDialog.setWindowModality(QtCore.Qt.WindowModal)
-        BatchDialog.resize(576, 342)
+        BatchDialog.resize(578, 348)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(BatchDialog.sizePolicy().hasHeightForWidth())
         BatchDialog.setSizePolicy(sizePolicy)
         BatchDialog.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/Icons/icons/icon_batchCover.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        BatchDialog.setWindowIcon(icon)
         BatchDialog.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.line = QtGui.QFrame(BatchDialog)
         self.line.setGeometry(QtCore.QRect(10, 90, 561, 16))
@@ -204,7 +207,7 @@ class Ui_BatchDialog(object):
         self.lab_feat.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTop|QtCore.Qt.AlignTrailing)
         self.lab_feat.setObjectName(_fromUtf8("lab_feat"))
         self.label_7 = QtGui.QLabel(BatchDialog)
-        self.label_7.setGeometry(QtCore.QRect(10, 320, 401, 16))
+        self.label_7.setGeometry(QtCore.QRect(10, 300, 271, 31))
         font = QtGui.QFont()
         font.setPointSize(8)
         font.setBold(True)
@@ -213,7 +216,7 @@ class Ui_BatchDialog(object):
         self.label_7.setFont(font)
         self.label_7.setObjectName(_fromUtf8("label_7"))
         self.horizontalLayoutWidget = QtGui.QWidget(BatchDialog)
-        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(380, 310, 191, 29))
+        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(300, 310, 269, 29))
         self.horizontalLayoutWidget.setObjectName(_fromUtf8("horizontalLayoutWidget"))
         self.horizontalLayout = QtGui.QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout.setMargin(0)
@@ -254,6 +257,7 @@ class Ui_BatchDialog(object):
         self.rb_Ulqt.setText(QtGui.QApplication.translate("BatchDialog", "Lower Quantile (25%)", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("BatchDialog", "Raster layer :", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("BatchDialog", "Vector layer (polygon) :", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_7.setText(QtGui.QApplication.translate("BatchDialog", "Results will be added to vector layer attribute table!", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_7.setText(QtGui.QApplication.translate("BatchDialog", "<html><head/><body>Results will be added to the <br>vector layer attribute table!</body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.btn_About.setText(QtGui.QApplication.translate("BatchDialog", "About", None, QtGui.QApplication.UnicodeUTF8))
 
+import resources_rc

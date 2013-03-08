@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="29.871933"
+   height="29.291462"
+   id="svg2985"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="Entwurf2.svg"
+   inkscape:export-filename="/home/martin/Dokumente/Programmierung/LecoS/icons/img_EdgeExtract.png"
+   inkscape:export-xdpi="92.177032"
+   inkscape:export-ydpi="92.177032">
+  <defs
+     id="defs2987">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3408"
+       is_visible="true" />
+    <linearGradient
+       id="linearGradient3876"
+       osb:paint="gradient">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop3878" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop3880" />
+    </linearGradient>
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3048"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3044"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3021"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3017"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3021-0"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3044-0"
+       is_visible="true" />
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="2"
+       height="9"
+       patternTransform="translate(-9,7)"
+       id="pattern3409">
+      <g
+         id="g3405"
+         transform="translate(9,-7)">
+        <path
+           style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:1;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+           d="M -8.5,7.5 L -8.5,15.5"
+           id="path3401" />
+        <path
+           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+           d="M -7.5,7.5 L -7.5,15.5"
+           id="path3403" />
+      </g>
+    </pattern>
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="2"
+       height="5"
+       patternTransform="translate(-8.5,7.5)"
+       id="pattern3386">
+      <g
+         id="g3382"
+         transform="translate(8.5,-7.5)">
+        <path
+           style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:1;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+           d="M -7,8 L -7,12"
+           id="path3370"
+           sodipodi:nodetypes="cc" />
+        <path
+           id="path3376"
+           d="M -8,8 L -8,12"
+           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+           sodipodi:nodetypes="cc" />
+      </g>
+    </pattern>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="16.21875"
+     inkscape:cx="18.30195"
+     inkscape:cy="13.329214"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     inkscape:snap-bbox="false"
+     inkscape:window-width="1440"
+     inkscape:window-height="875"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:snap-global="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3929"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       originx="-1.3395486px"
+       originy="-1.3395305px" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata2990">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     transform="translate(-1.3395486,-1.3689886)">
+    <path
+       id="path3451"
+       style="fill:#000000;stroke:#000000;stroke-width:1.26007628;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-opacity:1;stroke-dasharray:none"
+       d="m 11.222001,29.830026 8.892763,-8.748895 3.811183,0 2.540788,-2.499683 0,-2.499685 -1.270393,-1.249842 -1.270395,1.249842 -1.270394,1.249842 -2.540789,0 0,-2.499684 1.270394,-1.249843 1.270395,-1.24984 -1.270395,-1.249843 -2.540789,0 -2.540789,2.499683 0,3.749527 -8.8927599,8.748896 0,2.499685 1.2703951,1.24984 2.5407858,0 z"
+       inkscape:connector-curvature="0" />
+    <rect
+       style="fill:#808000;fill-opacity:1"
+       id="rect3344"
+       width="9.6801548"
+       height="8.323699"
+       x="1.3395486"
+       y="1.37336" />
+    <rect
+       y="1.37336"
+       x="11.389646"
+       height="8.3237"
+       width="10.235067"
+       id="rect3368"
+       style="fill:#808000;fill-opacity:1" />
+    <rect
+       style="fill:#008000;fill-opacity:1"
+       id="rect3370"
+       width="9.3102121"
+       height="8.3237"
+       x="21.809685"
+       y="1.37336" />
+  </g>
+</svg>
