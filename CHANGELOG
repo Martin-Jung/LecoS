@@ -1,3 +1,32 @@
+# Version 1.7.3
+- Bug fixing with mismatching shapes and extents (maybe better solution in the future)
+
+# Version 1.7.2
+- Enabled the calculation of landscape statistics for vector layers
+- Replaced QMessageBoxes with QMessageBar messages if a newer QGIS version (>= 10900) is used
+- Removed the landscape diversity tool and merged options to calculate landscape diversity into the other toolset
+- Fixed some small bugs with the GreatestPatch - SmallestPatch Metric
+- Fixed some bugs with mismatching shapes and extents (maybe better solution in the future)
+
+# Version 1.7.1
+- Fixed the "Add Table to QGIS"-Bug on Windows systems
+- Enables the option to save Results in the overlaying vectors attribute table
+
+# Version 1.7
+- Added new metrics: Median patch area, Mean patch distance, Mean patch perimeter, Mean patch shape ratio
+- Fixed some small bugs with the landscape modifier
+- Recreated the Batch-overlay tool from scratch and added several new functionalities to it
+- Fixed a bug for Windows using old numpy / scipy version where the function "count_nonzero" was not available
+
+# Version 1.6.1
+- Implemented a check-routine for the landscape diversity module.
+- Removed the icons from the toolbar as the functions increase. SEXTANTE support will be coming to enable easy access to LecoS
+- Build hasattr and try-catch phrases around import modules
+- Fixed small bug with the polygon-overlay
+
+# Version 1.6
+- Added the landscape modifier and several function to LecoS
+
 # Version 1.5.1
 - Implemented a small try-catch routine for gdal driver related issues
 

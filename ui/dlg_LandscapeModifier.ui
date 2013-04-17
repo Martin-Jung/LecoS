@@ -264,8 +264,8 @@ p, li { white-space: pre-wrap; }
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>469</width>
-      <height>119</height>
+      <width>98</width>
+      <height>28</height>
      </rect>
     </property>
     <attribute name="icon">
@@ -368,8 +368,8 @@ p, li { white-space: pre-wrap; }
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>469</width>
-      <height>119</height>
+      <width>98</width>
+      <height>28</height>
      </rect>
     </property>
     <attribute name="icon">
@@ -485,8 +485,8 @@ p, li { white-space: pre-wrap; }
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>469</width>
-      <height>119</height>
+      <width>98</width>
+      <height>28</height>
      </rect>
     </property>
     <attribute name="icon">
@@ -553,6 +553,14 @@ p, li { white-space: pre-wrap; }
     </widget>
    </widget>
    <widget class="QWidget" name="cleanPixel">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>98</width>
+      <height>28</height>
+     </rect>
+    </property>
     <attribute name="icon">
      <iconset resource="res_PatchModify.qrc">
       <normaloff>:/Modify_Res/icons/img_CleanRas.png</normaloff>:/Modify_Res/icons/img_CleanRas.png</iconset>
@@ -668,7 +676,7 @@ p, li { white-space: pre-wrap; }
     <item>
      <widget class="QLineEdit" name="where2Save">
       <property name="placeholderText">
-       <string>Output file</string>
+       <string>Choose output or leave blank for creating a temp file</string>
       </property>
      </widget>
     </item>
@@ -701,6 +709,9 @@ p, li { white-space: pre-wrap; }
      <widget class="QCheckBox" name="addToToc">
       <property name="text">
        <string>Add result to QGis afterwards</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
       </property>
      </widget>
     </item>

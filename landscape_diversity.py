@@ -19,27 +19,67 @@
  *                                                                         *
  ***************************************************************************/
 """
+# Import PyQT bindings
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+# Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
 
-import gdal, numpy, sys, scipy, string, math, ogr, os
-import subprocess
-import tempfile
-from scipy import ndimage
-gdal.AllRegister() # register all gdal drivers
+# Import base libraries
+import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 
-gdal.UseExceptions()
-ogr.UseExceptions()
+# Import numpy and scipy
+import numpy
+try:
+    import scipy
+except ImportError:
+    QMessageBox.warning(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
+    sys.exit(0)
+from scipy import ndimage # import ndimage module seperately for easy access
+
+# Try to import functions from osgeo
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
+try:
+    from osgeo import ogr
+except ImportError:
+    import ogr
+try:
+    from osgeo import osr
+except ImportError:
+    import osr
+try:
+    from osgeo import gdal_array
+except ImportError:
+    import gdalnumeric
+try:
+    from osgeo import gdalconst
+except ImportError:
+    import gdalconst
+    
+# Register gdal and ogr drivers
+if hasattr(gdal,"AllRegister"): # Can register drivers
+    gdal.AllRegister() # register all gdal drivers
+if hasattr(ogr,"RegisterAll"):
+    ogr.RegisterAll() # register all ogr drivers
+
+# Try to use exceptions with gdal and ogr
+if hasattr(gdal,"UseExceptions"):
+    gdal.UseExceptions()
+if hasattr(ogr,"UseExceptions"):
+    ogr.UseExceptions()
 
 helpdir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/LecoS/metric_info/"
 tmpdir = tempfile.gettempdir()
 
-## Diversity Indices
-    # Returns different diversity indices for the whole landscape with exception of no_data_values
+## CODE START ##
+# Diversity Indices
+# Returns different diversity indices for the whole landscape with exception of no_data_values
 class LandscapeDiversity():
     def __init__(self,rasterPath):
         self.rasterPath = rasterPath
@@ -56,7 +96,7 @@ class LandscapeDiversity():
         self.classes = sorted(numpy.unique(self.array)) # get classes
         self.classes.remove(self.nodata) # Remove nodata value from class list
         
-        
+    # Calculates a Diversity Index    
     def f_returnDiversity(self,index):
         if(index=="shannon"):
             sh = []

@@ -1,0 +1,16 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+       "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+		<title></title>
+	</head>
+
+	<body>
+	<h2>Mean Patch Perimeter</h2>
+	Conducts a Connected Component labeling and returns 
+	the mean patch shape. The patch shape is defined as the quotient
+	of the patches perimeter and area size.
+	<br>
+	<b>Careful</b>: Can be slow!
+	</body>
+</html>

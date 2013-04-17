@@ -19,26 +19,64 @@
  *                                                                         *
  ***************************************************************************/
 """
+# Import PyQT bindings
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+# Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
 
-import gdal, numpy, sys, scipy, string, math, ogr, os
-import subprocess
-import tempfile
-from scipy import ndimage
+# Import base libraries
+import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
+
+# Import numpy and scipy
+import numpy
 try:
+    import scipy
+except ImportError:
+    QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
+    sys.exit(0)
+from scipy import ndimage # import ndimage module seperately for easy access
+
+# Try to import functions from osgeo
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
+try:
+    from osgeo import ogr
+except ImportError:
+    import ogr
+try:
+    from osgeo import osr
+except ImportError:
+    import osr
+try:
+    from osgeo import gdal_array
+except ImportError:
+    import gdalnumeric
+try:
+    from osgeo import gdalconst
+except ImportError:
+    import gdalconst
+    
+# Register gdal and ogr drivers
+if hasattr(gdal,"AllRegister"): # Can register drivers
     gdal.AllRegister() # register all gdal drivers
+if hasattr(ogr,"RegisterAll"):
+    ogr.RegisterAll() # register all ogr drivers
+
+# Try to use exceptions with gdal and ogr
+if hasattr(gdal,"UseExceptions"):
     gdal.UseExceptions()
+if hasattr(ogr,"UseExceptions"):
     ogr.UseExceptions()
-except AttributeError:
-    #QMessageBox.warning(QDialog(),"LecoS: Warning","The gdal driver register command failed. LecoS might still work, but there is a chance of non working gdal file support.")
-    pass
+
 tmpdir = tempfile.gettempdir()
 
+## CODE START ##
 # Landscape Modifier class
 class LandscapeMod():
     def __init__(self,rasterPath,cl):
@@ -68,8 +106,6 @@ class LandscapeMod():
 #         plt.imshow(min_feature,interpolation='nearest')
 #         plt.axis('on')
 #         plt.show()
-
-
 
     # Extract edges from landscape patches class
     def extractEdges(self,size):

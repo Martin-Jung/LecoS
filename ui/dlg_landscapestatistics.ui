@@ -272,7 +272,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="tabsClosable">
         <bool>false</bool>
@@ -536,6 +536,138 @@
          </property>
         </widget>
        </widget>
+       <widget class="QWidget" name="landMet">
+        <attribute name="title">
+         <string>Landscape Metrics</string>
+        </attribute>
+        <widget class="QWidget" name="gridLayoutWidget_3">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>441</width>
+           <height>121</height>
+          </rect>
+         </property>
+         <layout class="QGridLayout" name="LandscapeBox">
+          <item row="4" column="0">
+           <widget class="QCheckBox" name="ch_LC4">
+            <property name="text">
+             <string>Maximum</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="ch_LC1">
+            <property name="text">
+             <string>Mean</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QCheckBox" name="ch_LC2">
+            <property name="text">
+             <string>Sum</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QCheckBox" name="ch_LC3">
+            <property name="text">
+             <string>Minimum</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QCheckBox" name="ch_LC5">
+            <property name="text">
+             <string>Standard Deviation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QCheckBox" name="ch_LC7">
+            <property name="text">
+             <string>Median</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QCheckBox" name="ch_LC6">
+            <property name="text">
+             <string>Lower Quantile (25%)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QCheckBox" name="ch_LC8">
+            <property name="text">
+             <string>Upper Quantile (25%)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Zonal statistics</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="verticalLayoutWidget_3">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>140</y>
+           <width>163</width>
+           <height>95</height>
+          </rect>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QLabel" name="label_7">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Diversity</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="ch_div1">
+            <property name="text">
+             <string>Shannon Index</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="ch_div2">
+            <property name="text">
+             <string>Shannon equitability</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="ch_div3">
+            <property name="text">
+             <string>Simpson Index</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
       </widget>
       <widget class="Line" name="line">
        <property name="geometry">
@@ -560,7 +692,7 @@
      <x>10</x>
      <y>460</y>
      <width>481</width>
-     <height>33</height>
+     <height>34</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -600,6 +732,16 @@
      <widget class="QPushButton" name="btn_About">
       <property name="text">
        <string>About</string>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/Icons/icons/about.png</normaloff>:/Icons/icons/about.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>12</width>
+        <height>12</height>
+       </size>
       </property>
      </widget>
     </item>

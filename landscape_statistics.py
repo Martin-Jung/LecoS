@@ -19,32 +19,68 @@
  *                                                                         *
  ***************************************************************************/
 """
+## IMPORT ##
+# Import PyQT bindings
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+# Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
 
-import gdal, numpy, sys, scipy, string, math, ogr, os
-import subprocess
-import tempfile
-from scipy import ndimage
+# Import base libraries
+import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
+
+# Import numpy and scipy
+import numpy
 try:
+    import scipy
+except ImportError:
+    QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
+    sys.exit(0)
+from scipy import ndimage # import ndimage module seperately for easy access
+from scipy import spatial # Import spatial for average distance
+
+
+# Try to import functions from osgeo
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
+try:
+    from osgeo import ogr
+except ImportError:
+    import ogr
+try:
+    from osgeo import osr
+except ImportError:
+    import osr
+try:
+    from osgeo import gdal_array
+except ImportError:
+    import gdalnumeric
+try:
+    from osgeo import gdalconst
+except ImportError:
+    import gdalconst
+    
+# Register gdal and ogr drivers
+if hasattr(gdal,"AllRegister"): # Can register drivers
     gdal.AllRegister() # register all gdal drivers
-except AttributeError:
-    #QMessageBox.warning(QDialog(),"LecoS: Warning","The gdal driver register command failed. LecoS might still work, but there is a chance of non working gdal file support.")
-    pass
-try:
-    ogr.UseExceptions()
+if hasattr(ogr,"RegisterAll"):
+    ogr.RegisterAll() # register all ogr drivers
+
+# Try to use exceptions with gdal and ogr
+if hasattr(gdal,"UseExceptions"):
     gdal.UseExceptions()
-except AttributeError:
-    pass    
+if hasattr(ogr,"UseExceptions"):
+    ogr.UseExceptions()
 
 helpdir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/LecoS/metric_info/"
 tmpdir = tempfile.gettempdir()
 
-
+## CODE START ##
 # List all available landscape functions
 # All defined metrics must possess an info file in the metric_info folder
 def listStatistics():
@@ -59,6 +95,10 @@ def listStatistics():
     functionList.append(unicode("Greatest patch area")) # Return Greatest Patch area
     functionList.append(unicode("Smallest patch area")) # Return Smallest Patch area
     functionList.append(unicode("Mean patch area")) # Return Mean Patch area
+    functionList.append(unicode("Median patch area")) # Return Median Patch area
+    functionList.append(unicode("Mean patch distance")) # Return Mean Patch distance
+    #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
+    functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
     functionList.append(unicode("Overall Core area")) # Return Core area
     functionList.append(unicode("Landscape division")) # Return Landscape Division Index
     functionList.append(unicode("Effective Meshsize")) # Return Effectiv Mesh Size      
@@ -96,7 +136,6 @@ def f_landcover(raster,nodata=None):
             pass # Clipped Raster has no No-data fields, therefore nothing is removed
         return classes, array
     else:
-        # TODO: Multiband Support?
         QMessageBox.warning( QDialog(),"LecoS: Warning","Multiband Rasters not implemented yet")
 
 # Returns the nodata value. Assumes an raster with one band
@@ -116,8 +155,16 @@ class LandCoverAnalysis():
         
         # Do basic Preprocessing 
         self.f_LandscapeArea() # Calculate LArea
+    
+    # Alternative count_nonzero function from scipy if available
+    def count_nonzero(self,array):
+        if hasattr(numpy,'count_nonzero'):
+            return numpy.count_nonzero(array)
+        elif hasattr(scipy,'count_nonzero'):
+            return scipy.count_nonzero(array)
+        else:
+            return (array != 0).sum()
 
-        
     # Executes the Metric functions
     def execSingleMetric(self,name,cl):
         self.cl = cl
@@ -139,16 +186,24 @@ class LandCoverAnalysis():
             return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"min")
         elif(name == unicode("Mean patch area")):
             return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"mean")
+        elif(name == unicode("Median patch area")):
+            return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"median")
+        elif(name == unicode("Mean patch distance")):
+            return unicode(name), self.f_returnAvgPatchDist(self.cl_array)
+        elif(name == unicode("Mean patch perimeter")):
+            return unicode(name), self.f_returnAvgPatchPerimeter(self.labeled_array)
+        elif(name == unicode("Mean patch shape ratio")):
+            return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches)
         elif(name == unicode("Overall Core area")):
             return unicode(name), self.f_getCoreArea(self.labeled_array)
         elif(name == unicode("Landscape division")):
-            return unicode(name),     self.f_returnLandscapeDivisionIndex(self.array,self.labeled_array,self.numpatches,cl)
+            return unicode(name), self.f_returnLandscapeDivisionIndex(self.array,self.labeled_array,self.numpatches,cl)
         elif(name == unicode("Splitting Index")):
             return unicode(name), self.f_returnSplittingIndex(self.array,self.numpatches,self.labeled_array,cl)
         elif(name == unicode("Effective Meshsize")):
             return unicode(name), self.f_returnEffectiveMeshSize(self.array,self.labeled_array,self.numpatches,cl)
         else:
-            QMessageBox.warning( QDialog(), "LecoS: Warning","Unfortunately the Metric has yet to be coded.")
+            return None, None
         
     # Connected component labeling function
     def f_ccl(self,cl_array):
@@ -156,12 +211,85 @@ class LandCoverAnalysis():
         self.cl_array = cl_array
         struct = scipy.ndimage.generate_binary_structure(2,2)
         self.labeled_array, self.numpatches = ndimage.label(cl_array,struct) 
-            
+        
     ## Landscape Metrics
+    def execLandMetric(self,name,nodata):
+        if name == "LC_Mean":
+            return unicode(name), numpy.mean(self.array[self.array!=nodata])       
+        if name == "LC_Sum":
+            return unicode(name), numpy.sum(self.array[self.array!=nodata])
+        if name == "LC_Min":
+            return unicode(name), numpy.min(self.array[self.array!=nodata])
+        if name == "LC_Max":
+            return unicode(name), numpy.max(self.array[self.array!=nodata])
+        if name == "LC_SD":
+            return unicode(name), numpy.std(self.array[self.array!=nodata])
+        if name == "LC_LQua":
+            return unicode(name), scipy.percentile(self.array[self.array!=nodata],25)
+        if name == "LC_Med":
+            return unicode(name), numpy.median(self.array[self.array!=nodata])
+        if name == "LC_UQua":
+            return unicode(name), scipy.percentile(self.array[self.array!=nodata],75)
+        if name == "DIV_SH":
+            if len(self.classes) == 1:
+                func.DisplayError(self.iface,"LecoS: Warning" ,"This tool needs at least two landcover classes to calculate landscape diversity!","WARNING")
+                return unicode(name), "NaN"
+            else:
+                return unicode(name), self.f_returnDiversity("shannon",nodata)
+        if name == "DIV_EV":
+            if len(self.classes) == 1:
+                func.DisplayError(self.iface,"LecoS: Warning" ,"This tool needs at least two landcover classes to calculate landscape diversity!","WARNING")
+                return unicode(name), "NaN"
+            else:
+                return unicode(name), self.f_returnDiversity("eveness",nodata)
+        if name == "DIV_SI":
+            if len(self.classes) == 1:
+                func.DisplayError(self.iface,"LecoS: Warning" ,"This tool needs at least two landcover classes to calculate landscape diversity!","WARNING")
+                return unicode(name), "NaN"
+            else:
+                return unicode(name), self.f_returnDiversity("simpson",nodata)
+    
+    # Calculates a Diversity Index    
+    def f_returnDiversity(self,index,nodata):
+        if(index=="shannon"):
+            sh = []
+            cl_array = numpy.copy(self.array) # create working array
+            cl_array[cl_array==int(nodata)] = 0
+            for cl in self.classes:
+                res = []
+                for i in self.classes:
+                    arr = numpy.copy(self.array)
+                    arr[self.array!=i] = 0
+                    res.append(self.count_nonzero(arr))
+                arr = numpy.copy(self.array)
+                arr[self.array!=cl] = 0
+                prop = self.count_nonzero(arr) / float(sum(res))
+                sh.append(prop * math.log(prop))
+            return sum(sh)*-1
+        elif(index=="simpson"):
+            si = []
+            cl_array = numpy.copy(self.array) # create working array
+            cl_array[cl_array==int(nodata)] = 0
+            for cl in self.classes:
+                res = []
+                for i in self.classes:
+                    arr = numpy.copy(self.array)
+                    arr[self.array!=i] = 0
+                    res.append(self.count_nonzero(arr))
+                arr = numpy.copy(self.array)
+                arr[self.array!=cl] = 0
+                prop = self.count_nonzero(arr) / float(sum(res))
+                si.append(math.pow(prop,2))
+            return 1-sum(si)
+        elif(index=="eveness"):
+            return self.f_returnDiversity("shannon",nodata) / math.log(len(self.classes))
+    
+    
+    ## Class Metrics
     # Return the total area for the given class
     def f_returnArea(self,labeled_array):
         #sizes = scipy.ndimage.sum(array, labeled_array, range(numpatches + 1)).astype(labeled_array.dtype)
-        area = numpy.count_nonzero(labeled_array) * self.cellsize_2
+        area = self.count_nonzero(labeled_array) * self.cellsize_2
         return area
     
     # Aggregates all class area, equals the sum of total area for each class
@@ -198,7 +326,7 @@ class LandCoverAnalysis():
                 feature = f_returnPatch(labeled_array,i)
                 dil = ndimage.binary_dilation(feature,s).astype(feature.dtype)
                 n = dil - feature
-                res.append(numpy.count_nonzero(n))
+                res.append(self.count_nonzero(n))
         return sum(res)
     
         import matplotlib.pyplot as plt
@@ -275,18 +403,17 @@ class LandCoverAnalysis():
     def f_returnPatchArea(self,cl_array,labeled_array,numpatches,what):
         sizes = ndimage.sum(cl_array,labeled_array,range(1,numpatches+1))
         sizes = sizes[sizes!=0] # remove zeros
-        # Iterates solutions, horribly slow
-        #sizes = []
-        #for i in xrange(1,numpatches+1):
-        #    feature = self.f_returnPatch(labeled_array,i)
-        #    area = self.f_returnArea(feature)
-        #    sizes.append(area)
-        if what=="max":
-            return (numpy.max(sizes)*self.cellsize_2) / int(self.cl)
-        elif what=="min":
-            return (numpy.min(sizes)*self.cellsize_2) / int(self.cl)
-        elif what=="mean":
-            return (numpy.mean(sizes)*self.cellsize_2) / int(self.cl)
+        if len(sizes) != 0:            
+            if what=="max":
+                return (numpy.max(sizes)*self.cellsize_2) / int(self.cl)
+            elif what=="min":
+                return (numpy.min(sizes)*self.cellsize_2) / int(self.cl)
+            elif what=="mean":
+                return (numpy.mean(sizes)*self.cellsize_2) / int(self.cl)
+            elif what=="median":
+                return (numpy.median(sizes)*self.cellsize_2) / int(self.cl)
+        else:
+            return None
     
     # Returns the proportion of the labeled class in the landscape
     def f_returnProportion(self,array,cl):
@@ -294,28 +421,52 @@ class LandCoverAnalysis():
         for i in self.classes:
             arr = numpy.copy(array)
             arr[array!=i] = 0
-            res.append(numpy.count_nonzero(arr))
+            res.append(self.count_nonzero(arr))
         arr = numpy.copy(array)
         arr[array!=cl] = 0
-        prop = numpy.count_nonzero(arr) / float(sum(res))
+        prop = self.count_nonzero(arr) / float(sum(res))
         return prop
     
     # Returns the total number of cells in the array
     def f_returnTotalCellNumber(self,array):
-        return int(numpy.count_nonzero(array))
+        return int(self.count_nonzero(array))
         
     # Returns a tuple with the position of the largest patch
     # FIXME: Obsolete! Maybe leave for later use
     def f_returnPosLargestPatch(self,labeled_array):
         return numpy.unravel_index(labeled_array.argmax(),labeled_array.shape)
     
+    # Get average distance between landscape patches
+    def f_returnAvgPatchDist(self,cl_array):
+        b = spatial.distance.pdist(cl_array,metric="euclidean")
+        return numpy.mean(b)*self.cellsize # Get mean distance multiplied with the cellsize
+        
+    # Get average Patch Perimeter of given landscape patch
+    # FIXME: can't be right
+    def f_returnAvgPatchPerimeter(self,labeled_array):
+        labeled_array = self.f_setBorderZero(labeled_array) # add a border of zeroes
+        AvgPeri = numpy.mean(labeled_array[:,1:] != labeled_array[:,:-1]) + numpy.mean(labeled_array[1:,:] != labeled_array[:-1,:])
+        return AvgPeri * self.cellsize 
+    
+    # Average shape (ratio perimeter/area) of each patches of each lc-class
+    def f_returnAvgShape(self,labeled_array,cl_array, numpatches):        
+        perim = numpy.array([]).astype(float)
+        for i in xrange(1,numpatches + 1): # Very slow!
+                feature = self.f_returnPatch(labeled_array,i)
+                p = numpy.sum(feature[:,1:] != feature[:,:-1]) + numpy.sum(feature[1:,:] != feature[:-1,:])
+                perim = numpy.append(perim,p)        
+        area = ndimage.sum(cl_array, labeled_array, range(numpatches + 1)).astype(float)
+        area = area[area !=0]
+        d = numpy.divide(perim,area).astype(float)
+        return numpy.mean(d)
+
     # Returns the Landscape division Index for the given array
     def f_returnLandscapeDivisionIndex(self,array,labeled_array,numpatches,cl):
         res = []
         for i in self.classes:
             arr = numpy.copy(array)
             arr[array!=i] = 0
-            res.append(numpy.count_nonzero(arr))
+            res.append(self.count_nonzero(arr))
         Lcell = float(sum(res))
         res = []
         sizes = ndimage.sum(array,labeled_array,range(1,numpatches+1))
@@ -337,7 +488,10 @@ class LandCoverAnalysis():
             res.append(val)
         area = sum(res)
         larea2 = math.pow(self.Larea,2)
-        si = float(larea2) / float(area)
+        if area != 0:
+            si = float(larea2) / float(area)
+        else:
+            si = None
         return si
     
     # Returns the Effective Mesh Size Index for the given array
@@ -351,3 +505,27 @@ class LandCoverAnalysis():
         Earea = sum(res)
         eM = float(Earea) / float(self.Larea)
         return eM
+        
+     
+    def testing_def(self):
+        #
+        import numpy
+        from scipy import ndimage
+        import matplotlib.pyplot as plt
+        
+        rasterPath = "/home/martin/Science/Bialowieza_TestData/fc_raster_plot23.tif"
+        raster = gdal.Open(str(rasterPath))
+        array = raster.GetRasterBand(1).ReadAsArray()
+        
+        plt.imshow(array)
+        plt.axis('on')
+        plt.show()
+
+        a = numpy.zeros((6,6), dtype=numpy.int) 
+        a[1:5, 1:5] = 1;a[3,3] = 0 ; a[2,2] = 2
+
+        s = ndimage.generate_binary_structure(2,2) # Binary structure
+        #.... Calculate Sum of 
+        b = a[1:-1, 1:-1]
+        print(numpy.exp(ndimage.convolve(numpy.log(b), s, mode = 'constant')))
+        result_array = numpy.zeros_like(a)

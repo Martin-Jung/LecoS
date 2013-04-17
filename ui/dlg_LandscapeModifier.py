@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_LandscapeModifier.ui'
 #
-# Created: Fri Mar  8 18:22:28 2013
+# Created: Mon Apr 15 19:08:48 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -118,7 +118,7 @@ class Ui_LandMod(object):
         icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/Modify_Res/icons/img_EdgeExtract.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.box_RasCalc.addItem(self.PatchEdges, icon1, _fromUtf8(""))
         self.IsoMaxMinPatch = QtGui.QWidget()
-        self.IsoMaxMinPatch.setGeometry(QtCore.QRect(0, 0, 469, 119))
+        self.IsoMaxMinPatch.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.IsoMaxMinPatch.setObjectName(_fromUtf8("IsoMaxMinPatch"))
         self.helpText_2 = QtGui.QTextEdit(self.IsoMaxMinPatch)
         self.helpText_2.setGeometry(QtCore.QRect(290, 0, 171, 91))
@@ -158,7 +158,7 @@ class Ui_LandMod(object):
         icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/Modify_Res/icons/img_MaxMin.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.box_RasCalc.addItem(self.IsoMaxMinPatch, icon2, _fromUtf8(""))
         self.IncDecLand = QtGui.QWidget()
-        self.IncDecLand.setGeometry(QtCore.QRect(0, 0, 469, 119))
+        self.IncDecLand.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.IncDecLand.setObjectName(_fromUtf8("IncDecLand"))
         self.helpText_3 = QtGui.QTextEdit(self.IncDecLand)
         self.helpText_3.setGeometry(QtCore.QRect(290, 0, 171, 91))
@@ -202,7 +202,7 @@ class Ui_LandMod(object):
         icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/Modify_Res/icons/img_IncDec.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.box_RasCalc.addItem(self.IncDecLand, icon3, _fromUtf8(""))
         self.fillHoles = QtGui.QWidget()
-        self.fillHoles.setGeometry(QtCore.QRect(0, 0, 469, 119))
+        self.fillHoles.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.fillHoles.setObjectName(_fromUtf8("fillHoles"))
         self.helpText_4 = QtGui.QTextEdit(self.fillHoles)
         self.helpText_4.setGeometry(QtCore.QRect(290, 0, 171, 91))
@@ -228,6 +228,7 @@ class Ui_LandMod(object):
         icon4.addPixmap(QtGui.QPixmap(_fromUtf8(":/Modify_Res/icons/img_closeHole.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.box_RasCalc.addItem(self.fillHoles, icon4, _fromUtf8(""))
         self.cleanPixel = QtGui.QWidget()
+        self.cleanPixel.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.cleanPixel.setObjectName(_fromUtf8("cleanPixel"))
         self.helpText_5 = QtGui.QTextEdit(self.cleanPixel)
         self.helpText_5.setGeometry(QtCore.QRect(290, 0, 171, 91))
@@ -286,6 +287,7 @@ class Ui_LandMod(object):
         self.horizontalLayout_5.setMargin(0)
         self.horizontalLayout_5.setObjectName(_fromUtf8("horizontalLayout_5"))
         self.addToToc = QtGui.QCheckBox(self.horizontalLayoutWidget_5)
+        self.addToToc.setChecked(True)
         self.addToToc.setObjectName(_fromUtf8("addToToc"))
         self.horizontalLayout_5.addWidget(self.addToToc)
         spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -350,7 +352,7 @@ class Ui_LandMod(object):
         self.sp_CleanIter.setSuffix(QtGui.QApplication.translate("LandMod", " x", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("LandMod", "Taxicab structure", None, QtGui.QApplication.UnicodeUTF8))
         self.box_RasCalc.setItemText(self.box_RasCalc.indexOf(self.cleanPixel), QtGui.QApplication.translate("LandMod", "Cleans landscape of small border pixels", None, QtGui.QApplication.UnicodeUTF8))
-        self.where2Save.setPlaceholderText(QtGui.QApplication.translate("LandMod", "Output file", None, QtGui.QApplication.UnicodeUTF8))
+        self.where2Save.setPlaceholderText(QtGui.QApplication.translate("LandMod", "Choose output or leave blank for creating a temp file", None, QtGui.QApplication.UnicodeUTF8))
         self.btn_Save.setText(QtGui.QApplication.translate("LandMod", "...", None, QtGui.QApplication.UnicodeUTF8))
         self.addToToc.setText(QtGui.QApplication.translate("LandMod", "Add result to QGis afterwards", None, QtGui.QApplication.UnicodeUTF8))
 

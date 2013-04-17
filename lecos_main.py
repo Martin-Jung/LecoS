@@ -19,16 +19,22 @@
  *                                                                         *
  ***************************************************************************/
 """
-# Import the PyQt and QGIS libraries
+# Import PyQT bindings
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+
+# Import QGIS analysis tools
 from qgis.core import *
+from qgis.gui import *
+from qgis.analysis import *
+
+# Import base libraries
+import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
+
 # Initialize Qt resources from file resources_rc.py
 from ui import resources_rc
 # Import the code for the dialogs
 from lecos_dlg import LecosDialog
-# Import small Div Dialog
-from lecos_dlg import DivDialog
 # Import Batch Dialog
 from lecos_dlg import BatchDialog
 # Import RasterModifier Dialog
@@ -37,6 +43,7 @@ from lecos_dlg import LandMod
 # Import functions for about Dialog
 import lecos_functions as func
 
+## CODE START ##
 class LecoS( object ):
     def __init__(self, iface):
         # Save reference to the QGIS interface
@@ -44,6 +51,9 @@ class LecoS( object ):
         
         # initialize plugin directory
         self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/LecoS"
+        
+        # initialize SEXTANTE support if available
+        #self.initSextante()
 
     def initGui(self):
         # Create action that will start the LecoS Plugin
@@ -55,11 +65,6 @@ class LecoS( object ):
         self.actionBatch = QAction(QIcon(self.plugin_dir+"/icons/icon_batchCover.png"),\
             u"Land cover polygon overlay", self.iface.mainWindow())
         QObject.connect(self.actionBatch, SIGNAL("triggered()"), self.runBatch)
-                
-        # Create action for small diversity dialog
-        self.actionDivDlg = QAction(QIcon(self.plugin_dir+"/icons/icon_diversity.png"),\
-            u"Diversity indices for Raster", self.iface.mainWindow())
-        QObject.connect(self.actionDivDlg, SIGNAL("triggered()"), self.runDiv)
         
         # Create action for small RasterModifier dialog
         self.actionLMod = QAction(QIcon(self.plugin_dir+"/icons/icon_LandMod.png"),\
@@ -68,49 +73,63 @@ class LecoS( object ):
 
         # check if Raster menu available
         if hasattr(self.iface, "addPluginToRasterMenu"):
-            # Raster menu and toolbar available
-            self.iface.addRasterToolBarIcon(self.actionLecoS)
-            self.iface.addRasterToolBarIcon(self.actionBatch)
-            self.iface.addRasterToolBarIcon(self.actionDivDlg)
-            self.iface.addRasterToolBarIcon(self.actionLMod)
+            # Disable Raster toolbar by default
+            #self.iface.addRasterToolBarIcon(self.actionLecoS)
+            #self.iface.addRasterToolBarIcon(self.actionBatch)
+            #self.iface.addRasterToolBarIcon(self.actionLMod)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionLecoS)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionBatch)
-            self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionDivDlg)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionLMod)
         else:
             # no menu, place plugin under Plugins menu and toolbox as usual
-            self.iface.addToolBarIcon(self.actionLecoS)
-            self.iface.addToolBarIcon(self.actionBatch)
-            self.iface.addToolBarIcon(self.actionDivDlg)
-            self.iface.addToolBarIcon(self.actionLMod)
+            # Disable Raster toolbar by default
+            #self.iface.addToolBarIcon(self.actionLecoS)
+            #self.iface.addToolBarIcon(self.actionBatch)
+            #self.iface.addToolBarIcon(self.actionLMod)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionLecoS)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionBatch)
-            self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionDivDlg)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionLMod)
-
-    
+            
     def unload(self):
         # check if Raster menu available and remove our buttons from appropriate
         if hasattr(self.iface, "addPluginToRasterMenu"):
             self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionLecoS)
             self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionBatch)
-            self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionDivDlg)
-            self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionLMod)            
-            self.iface.removeRasterToolBarIcon(self.actionLecoS)
-            self.iface.removeRasterToolBarIcon(self.actionBatch)
-            self.iface.removeRasterToolBarIcon(self.actionDivDlg)
-            self.iface.removeRasterToolBarIcon(self.actionLMod)
+            self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionLMod)   
+            # Disable Raster toolbar by default         
+            #self.iface.removeRasterToolBarIcon(self.actionLecoS)
+            #self.iface.removeRasterToolBarIcon(self.actionBatch)
+            #self.iface.removeRasterToolBarIcon(self.actionLMod)
         else:
             # Remove the plugin menu item and icon
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLecoS)
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionBatch)
-            self.iface.removePluginMenu(u"&Landscape Ecology",self.actionDivDlg)
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLMod)            
-            self.iface.removeToolBarIcon(self.actionLecoS)
-            self.iface.removeToolBarIcon(self.actionBatch)
-            self.iface.removeToolBarIcon(self.actionDivDlg)
-            self.iface.removeToolBarIcon(self.actionLMod)
-
+            # Disable Raster toolbar by default
+            #self.iface.removeToolBarIcon(self.actionLecoS)
+            #self.iface.removeToolBarIcon(self.actionBatch)
+            #self.iface.removeToolBarIcon(self.actionLMod)
+    
+    # Try to enable SEXTANTE support
+    def initSextante(self):
+        # Try to import Sextante
+        try:
+            from sextante.core.Sextante import Sextante
+        except ImportError:
+            return
+        
+        # Add folder to sys.path
+        cmd_folder = os.path.split(inspect.getfile( inspect.currentframe() ))[0]
+        if cmd_folder not in sys.path:
+            sys.path.insert(0, cmd_folder)
+        
+        # Load Provider
+        from lecos_sextanteprov import LecoSAlgorithmsProv
+        
+        self.provider = LecoSAlgorithmsProv() # Load LecoS Algorithm Provider
+        Sextante.addProvider(self.provider)
+        #Sextante.removeProvider(self.provider)
+        
     # run method that performs all the real work
     def run(self):
         # create and show the dialog
@@ -125,12 +144,6 @@ class LecoS( object ):
         dlg.show()
         result = dlg.exec_()
         
-    # Executes small Diversity gui
-    def runDiv(self):
-        dlg = DivDialog( self.iface )
-        dlg.show()
-        result = dlg.exec_()
-    
     # Executes small LandscapeMod gui
     def runLMod(self):
         dlg = LandMod( self.iface )
