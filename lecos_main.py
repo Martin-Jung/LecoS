@@ -7,7 +7,7 @@
                               -------------------
         begin                : 2012-09-06
         copyright            : (C) 2013 by Martin Jung
-        email                : martinjung@zoho.com
+        email                : martinjung at zoho.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -26,7 +26,7 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
-from qgis.analysis import *
+#from qgis.analysis import *
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
@@ -53,7 +53,8 @@ class LecoS( object ):
         self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/LecoS"
         
         # initialize SEXTANTE support if available
-        #self.initSextante()
+        self.sex_load = True
+        self.initSextante()
 
     def initGui(self):
         # Create action that will start the LecoS Plugin
@@ -109,26 +110,27 @@ class LecoS( object ):
             #self.iface.removeToolBarIcon(self.actionLecoS)
             #self.iface.removeToolBarIcon(self.actionBatch)
             #self.iface.removeToolBarIcon(self.actionLMod)
+        #if self.sex_load:
+        #    Sextante.removeProvider(self.provider)
     
-    # Try to enable SEXTANTE support
+    # Try to enable SEXTANTE support if installed
     def initSextante(self):
         # Try to import Sextante
         try:
             from sextante.core.Sextante import Sextante
         except ImportError:
-            return
-        
-        # Add folder to sys.path
-        cmd_folder = os.path.split(inspect.getfile( inspect.currentframe() ))[0]
-        if cmd_folder not in sys.path:
-            sys.path.insert(0, cmd_folder)
-        
-        # Load Provider
-        from lecos_sextanteprov import LecoSAlgorithmsProv
-        
-        self.provider = LecoSAlgorithmsProv() # Load LecoS Algorithm Provider
-        Sextante.addProvider(self.provider)
-        #Sextante.removeProvider(self.provider)
+            self.sex_load = False
+        if self.sex_load:
+            # Add folder to sys.path
+            cmd_folder = os.path.split(inspect.getfile( inspect.currentframe() ))[0]
+            if cmd_folder not in sys.path:
+                sys.path.insert(0, cmd_folder)
+            
+            # Load Lecos Sextante Provider
+            from lecos_sextanteprov import LecoSAlgorithmsProv
+            
+            self.provider = LecoSAlgorithmsProv() # Load LecoS Algorithm Provider
+            Sextante.addProvider(self.provider)
         
     # run method that performs all the real work
     def run(self):

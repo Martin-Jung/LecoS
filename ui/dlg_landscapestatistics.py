@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_landscapestatistics.ui'
 #
-# Created: Mon Apr 15 19:08:47 2013
+# Created: Tue May 21 21:38:33 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -311,7 +311,7 @@ class Ui_Lecos(object):
         self.line.setObjectName(_fromUtf8("line"))
         self.gridLayout.addWidget(self.groupBox, 0, 0, 1, 1)
         self.horizontalLayoutWidget = QtGui.QWidget(Lecos)
-        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(10, 460, 481, 33))
+        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(10, 460, 481, 34))
         self.horizontalLayoutWidget.setObjectName(_fromUtf8("horizontalLayoutWidget"))
         self.horizontalLayout = QtGui.QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout.setMargin(0)
@@ -327,6 +327,10 @@ class Ui_Lecos(object):
         spacerItem6 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem6)
         self.btn_About = QtGui.QPushButton(self.horizontalLayoutWidget)
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/Icons/icons/about.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.btn_About.setIcon(icon1)
+        self.btn_About.setIconSize(QtCore.QSize(12, 12))
         self.btn_About.setObjectName(_fromUtf8("btn_About"))
         self.horizontalLayout.addWidget(self.btn_About)
         self.bt_Accept = QtGui.QDialogButtonBox(self.horizontalLayoutWidget)

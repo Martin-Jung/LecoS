@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2012-09-06
         copyright            : (C) 2013 by Martin Jung
-        email                : martinjung@zoho.com
+        email                : martinjung at zoho.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -27,7 +27,7 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
-from qgis.analysis import *
+#from qgis.analysis import *
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
@@ -41,7 +41,6 @@ except ImportError:
     sys.exit(0)
 from scipy import ndimage # import ndimage module seperately for easy access
 from scipy import spatial # Import spatial for average distance
-
 
 # Try to import functions from osgeo
 try:
@@ -71,11 +70,12 @@ if hasattr(gdal,"AllRegister"): # Can register drivers
 if hasattr(ogr,"RegisterAll"):
     ogr.RegisterAll() # register all ogr drivers
 
+# BUG
 # Try to use exceptions with gdal and ogr
-if hasattr(gdal,"UseExceptions"):
-    gdal.UseExceptions()
-if hasattr(ogr,"UseExceptions"):
-    ogr.UseExceptions()
+# if hasattr(gdal,"UseExceptions"):
+#     gdal.UseExceptions()
+# if hasattr(ogr,"UseExceptions"):
+#     ogr.UseExceptions()
 
 helpdir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/LecoS/metric_info/"
 tmpdir = tempfile.gettempdir()
@@ -303,7 +303,11 @@ class LandCoverAnalysis():
     
     # Return Patchdensity
     def f_patchDensity(self, numpatches):
-        return (float(numpatches) / float(self.Larea))
+        try:
+            val = (float(numpatches) / float(self.Larea))
+        except ZeroDivisionError:
+            val = None
+        return val
     
     # Return array with a specific labeled patch
     def f_returnPatch(self,labeled_array,patch):
@@ -384,7 +388,11 @@ class LandCoverAnalysis():
     
     # Return Edge Density
     def f_returnEdgeDensity(self,labeled_array):
-        return float(self.f_returnEdgeLength(labeled_array)) / float(self.Larea)
+        try:
+            val = float(self.f_returnEdgeLength(labeled_array)) / float(self.Larea)
+        except ZeroDivisionError:
+            val = None
+        return val
     
     # Returns the given matrix with a zero border coloumn and row around
     def f_setBorderZero(self,matrix):
@@ -424,7 +432,10 @@ class LandCoverAnalysis():
             res.append(self.count_nonzero(arr))
         arr = numpy.copy(array)
         arr[array!=cl] = 0
-        prop = self.count_nonzero(arr) / float(sum(res))
+        try:
+            prop = self.count_nonzero(arr) / float(sum(res))
+        except ZeroDivisionError:
+            prop = None
         return prop
     
     # Returns the total number of cells in the array
@@ -503,12 +514,30 @@ class LandCoverAnalysis():
             area = (i*self.cellsize_2) / int(cl)
             res.append(math.pow(area,2))            
         Earea = sum(res)
-        eM = float(Earea) / float(self.Larea)
+        try:
+            eM = float(Earea) / float(self.Larea)
+        except ZeroDivisionError:
+            eM = None
         return eM
         
      
     def testing_def(self):
-        #
+        #Teststuff
+#         rasterPath = "/home/martin/Projekte/Bialowieza_TestData/fc_raster.tif" #load as a gdal image to get geotransform and full array
+#         srcImage = gdal.Open(str(rasterPath))
+#         array = srcImage.GetRasterBand(1).ReadAsArray() # Convert first band to array
+#         cl_array = numpy.copy(array)
+#         cl_array[array!=1] = 0
+#         s = ndimage.generate_binary_structure(2,2)
+#         labeled_array, numpatches = ndimage.label(cl_array,s)
+#(upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = srcImage.GetGeoTransform()
+#         
+#          import matplotlib.pyplot as plt
+#          plt.imshow(code,interpolation='nearest')
+#          plt.axis('on')
+#          plt.show()
+
+
         import numpy
         from scipy import ndimage
         import matplotlib.pyplot as plt

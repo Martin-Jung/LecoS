@@ -7,7 +7,7 @@
                               -------------------
         begin                : 2012-09-06
         copyright            : (C) 2013 by Martin Jung
-        email                : martinjung@zoho.com
+        email                : martinjung at zoho.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -26,7 +26,7 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
-from qgis.analysis import *
+#from qgis.analysis import *
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
@@ -330,9 +330,11 @@ def addAttributesToLayer2(layer,results):
     cmd = string.split(cmd)
     name = ""
     for i in range(0,len(cmd)):
-      name = name + cmd[i][0:3]
+      if len(cmd) == 1:
+        name = name + cmd[i]
+      else:
+        name = name + cmd[i][0:3]
     name = name[0:9] # Make sure only 10 character are Inside the Name
-     
     ind = provider.fieldNameIndex(name)
     try:
       if ind == -1:
@@ -345,7 +347,10 @@ def addAttributesToLayer2(layer,results):
     # Write values to newly created coloumn or to existing one
     for ar in results[metric]:
       if caps & QgsVectorDataProvider.ChangeAttributeValues:
-        attrs = { ind : QVariant(round(ar[2],6)) }
+        try:
+          attrs = { ind : QVariant(round(ar[2],6)) }
+        except:
+          attrs = { ind : QVariant(ar[2]) }
         provider.changeAttributeValues({ ar[0] : attrs })
   
   layer.commitChanges()
@@ -364,11 +369,15 @@ def exportRaster(array,rasterSource,path):
   
   driver = gdal.GetDriverByName('GTiff')
   # Create File based in path
-  outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Float32)
+  try:
+    outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Float32)
+  except RuntimeError:
+    QMessageBox.warning(QDialog(),"Could not overwrite file. Check permissions!")
+    return
   if outDs is None:
-      QMessageBox.warning(QDialog(),"Could not create output File. Check permissions!")
-      sys.exit(1)
-
+    QMessageBox.warning(QDialog(),"Could not create output File. Check permissions!")
+    return
+      
   band = outDs.GetRasterBand(1)
   band.WriteArray(array)
   

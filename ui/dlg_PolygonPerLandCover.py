@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_PolygonPerLandCover.ui'
 #
-# Created: Mon Apr 15 19:08:47 2013
+# Created: Tue May 21 21:38:34 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -271,6 +271,10 @@ class Ui_BatchDialog(object):
         self.horizontalLayout_8.setMargin(0)
         self.horizontalLayout_8.setObjectName(_fromUtf8("horizontalLayout_8"))
         self.btn_About = QtGui.QPushButton(self.horizontalLayoutWidget_8)
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/Icons/icons/about.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.btn_About.setIcon(icon1)
+        self.btn_About.setIconSize(QtCore.QSize(12, 12))
         self.btn_About.setObjectName(_fromUtf8("btn_About"))
         self.horizontalLayout_8.addWidget(self.btn_About)
         self.startButtons = QtGui.QDialogButtonBox(self.horizontalLayoutWidget_8)
@@ -293,7 +297,7 @@ class Ui_BatchDialog(object):
         BatchDialog.setTabOrder(self.Cl_Metrics, self.startButtons)
 
     def retranslateUi(self, BatchDialog):
-        BatchDialog.setWindowTitle(QtGui.QApplication.translate("BatchDialog", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
+        BatchDialog.setWindowTitle(QtGui.QApplication.translate("BatchDialog", "Polygon batch overlay", None, QtGui.QApplication.UnicodeUTF8))
         self.SettingsBox.setTitle(QtGui.QApplication.translate("BatchDialog", "Settings:", None, QtGui.QApplication.UnicodeUTF8))
         self.rb_Landscape.setText(QtGui.QApplication.translate("BatchDialog", "Landscape", None, QtGui.QApplication.UnicodeUTF8))
         self.rb_Class.setText(QtGui.QApplication.translate("BatchDialog", "Class", None, QtGui.QApplication.UnicodeUTF8))

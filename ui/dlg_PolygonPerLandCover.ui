@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Polygon batch overlay</string>
   </property>
   <property name="windowIcon">
    <iconset resource="resources.qrc">

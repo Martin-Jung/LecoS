@@ -7,7 +7,7 @@
                               -------------------
         begin                : 2012-09-06
         copyright            : (C) 2013 by Martin Jung
-        email                : martinjung@zoho.com
+        email                : martinjung at zoho.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,20 +19,32 @@
  *                                                                         *
  ***************************************************************************/
 """
+# Import PyQT bindings
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
+# Sextante bindings
 from sextante.core.AlgorithmProvider import AlgorithmProvider
 from sextante.core.SextanteConfig import Setting, SextanteConfig
+from sextante.core.SextanteLog import SextanteLog
 from lecos_sextantealgorithms import *
+
+# Import modules
+import tempfile
+tmpdir = tempfile.gettempdir() # tempdir
+import os
 
 class LecoSAlgorithmsProv(AlgorithmProvider):
 
-    MY_DUMMY_SETTING = "MY_DUMMY_SETTING"
+    tmpdir = tmpdir
 
     def __init__(self):
         AlgorithmProvider.__init__(self)
-        self.alglist = [ExampleAlgorithm()]
-        for alg in self.alglist:
-            alg.provider = self
+        # Create algorithms list
+        self.createAlgsList()
+    
+    def getDescription(self):
+        return "LecoS (Landscape ecology statistics)"
 
     def initializeSettings(self):
         '''In this method we add settings needed to configure our provider.
@@ -40,27 +52,51 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
         automatically adding a setting for activating or deactivating the
         algorithms in the provider'''
         AlgorithmProvider.initializeSettings(self)
-        SextanteConfig.addSetting(Setting("LecoS", LecoSAlgorithmsProv.MY_DUMMY_SETTING, "Example setting", "Default value"))
+        #SextanteConfig.addSetting(Setting(self.getDescription(), LecoSAlgorithmsProv.tmpdir, "Temporary Directory", tmpdir))
         '''To get the parameter of a setting parameter, use SextanteConfig.getSetting(name_of_parameter)'''
 
     def unload(self):
         '''Setting should be removed here, so they do not appear anymore
         when the plugin is unloaded'''
         AlgorithmProvider.unload(self)
-        SextanteConfig.removeSetting( LecoSAlgorithmsProv.MY_DUMMY_SETTING)
-
+        #SextanteConfig.removeSetting(LecoSAlgorithmsProv.tmpdir)
 
     def getName(self):
         '''This is the name that will appear on the toolbox group.
         It is also used to create the command line name of all the algorithms
         from this provider'''
-        return "Example algorithms"
+        return "lecos"
 
     def getIcon(self):
-        '''We return the default icon'''
-        return AlgorithmProvider.getIcon(self)
+        '''We return the icon for lecos'''
+        return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"icon.png")
+    
+    def createAlgsList(self):
+        '''Create list of Arguments'''
+        
+        self.preloadedAlgs = []        
+        # Load in Algorithms from lecos_sextantealgorithms
+        # Landscape statistics
+        self.preloadedAlgs.append( LandscapeStatistics() )
+        self.preloadedAlgs.append( PatchStatistics() )
+        
+        # Landscape Polygon Overlay
+        self.preloadedAlgs.append( RasterPolyOver() )
+        
+        #self.preloadedAlgs.append( VectorPolyOver() )
+        ## TODO: get command to extract fields in sextante
+        
+        # Landscape modifications
+        self.preloadedAlgs.append( IncreaseLandPatch() )
+        self.preloadedAlgs.append( ExtractEdges() )
+        self.preloadedAlgs.append( IsolateExtremePatch() )
+        self.preloadedAlgs.append( CloseHoles() )
+        self.preloadedAlgs.append( CleanSmallPixels() )
+        
+        for alg in self.preloadedAlgs:
+            alg.provider = self # reset provider
 
-
+    
     def _loadAlgorithms(self):
         '''Here we fill the list of algorithms in self.algs.
         This method is called whenever the list of algorithms should be updated.
@@ -71,4 +107,4 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
         In this case, since the list is always the same, we assign from the pre-made list.
         This assignment has to be done in this method even if the list does not change,
         since the self.algs list is cleared before calling this method'''
-        self.algs = self.alglist
+        self.algs = self.preloadedAlgs

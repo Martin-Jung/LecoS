@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2012-09-06
         copyright            : (C) 2013 by Martin Jung
-        email                : martinjung@zoho.com
+        email                : martinjung at zoho.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -26,7 +26,7 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
-from qgis.analysis import *
+#from qgis.analysis import *
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
@@ -141,7 +141,15 @@ class LecosDialog(QDialog, Ui_Lecos):
     # Update Cellsize if a valid raster-file is selected
     def cellSizer( self, rasterName ):
         if rasterName != -1:
-            pixelSize = func.getRasterLayerByName( rasterName ).rasterUnitsPerPixel()
+            if QGis.QGIS_VERSION_INT < 10900:
+                pixelSize = func.getRasterLayerByName( rasterName ).rasterUnitsPerPixel()
+            else:
+                pixelSize = func.getRasterLayerByName( rasterName ).rasterUnitsPerPixelX() # Extract The X-Value
+                pixelSizeY = func.getRasterLayerByName( rasterName ).rasterUnitsPerPixelY() # Extract The Y-Value
+                # Check for rounded equal square cellsize
+                if round(pixelSize,0) != round(pixelSizeY,0):
+                    func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (rasterName),"WARNING")
+                    
             self.sp_cellsize.setEnabled( True )
             self.sp_cellsize.setValue( pixelSize )        
     
@@ -565,6 +573,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 for k,  field in prov.items():
                     if field.type() in [ QVariant.Int, QVariant.String ]:
                         self.cb_SelD.addItem( field.name() )
+        
         else: # RasterLayer is current layer
             self.cb_SelD.setEnabled( False )
             self.cb_SelD.clear()
@@ -797,6 +806,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                         results = []
                         for cmd in self.metrics:
                             results.append(bat.go(cmd,cl))
+                            self.iface.mainWindow().statusBar().showMessage("Metric %s calculated" % (cmd))
                         self.Output(results)
                 else:
                     # Vector analysis on Landscape Level
@@ -806,6 +816,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                         met = filter(lambda x:el in x,self.metrics)              
                         for cmd in met:
                             results.append(bat.go(cmd))
+                            self.iface.mainWindow().statusBar().showMessage("Metric %s calculated" % (cmd))
                     self.Output(results)
 
             else:
@@ -820,7 +831,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 band = image.GetRasterBand(1)
                 nd = band.GetNoDataValue()
                 int(nd)
-            except TypeError:
+            except TypeError, ValueError:
                 func.DisplayError(self.iface,"LecoS: Warning" ,"Please classify your raster with a correct nodata value","WARNING")
                 return
             # Look for smaller rasters than polygons
@@ -829,7 +840,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
 #            if vecE > rasE:
 #                func.DisplayError(self.iface,"LecoS: Warning" ,"Please cut the overlaying vector to the rasters extent","WARNING")
 #                return
-            bat = pov.BatchConverter(self.landPath,self.vectorPath)
+            bat = pov.BatchConverter(self.landPath,self.vectorPath,self.iface)
             # Landscape or classified
             if self.cl_metric:
                 if(self.classIND == ""):
@@ -837,21 +848,34 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                     return
                 else:
                     cl = int(self.classes[self.cb_LClass.currentIndex()]) # Get selected class
-                cellsize = self.landscape.rasterUnitsPerPixel()
+                
+                if QGis.QGIS_VERSION_INT < 10900:
+                    cellsize = self.landscape.rasterUnitsPerPixel()
+                else:
+                    cellsize = self.landscape.rasterUnitsPerPixelX() # Extract The X-Value
+                    cellsizeY = self.landscape.rasterUnitsPerPixelY() # Extract The Y-Value
+                    # Check for rounded equal square cellsize
+                    if round(cellsize,0) != round(cellsizeY,0):
+                        func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (self.cb_Raster.currentText()),"WARNING")
+            
                 #Calculate selected statistics for classified raster
                 results = []
                 error = 0
                 for cmd in self.metrics:
                     err, r = bat.go(cmd,cl,cellsize,None,rasE)
                     results.append(r)
-                    error = error + err
-                if error > 0 and QGis.QGIS_VERSION_INT >= 10900:
-                    error = str(error / len(self.metrics))
-                    func.DisplayError(self.iface,"LecoS: Warning" ,"There were no overlay values for "+error+" vector features","WARNING")
-                
+                    error = error + len(err)
+                self.DLmessagebar(error,err)
                 self.Output(results)   
             else:
-                cellsize = self.landscape.rasterUnitsPerPixel()
+                if QGis.QGIS_VERSION_INT < 10900:
+                    cellsize = self.landscape.rasterUnitsPerPixel()
+                else:
+                    cellsize = self.landscape.rasterUnitsPerPixelX() # Extract The X-Value
+                    cellsizeY = self.landscape.rasterUnitsPerPixelY() # Extract The Y-Value
+                    # Check for rounded equal square cellsize
+                    if round(cellsize,0) != round(cellsizeY,0):
+                        func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (self.cb_Raster.currentText()),"WARNING")
                 #Calculate statistics for unclassified raster
                 results = []
                 error = 0
@@ -860,11 +884,27 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                     for cmd in met:
                         err, r = bat.go(cmd,None,cellsize,None,rasE)
                         results.append(r)
-                        error = error + err
-                if error > 0 and QGis.QGIS_VERSION_INT >= 10900:
-                    error = str(error / len(self.metrics))
-                    func.DisplayError(self.iface,"LecoS: Warning" ,"There were no overlay values or other errors for "+error+" vector features","WARNING")
+                        error = error + len(err)
+                self.DLmessagebar(error,err)
                 self.Output(results)
+    # Dialog for to messagebar
+    def DLmessagebar(self,n,err):
+        if n > 0 and QGis.QGIS_VERSION_INT >= 10900:
+            error = str(n / len(self.metrics))
+            
+            text = "There were no overlay values for "+error+" vector features. The following features were not inside the raster shapes bounding box:"            
+            widget = self.iface.messageBar().createMessage("LecoS - Warning",text)
+            btn = QComboBox()
+            QObject.connect( btn, SIGNAL( "currentIndexChanged( QString )" ), self.selectFeatID ) 
+            widget.layout().addWidget(btn)
+            self.iface.messageBar().pushWidget(widget, QgsMessageBar.WARNING)
+            for item in err:
+               btn.addItem(str(item))
+    
+    # Select features with ID
+    def selectFeatID(self,ID):
+        ID = int(ID)
+        self.vector.select(ID)
 
     # Function for Output generation
     def Output(self,results):
@@ -882,7 +922,11 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             else:
                 title = ["PolygonFeatureID"]
             for x in results:
-                title.append( str(x[0][1]) ) 
+                try: # Catch in case there are no results
+                    title.append( str(x[0][1]) ) 
+                except IndexError:
+                    func.DisplayError(self.iface,"LecoS: Warning" ,"Results couldn't be calculated. Please make sure all shapes are within the rasters extent!","WARNING")
+                    return
             f = open(self.FileSavePath, "wb" )
             writer = csv.writer(f,delimiter=';',quotechar="'",quoting=csv.QUOTE_ALL)
             writer.writerow(title)
@@ -941,12 +985,20 @@ class LandMod(QDialog, Ui_LandMod):
         self.cb_Raster.addItems( func.getRasterLayersNames() )
         if(self.cb_Raster.count()!=0):
             self.loadClasses()
-            self.cellSizer(self.cb_Raster.currentText())
+            #self.cellSizer(self.cb_Raster.currentText())
     
     # Set the cellsizer value 
     def cellSizer(self,rasterName):
         ras = func.getRasterLayerByName( rasterName )
-        pixelSize = ras.rasterUnitsPerPixel()
+        if QGis.QGIS_VERSION_INT < 10900:
+            pixelSize = ras.rasterUnitsPerPixel()
+        else:
+            pixelSize = ras.rasterUnitsPerPixelX() # Extract The X-Value
+            pixelSizeY = ras.rasterUnitsPerPixelY() # Extract The Y-Value
+            # Check for rounded equal square cellsize
+            if round(pixelSize,0) != round(pixelSizeY,0):
+                func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (rasterName),"WARNING")
+        
         self.CellsizeLine.setEnabled( True )
         self.CellsizeLine.setText( QString(str(pixelSize)) ) 
     

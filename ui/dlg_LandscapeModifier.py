@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_LandscapeModifier.ui'
 #
-# Created: Mon Apr 15 19:08:48 2013
+# Created: Tue May 21 21:38:34 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -311,13 +311,13 @@ class Ui_LandMod(object):
         QtCore.QMetaObject.connectSlotsByName(LandMod)
 
     def retranslateUi(self, LandMod):
-        LandMod.setWindowTitle(QtGui.QApplication.translate("LandMod", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
+        LandMod.setWindowTitle(QtGui.QApplication.translate("LandMod", "Landscape Modifier", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("LandMod", "Class:", None, QtGui.QApplication.UnicodeUTF8))
         self.helpText.setHtml(QtGui.QApplication.translate("LandMod", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'Sans\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Extracts edges from each patch of the given class. Edge width can specified by multiplying the cellsize.</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Extracts edges from each patch of the given class. Edge width can be specified by multiplying the cellsize.</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("LandMod", "x", None, QtGui.QApplication.UnicodeUTF8))
         self.label_4.setText(QtGui.QApplication.translate("LandMod", "Edge width", None, QtGui.QApplication.UnicodeUTF8))
         self.box_RasCalc.setItemText(self.box_RasCalc.indexOf(self.PatchEdges), QtGui.QApplication.translate("LandMod", "Extract landscape patch edges", None, QtGui.QApplication.UnicodeUTF8))

@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2012-09-06
         copyright            : (C) 2013 by Martin Jung
-        email                : martinjung@zoho.com
+        email                : martinjung at zoho.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -26,7 +26,7 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
-from qgis.analysis import *
+#from qgis.analysis import *
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
@@ -68,11 +68,12 @@ if hasattr(gdal,"AllRegister"): # Can register drivers
 if hasattr(ogr,"RegisterAll"):
     ogr.RegisterAll() # register all ogr drivers
 
+#BUG
 # Try to use exceptions with gdal and ogr
-if hasattr(gdal,"UseExceptions"):
-    gdal.UseExceptions()
-if hasattr(ogr,"UseExceptions"):
-    ogr.UseExceptions()
+# if hasattr(gdal,"UseExceptions"):
+#     gdal.UseExceptions()
+# if hasattr(ogr,"UseExceptions"):
+#     ogr.UseExceptions()
 
 tmpdir = tempfile.gettempdir()
 
@@ -92,20 +93,6 @@ class LandscapeMod():
         self.cl = cl
         self.cl_array = numpy.copy(self.srcArray)
         self.cl_array[self.srcArray!=self.cl] = 0
-        
-        #Teststuff
-#         rasterPath = "/home/martin/Projekte/Bialowieza_TestData/fc_raster.tif" #load as a gdal image to get geotransform and full array
-#         srcImage = gdal.Open(str(rasterPath))
-#         array = srcImage.GetRasterBand(1).ReadAsArray() # Convert first band to array
-#         cl_array = numpy.copy(array)
-#         cl_array[array!=1] = 0
-#         s = ndimage.generate_binary_structure(2,2)
-#         labeled_array, numpatches = ndimage.label(cl_array,s)
-#         
-#         import matplotlib.pyplot as plt
-#         plt.imshow(min_feature,interpolation='nearest')
-#         plt.axis('on')
-#         plt.show()
 
     # Extract edges from landscape patches class
     def extractEdges(self,size):

@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2012-09-06
         copyright            : (C) 2013 by Martin Jung
-        email                : martinjung@zoho.com
+        email                : martinjung at zoho.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -26,7 +26,7 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
-from qgis.analysis import *
+#from qgis.analysis import *
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
@@ -79,21 +79,26 @@ if hasattr(gdal,"AllRegister"): # Can register drivers
 if hasattr(ogr,"RegisterAll"):
     ogr.RegisterAll() # register all ogr drivers
 
-# Try to use exceptions with gdal and ogr
-if hasattr(gdal,"UseExceptions"):
-    gdal.UseExceptions()
-if hasattr(ogr,"UseExceptions"):
-    ogr.UseExceptions()
+# BUG
+# # Try to use exceptions with gdal and ogr
+# if hasattr(gdal,"UseExceptions"):
+#     gdal.UseExceptions()
+# if hasattr(ogr,"UseExceptions"):
+#     ogr.UseExceptions()
 
 ## CODE START ##
 # Many functions stolen from here :-)
 # http://geospatialpython.com/2011/02/clip-raster-using-shapefile.html 
 class BatchConverter():
-    def __init__(self,rasterPath,vectorPath):        
+    def __init__(self,rasterPath,vectorPath,iface=None):        
         # load as a gdal image to get geotransform and full array
         self.srcImage = gdal.Open(str(rasterPath))
         band = self.srcImage.GetRasterBand(1)
         self.nodata = band.GetNoDataValue()
+        if self.nodata == None:
+            print "Nodata-value is not specified in the raster layer"
+            self.nodata = 0
+        
         self.geoTrans = self.srcImage.GetGeoTransform()
         try:
             self.srcArray = self.srcImage.GetRasterBand(1).ReadAsArray() # Convert first band to array
@@ -108,7 +113,13 @@ class BatchConverter():
         ext = self.GetExtent(self.geoTrans,self.srcImage.RasterXSize,self.srcImage.RasterYSize)
         self.extent = (ext[0][0],ext[2][0],ext[1][1],ext[0][1]) # Format to the same tuple structure as the vector layer
         # Failure Clip counter
-        self.featFailed = 0
+        self.featFailed = []
+        
+        # Interface to QGIS
+        self.iface = iface
+        
+        # Error Counter
+        self.error = 0
         
     # Alternative count_nonzero function from scipy if available
     def count_nonzero(self,array):
@@ -130,73 +141,90 @@ class BatchConverter():
                 poly = self.lyr.GetFeature(i)
                 
             # Test if polygon feature is inside raster extent, otherwise return None as result
-            geom = poly.GetGeometryRef()
-            f_coord = geom.GetEnvelope()
-            ints = self.BBoxIntersect(self.extent,f_coord)
-            if ints:
-                array = self.getClipArray(poly)
-                if array != None: # Multi polygon?
-                    classes = sorted(numpy.unique(array)) # get classes
-                    for val in (self.nodata,0):# Remove raster nodata value and zeros from class list
-                        try:
-                            classes.remove(val) 
-                        except ValueError:
-                            pass
-                    # Classified Methods -> Use landscape_statistics module
-                    if cl != None:
-                        cl_analys = lcs.LandCoverAnalysis(array,cellsize,classes)
-                        cl_array = numpy.copy(array) # new working array
-                        cl_array[cl_array!=cl] = 0
-                        cl_analys.f_ccl(cl_array) # CC-labeling
-                        name, r = cl_analys.execSingleMetric(cmd,cl)             
-                        # Get FieldValue of given Field
-                        #id = self.getFieldValue(poly,landID)
-                        id = poly.GetFID()
-                        b = [id,name,r]
-                        res.append(b)
-                    # Unclassified Methods
-                    else:
-                        if(cmd == "LC_Sum"):
-                            r = self.returnArraySum(array)
-                        elif(cmd == "LC_Mean"):
-                            r = self.returnArrayMean(array)
-                        elif(cmd == "LC_SD"):
-                            r = self.returnArrayStd(array)
-                        elif(cmd == "LC_Med"):
-                            r = self.returnArrayMedi(array)
-                        elif(cmd == "LC_Max"):
-                            r = self.returnArrayMax(array)
-                        elif(cmd == "LC_Min"):
-                            r = self.returnArrayMin(array)
-                        elif(cmd == "LC_LQua"):
-                            r = self.returnArrayLowerQuant(array)
-                        elif(cmd == "LC_UQua"):
-                            r = self.returnArrayHigherQuant(array)
-                        elif(cmd == "DIV_SH"):
-                            if len(classes) > 1:
-                                r = self.f_returnShannonIndex(array,classes)
-                            else:
-                                r = None
-                        elif(cmd == "DIV_SI"):
-                            if len(classes) > 1:
-                                r = self.f_returnSimpsonIndex(array,classes)
-                            else:
-                                r = None
-                        elif(cmd == "DIV_EV"):
-                            if len(classes) > 1:
-                                r = self.f_returnShannonIndex(array,classes)
-                            else:
-                                r = None
-                        # Get FieldValue of given Field
-                        #id = self.getFieldValue(poly,landID)
-                        id = poly.GetFID()
-                        b = [id,cmd,r]
-                        res.append(b)
+            #geom = poly.GetGeometryRef()
+            #f_coord = geom.GetEnvelope()
+            #ints = self.BBoxIntersect(self.extent,f_coord)
+            #if ints: # Bounding Box intersecting ?
+            array = self.getClipArray(poly)
+            if array != None: # Multi polygon or no raster values below ?
+                classes = sorted(numpy.unique(array)) # get classes
+                for val in (self.nodata,0):# Remove raster nodata value and zeros from class list
+                    try:
+                        classes.remove(val) 
+                    except ValueError:
+                        pass
+                # Classified Methods -> Use landscape_statistics module
+                if cl != None:
+                    cl_analys = lcs.LandCoverAnalysis(array,cellsize,classes)
+                    cl_array = numpy.copy(array) # new working array
+                    cl_array[cl_array!=cl] = 0
+                    cl_analys.f_ccl(cl_array) # CC-labeling
+                    name, r = cl_analys.execSingleMetric(cmd,cl)             
+                    # Get FieldValue of given Field
+                    #id = self.getFieldValue(poly,landID)
+                    id = poly.GetFID()
+                    b = [id,name,r]
+                    res.append(b)
+                # Unclassified Methods
+                else:
+                    if(cmd == "LC_Sum"):
+                        r = self.returnArraySum(array)
+                    elif(cmd == "LC_Mean"):
+                        r = self.returnArrayMean(array)
+                    elif(cmd == "LC_SD"):
+                        r = self.returnArrayStd(array)
+                    elif(cmd == "LC_Med"):
+                        r = self.returnArrayMedi(array)
+                    elif(cmd == "LC_Max"):
+                        r = self.returnArrayMax(array)
+                    elif(cmd == "LC_Min"):
+                        r = self.returnArrayMin(array)
+                    elif(cmd == "LC_LQua"):
+                        r = self.returnArrayLowerQuant(array)
+                    elif(cmd == "LC_UQua"):
+                        r = self.returnArrayHigherQuant(array)
+                    elif(cmd == "DIV_SH"):
+                        if len(classes) > 1:
+                            r = self.f_returnShannonIndex(array,classes)
+                        else:
+                            r = None
+                    elif(cmd == "DIV_SI"):
+                        if len(classes) > 1:
+                            r = self.f_returnSimpsonIndex(array,classes)
+                        else:
+                            r = None
+                    elif(cmd == "DIV_EV"):
+                        if len(classes) > 1:
+                            r = self.f_returnShannonEqui(array,classes)
+                        else:
+                            r = None
+                    # Get FieldValue of given Field
+                    #id = self.getFieldValue(poly,landID)
+                    
+                    id = poly.GetFID()
+                    b = [id,cmd,r]
+                    res.append(b)
             else:
-                self.featFailed = self.featFailed + 1
                 id = poly.GetFID()
+                if self.featFailed.count(id) == 0:
+                    self.featFailed.append(id)
                 b = [id,cmd,None]
                 res.append(b)
+#             else:
+#                 id = poly.GetFID()
+#                 if self.featFailed.count(id) == 0:
+#                     self.featFailed.append(id)
+#                 b = [id,cmd,None]
+#                 res.append(b)
+            # Update the Statusbar of the current process
+            if self.iface != None:
+                self.iface.mainWindow().statusBar().showMessage("%s calculated for feature %s out of %s (%s impossible)" % (cmd, poly.GetFID(),self.lyr.GetFeatureCount(),len(self.featFailed) ))
+        
+        # Display number of errors in statusbar
+        if self.error != 0:
+            if self.iface != None:
+                self.iface.mainWindow().statusBar().showMessage("%s could not be calculated for %s features" % (cmd,self.error ))
+
         return self.featFailed, res
     
     # Get value of a field name within a given feature of a ogr layer
@@ -217,10 +245,9 @@ class BatchConverter():
         try:
             a=numpy.fromstring(i.tostring(),'b')
         except SystemError:
-            QMessageBox.warning(QDialog(),"LecoS: Warning","Raster file is to big for processing. Please crop the file and try again.")
-            return
-
-        a.shape=i.im.size[1], i.im.size[0]
+            a = None
+        if a != None:
+            a.shape=i.im.size[1], i.im.size[0]
         return a
 
     def arrayToImage(self,a):
@@ -247,6 +274,15 @@ class BatchConverter():
         line = int((ulY - y) / xDist)
         return (pixel, line) 
     
+    def Pixel2world(self,geoMatrix, x, y):
+        ulX = geoMatrix[0]
+        ulY = geoMatrix[3]
+        xDist = geoMatrix[1]
+        yDist = geoMatrix[5]
+        coorX = (ulX + (x * xDist))
+        coorY = (ulY + (y * yDist))
+        return (coorX, coorY)
+        
     # Returns an array from the given polygon feature
     # Assumes that the polygon is inside the rasters extent!
     def getClipArray(self,poly):
@@ -254,17 +290,16 @@ class BatchConverter():
         geom = poly.GetGeometryRef()
         if geom.GetGeometryCount() > 1:
             # TODO: What to do with multipolygons?
-            clip = None
-            self.featFailed = self.featFailed + 1 # Increase counter of failed feature shape match
+            clip2 = None
         else:
-            minX, maxX, minY, maxY = geom.GetEnvelope()
+            minX, maxX, minY, maxY = geom.GetEnvelope() #self.lyr.GetExtent()
             ulX, ulY = self.world2Pixel(self.geoTrans, minX, maxY)
             lrX, lrY = self.world2Pixel(self.geoTrans, maxX, minY)
         
             # Calculate the pixel size of the new image
             pxWidth = int(lrX - ulX)
             pxHeight = int(lrY - ulY)
-            
+                        
             # Clip the raster to the shapes boundingbox
             clip = self.srcArray[ulY:lrY, ulX:lrX]
             
@@ -281,17 +316,19 @@ class BatchConverter():
                 points.append((pts.GetX(p), pts.GetY(p)))
             for p in points:
                 pixels.append(self.world2Pixel(geoTrans, p[0], p[1]))
-            rasterPoly = Image.new("L", (pxWidth, pxHeight), 1)
-            rasterize = ImageDraw.Draw(rasterPoly)
-            rasterize.polygon(pixels, 0)
+            rasterPoly = Image.new("L", (pxWidth, pxHeight), 0)
+            ImageDraw.Draw(rasterPoly).polygon(pixels, 0)
             mask = self.imageToArray(rasterPoly)
-            # Clip the image using the mask
-            try:
-                clip2 = numpy.choose(mask,(clip, 0)).astype(self.srcArray.dtype)
-            except ValueError:
-                clip2 = None
-            return clip2            
-
+            if mask != None:
+                try:
+                    clip2 = numpy.choose(mask,(clip, 0)).astype(self.srcArray.dtype)
+                except ValueError:
+                    self.error = self.error + 1
+                    clip2 = None # Outside range
+            else:
+                self.error = self.error + 1
+                clip2 = None # Image to array failed because polygon outside range
+        return clip2            
     
     def _getClipArray_OLD(self,poly):
         # Convert the layer extent to image pixel coordinates
@@ -319,7 +356,6 @@ class BatchConverter():
         geom = poly.GetGeometryRef()
         if geom.GetGeometryCount() > 1:
             clip2 = None
-            self.featFailed = self.featFailed + 1 # Increase counter of failed feature shape match
         else:
             pts = geom.GetGeometryRef(0)
             for p in range(pts.GetPointCount()):
@@ -335,7 +371,6 @@ class BatchConverter():
                 clip2 = numpy.choose(mask,(clip, 0)).astype(self.srcArray.dtype)
             except ValueError:
                 #QMessageBox.warning(QDialog(),"LecoS: Warning","Please make sure that all vector features are within the raster grid!")
-                self.featFailed = self.featFailed + 1 # Increase counter of failed feature shape match
                 clip2 = None
         return clip2
     
@@ -409,41 +444,50 @@ class BatchConverter():
     ## Unclassified Methods ##
     # Returns sum of clipped raster cells
     def returnArraySum(self,array):
-        return numpy.sum(array)
+        return numpy.sum(array[array!=self.nodata])
     
     # Returns mean of clipped raster cells
     def returnArrayMean(self,array):
-        return numpy.mean(array[array!=0])
+        return numpy.mean(array[array!=self.nodata])
         
     # Returns standard deviation of clipped raster cells
     def returnArrayStd(self,array):
-        return numpy.std(array[array!=0])
+        return numpy.std(array[array!=self.nodata])
     
     # Returns the minimum of clipped raster cells
     def returnArrayMin(self,array):
-        if numpy.size(array) != 0:
-            return numpy.min(array[array!=0])
+        if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
+            return numpy.min(array[array!=self.nodata])
         else:
             return None
     
     # Returns the minimum of clipped raster cells
     def returnArrayMax(self,array):
-        if numpy.size(array) != 0:
-            return numpy.max(array[array!=0])
+        if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
+            return numpy.max(array[array!=self.nodata])
         else:
             return None
         
     # Returns the median of clipped raster cells
     def returnArrayMedi(self,array):
-        return numpy.median(array[array!=0])
+        if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
+            return numpy.median(array[array!=self.nodata])
+        else:
+            return None
     
     # Returns the weighed average of clipped raster cells
     def returnArrayLowerQuant(self,array):
-        return scipy.percentile(array[array!=0],25)
+        if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
+            return scipy.percentile(array[array!=self.nodata],25)
+        else:
+            return None
     
     # Returns the weighed average of clipped raster cells
     def returnArrayHigherQuant(self,array):
-        return scipy.percentile(array[array!=0],75)
+        if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
+            return scipy.percentile(array[array!=self.nodata],75)
+        else:
+            return None
     
     # Calculates the Shannon Index    
     def f_returnShannonIndex(self,array,classes):
@@ -539,7 +583,7 @@ class VectorBatchConverter():
         for i in range(0,d.GetFeatureCount()):
             f = d.GetFeature(i)
             self.groups.append(f.GetField(0))
-        
+                
     # Runs a defined metric
     def go(self,name,cl=None):
         cl = str(cl)

@@ -1,6 +1,0 @@
---> lcp: raster nehmen, get class, component labeling der patches der class. resultierendes raster als basis nehmen.
-
-Raster Creation
---> Create raster based on edge lines (binary dilaton and substraction)
---> Create Landcover subsets (edge lines, greatest patch, most isolated patch?)
---> Create Diversity rasters (Determine Shannon-Index patchwise in a moving window approach)

@@ -1,6 +1,0 @@
-Eveness  - ok
-Number of land cover classes - ok
-Average perimeter of patches of each land cover class - ok
-Number of patches of each land cover class - ok
-Average distance between the patches of the same lc-class - ok
-Average shape (ratio perimeter/area) of each patches of each lc-class - ok, but slow

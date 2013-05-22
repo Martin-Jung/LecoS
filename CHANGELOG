@@ -1,5 +1,20 @@
+# Version 1.7.6
+
+
+# Version 1.7.5
+- SEXTANTE support!
+- Fixed bug with the overlay calculation of landscape metrics (included no-data values)
+
+# Version 1.7.4
+- Fixed Bug with the rasterUnitsPerPixel extraction for QGIS 1.9/2.0. Now raises a warning if cells are not square
+- Improved Input response
+
 # Version 1.7.3
-- Bug fixing with mismatching shapes and extents (maybe better solution in the future)
+- Some Improvements with the mismatching shapes and extents -> now uses polygon extent instead of the whole shapefile
+- Fixed Error with the Shannon Equitability
+- Fixed Errors with Diversity indices and shapefile edits
+- Fixed Bug causing QGIS to crash -> http://hub.qgis.org/issues/7612
+- The Batchoverlay now displays the progress in the QGIS main window taskbar 
 
 # Version 1.7.2
 - Enabled the calculation of landscape statistics for vector layers
