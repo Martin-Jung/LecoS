@@ -25,11 +25,11 @@ def name():
 def description():
     return "Contains several analytical functions for land cover analysis"
 def version():
-    return "Version 1.7.6"
+    return "Version 1.9"
 def icon():
     return "icons/icon.png"
 def qgisMinimumVersion():
-    return "1.8"
+    return "2.0"
 def classFactory(iface):
     # load LecoS class from file LecoS
     from lecos_main import LecoS

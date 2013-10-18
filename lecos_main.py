@@ -74,19 +74,11 @@ class LecoS( object ):
 
         # check if Raster menu available
         if hasattr(self.iface, "addPluginToRasterMenu"):
-            # Disable Raster toolbar by default
-            #self.iface.addRasterToolBarIcon(self.actionLecoS)
-            #self.iface.addRasterToolBarIcon(self.actionBatch)
-            #self.iface.addRasterToolBarIcon(self.actionLMod)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionLecoS)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionBatch)
             self.iface.addPluginToRasterMenu("&Landscape Ecology", self.actionLMod)
         else:
             # no menu, place plugin under Plugins menu and toolbox as usual
-            # Disable Raster toolbar by default
-            #self.iface.addToolBarIcon(self.actionLecoS)
-            #self.iface.addToolBarIcon(self.actionBatch)
-            #self.iface.addToolBarIcon(self.actionLMod)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionLecoS)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionBatch)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionLMod)
@@ -97,27 +89,17 @@ class LecoS( object ):
             self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionLecoS)
             self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionBatch)
             self.iface.removePluginRasterMenu("&Landscape Ecology",self.actionLMod)   
-            # Disable Raster toolbar by default         
-            #self.iface.removeRasterToolBarIcon(self.actionLecoS)
-            #self.iface.removeRasterToolBarIcon(self.actionBatch)
-            #self.iface.removeRasterToolBarIcon(self.actionLMod)
         else:
             # Remove the plugin menu item and icon
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLecoS)
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionBatch)
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLMod)            
-            # Disable Raster toolbar by default
-            #self.iface.removeToolBarIcon(self.actionLecoS)
-            #self.iface.removeToolBarIcon(self.actionBatch)
-            #self.iface.removeToolBarIcon(self.actionLMod)
-        #if self.sex_load:
-        #    Sextante.removeProvider(self.provider)
-    
+                
     # Try to enable SEXTANTE support if installed
     def initSextante(self):
         # Try to import Sextante
         try:
-            from sextante.core.Sextante import Sextante
+            from processing.core.Processing import Processing
         except ImportError:
             self.sex_load = False
         if self.sex_load:
@@ -130,7 +112,7 @@ class LecoS( object ):
             from lecos_sextanteprov import LecoSAlgorithmsProv
             
             self.provider = LecoSAlgorithmsProv() # Load LecoS Algorithm Provider
-            Sextante.addProvider(self.provider)
+            Processing.addProvider(self.provider)
         
     # run method that performs all the real work
     def run(self):

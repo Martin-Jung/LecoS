@@ -166,7 +166,7 @@ class LandCoverAnalysis():
             return (array != 0).sum()
 
     # Executes the Metric functions
-    def execSingleMetric(self,name,cl):
+    def execSingleMetric(self,name,cl):        
         self.cl = cl
         if(name == unicode("Land cover")):
             return unicode(name), self.f_returnArea(self.labeled_array)
@@ -206,14 +206,14 @@ class LandCoverAnalysis():
             return None, None
         
     # Connected component labeling function
-    def f_ccl(self,cl_array):
+    def f_ccl(self,cl_array,s=2):
         # Binary structure
         self.cl_array = cl_array
-        struct = scipy.ndimage.generate_binary_structure(2,2)
+        struct = scipy.ndimage.generate_binary_structure(s,s)
         self.labeled_array, self.numpatches = ndimage.label(cl_array,struct) 
         
     ## Landscape Metrics
-    def execLandMetric(self,name,nodata):
+    def execLandMetric(self,name,nodata):        
         if name == "LC_Mean":
             return unicode(name), numpy.mean(self.array[self.array!=nodata])       
         if name == "LC_Sum":
@@ -407,6 +407,19 @@ class LandCoverAnalysis():
         newlab = ndimage.binary_erosion(labeled_array,s).astype(labeled_array.dtype)
         return ndimage.sum(newlab) * self.cellsize_2
     
+    # Calculates the Fractal dimension index patchwise
+    # Returns a list with all values
+    def f_getFractalDimensionIndex(self,labeled_array,numpatches):
+        # Calculate patchwise
+        frac = numpy.array([]).astype(float)
+        for i in xrange(1,numpatches + 1): # Very slow!
+            feature = self.f_returnPatch(labeled_array,i)
+            a = float( self.f_returnArea(feature) )
+            p = float( self.f_returnEdgeLength(feature) )
+            fdi = ( 2.0 * math.log( 0.25 * p ) ) / math.log( a )
+            frac = numpy.append(frac,fdi)        
+        return frac
+    
     # Return greatest, smallest or mean patch area
     def f_returnPatchArea(self,cl_array,labeled_array,numpatches,what):
         sizes = ndimage.sum(cl_array,labeled_array,range(1,numpatches+1))
@@ -422,7 +435,7 @@ class LandCoverAnalysis():
                 return (numpy.median(sizes)*self.cellsize_2) / int(self.cl)
         else:
             return None
-    
+            
     # Returns the proportion of the labeled class in the landscape
     def f_returnProportion(self,array,cl):
         res = []
@@ -523,6 +536,7 @@ class LandCoverAnalysis():
      
     def testing_def(self):
         #Teststuff
+        pass
 #         rasterPath = "/home/martin/Projekte/Bialowieza_TestData/fc_raster.tif" #load as a gdal image to get geotransform and full array
 #         srcImage = gdal.Open(str(rasterPath))
 #         array = srcImage.GetRasterBand(1).ReadAsArray() # Convert first band to array
@@ -530,7 +544,7 @@ class LandCoverAnalysis():
 #         cl_array[array!=1] = 0
 #         s = ndimage.generate_binary_structure(2,2)
 #         labeled_array, numpatches = ndimage.label(cl_array,s)
-#(upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = srcImage.GetGeoTransform()
+#         (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = srcImage.GetGeoTransform()
 #         
 #          import matplotlib.pyplot as plt
 #          plt.imshow(code,interpolation='nearest')

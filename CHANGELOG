@@ -1,5 +1,24 @@
-# Version 1.7.6
+# Version 1.9
+### Major Update: ###
+- Added new tools to the Processing toolbox for use in complex models
+	- Function to count Raster cells -> Output as table
+	- Function to query raster values below a point layer
+	- Function to intersect two landscape (raster) layers -> Output clipped raster
+	- Function to creates a new random raster based on values from a statistical distribution -> Output raster
+	- Function to conduct a Neighborhood analysis (analogous to r.neighbors. or Focal Statistics in ArcGis)
+	- Function to conduct a connected component labeling of connected patches
+	- Function to conduct ZonalStatistics based on two landscapes (ZonalStatistics with raster layers in ArcGIS)
+- Improved the overall documentation for the Processing Toolbox and created new simple icons
+- Fixed Bug: http://hub.qgis.org/issues/8810
 
+# Version 1.8.2
+- Small bug fixing (Processing interface not working)
+
+# Version 1.8.1
+- Update for the integration of SEXTANTE into QGIS (now called Processing)
+
+# Version 1.8
+- Updated for new QGIS 2.0 API
 
 # Version 1.7.5
 - SEXTANTE support!

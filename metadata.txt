@@ -7,12 +7,12 @@
 
 [general]
 name=LecoS - Landscape Ecology Statistics
-qgisMinimumVersion=1.8
+qgisMinimumVersion=2.0
 description=Contains several analytical functions for land cover analysis
-version=1.7.6
+version=1.9
 
 # Uncomment the following line and add your changelog entries:
-changelog= see CHANGELOG file
+changelog= see CHANGELOG file for old versions
 
 # tags are comma separated with spaces allowed
 tags=Ecology,Landscape,Analytical tools,Statistics,Land Cover
@@ -29,4 +29,4 @@ deprecated=False
 
 # Author contact information
 author=Martin Jung
-email=martinjung@zoho.com
+email=martinjung-at-zoho.com

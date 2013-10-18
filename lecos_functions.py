@@ -30,6 +30,8 @@ from qgis.gui import *
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
+import numpy
+import scipy
 
 # Try to import functions from osgeo
 try:
@@ -51,7 +53,7 @@ if hasattr(ogr,"RegisterAll"):
 # Save results to CSV
 def saveToCSV( results, titles, filePath ):
   f = open(filePath, "wb" )
-  writer = csv.writer(f,delimiter=';',quotechar="'",quoting=csv.QUOTE_ALL)
+  writer = csv.writer(f,delimiter=';',quotechar="",quoting=csv.QUOTE_NONE)
   writer.writerow(titles)
   for item in results:
     writer.writerow(item)
@@ -174,13 +176,13 @@ def AboutDlg( ):
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def lastUsedDir():
   settings = QSettings( "Lecoto", "lecos" )
-  return settings.value( "lastUsedDir", QVariant( "" ) ).toString()
+  return settings.value( "lastUsedDir", str( "" ) )
 
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def setLastUsedDir( lastDir ):
   path = QFileInfo( lastDir ).absolutePath()
   settings = QSettings( "Lecoto", "lecos" )
-  settings.setValue( "lastUsedDir", QVariant( path ) )
+  settings.setValue( "lastUsedDir", str( path ) )
   
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def getRasterLayerByName( layerName ):
@@ -252,76 +254,13 @@ def getLayerByName( layerName ):
         else:
           return None
 
-
-# Add a new attribute to the vectorlayer
-# Expected input: Array with [ID,Value]
-def addAttributesToLayer(layer,cmd,results,type="qgis"):
-  if type == "qgis":
-    # Open a Shapefile, and get field names
-    provider = layer.dataProvider()
-    allAttrs = provider.attributeIndexes()
-    if hasattr(provider,"select"): # Worked before, maybe necessary in the future again
-      provider.select(allAttrs)
-    caps = provider.capabilities()
-  
-    name = cmd #"".join(e[0] for e in cmd.split()) + "_"
-    # Create Attribute Column
-    ind = provider.fieldNameIndex(name)
-    try:
-      if ind == -1:
-        if caps & QgsVectorDataProvider.AddAttributes:
-          res = provider.addAttributes( [ QgsField(name,QVariant.Double) ] )
-    except:
-      return False
-    ind = provider.fieldNameIndex(name)
-    # Write values to newly created coloumn or to existing one
-    try:
-      for ar in results:
-        if caps & QgsVectorDataProvider.ChangeAttributeValues:
-          attrs = { ind : QVariant(round(ar[1],6)) }
-          provider.changeAttributeValues({ ar[0] : attrs })
-    except:
-      return False
-    layer.commitChanges()
-    return True
-  elif type == "gdal":
-    # Write attributes to table using GDAL #
-    path = layer.source()
-    vector = ogr.Open(str(path)) # Get layer
-    if not vector:
-      QMessageBox.warning(QDialog(),"Could not open vector file. Check permissions!")
-      return False
-    layer = vector.GetLayer()
-    # Get fieldDefinitions from featureDefinition
-    featureDefinition = layer.GetLayerDefn()
-    fieldIndices = xrange(featureDefinition.GetFieldCount())
-    fieldDefinitions = []
-    for fieldIndex in fieldIndices:
-        fieldDefinition = featureDefinition.GetFieldDefn(fieldIndex)
-        fieldDefinitions.append((fieldDefinition.GetName(), fieldDefinition.GetType()))
-    
-    field_name = ogr.FieldDefn(cmd, ogr.OFTReal)
-    field_name.SetWidth(24)
-    layer.CreateField(field_name)
-    for fid in range(0,len(results)):
-      feature = layer.GetFeature(fid)
-      feature.SetField(cmd,results[fid][1])
-      feature.Destroy()
-    layer.SyncToDisk()
-    vector.Destroy()
-    
-
-# Special Function for Metric outputs
 # Save multiple different attributes to vector table
 # Input = [[[ID,METRIC,VAL],[ID,METRIC,VAL]],[[ID,METRIC,VAL2],[ID,METRIC,VAL2]]]
-def addAttributesToLayer2(layer,results):
+def addAttributesToLayer(layer,results):
   # Open a Shapefile, and get field names
-  layer.startEditing() # start editing
   provider = layer.dataProvider()
-  if hasattr(provider,"select"): # Worked before, maybe necessary in the future again
-    allAttrs = provider.attributeIndexes()
-    provider.select(allAttrs)
   caps = provider.capabilities()
+    
   for metric in xrange(0,len(results)):
     # Create Attribute Column
     # Name Formating
@@ -337,21 +276,27 @@ def addAttributesToLayer2(layer,results):
     name = name[0:9] # Make sure only 10 character are Inside the Name
     ind = provider.fieldNameIndex(name)
     try:
-      if ind == -1:
+      if ind == -1: # Already existing?
         if caps & QgsVectorDataProvider.AddAttributes:
           res = provider.addAttributes( [ QgsField(name,QVariant.Double) ] )
+          if res == False:
+            return res
     except:
       return False
-    ind = provider.fieldNameIndex(name)
-    
-    # Write values to newly created coloumn or to existing one
-    for ar in results[metric]:
-      if caps & QgsVectorDataProvider.ChangeAttributeValues:
-        try:
-          attrs = { ind : QVariant(round(ar[2],6)) }
-        except:
-          attrs = { ind : QVariant(ar[2]) }
-        provider.changeAttributeValues({ ar[0] : attrs })
+    ind = provider.fieldNameIndex(name) # Check again if attribute is existing
+    if ind != -1:
+      # Write values to newly created coloumn or to existing one
+      for ar in results[metric]:
+        if caps & QgsVectorDataProvider.ChangeAttributeValues:
+          try:
+            attrs = { ind : (round(ar[2],6)) }
+          except:
+            attrs = { ind : (ar[2]) }
+          provider.changeAttributeValues({ ar[0] : attrs })
+        else:
+          return False
+    else:
+      return False
   
   layer.commitChanges()
   return True
@@ -361,11 +306,16 @@ def addAttributesToLayer2(layer,results):
 # Save a rasterfile as geotiff to a given directory
 # Need the previous raster (for output size and projection)
 # and a path with writing permissions
-def exportRaster(array,rasterSource,path):
+def exportRaster(array,rasterSource,path,nodata=True):
   raster = gdal.Open(str(rasterSource))
   rows = raster.RasterYSize
   cols = raster.RasterXSize
-  nodata = 0#raster.GetRasterBand(1).GetNoDataValue()
+  if nodata == True:
+    nodata = raster.GetRasterBand(1).GetNoDataValue()
+  elif nodata == False:
+    nodata = 0
+  else: # take nodata as it comes
+    nodata = nodata
   
   driver = gdal.GetDriverByName('GTiff')
   # Create File based in path
@@ -441,5 +391,32 @@ def DisplayError(iface,header,text,type="WARNING",time=4,both=False):
     elif type=="CRITICAL":
       QMessageBox.critical( QDialog(), header, text )
 
+# Create basic raster without projection
+def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
+    driver = gdal.GetDriverByName(d)
+    # Create File based in path
+    try:
+        tDs = driver.Create(output, cols, rows, 1, gdal.GDT_Float32)
+    except RuntimeError:
+        raise GeoAlgorithmExecutionException("Could not generate output file")
+    
+    band = tDs.GetRasterBand(1)
+    band.WriteArray(array)
 
-  
+    # flush data to disk, set the NoData value
+    band.FlushCache()
+    band.SetNoDataValue(nodata)
+
+    # georeference the image and set the projection
+    tDs.SetGeoTransform(gt)
+    
+    band = tDs = None # Close writing
+    
+# Alternative count_nonzero function from scipy if available
+def count_nonzero(array):
+    if hasattr(numpy,'count_nonzero'):
+        return numpy.count_nonzero(array)
+    elif hasattr(scipy,'count_nonzero'):
+        return scipy.count_nonzero(array)
+    else:
+        return (array != 0).sum()

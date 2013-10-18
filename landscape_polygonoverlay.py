@@ -218,7 +218,7 @@ class BatchConverter():
 #                 res.append(b)
             # Update the Statusbar of the current process
             if self.iface != None:
-                self.iface.mainWindow().statusBar().showMessage("%s calculated for feature %s out of %s (%s impossible)" % (cmd, poly.GetFID(),self.lyr.GetFeatureCount(),len(self.featFailed) ))
+                self.iface.mainWindow().statusBar().showMessage("%s calculated for feature %s out of %s (%s impossible)" % (cmd, poly.GetFID()+1,self.lyr.GetFeatureCount(),len(self.featFailed) ))
         
         # Display number of errors in statusbar
         if self.error != 0:
@@ -444,48 +444,72 @@ class BatchConverter():
     ## Unclassified Methods ##
     # Returns sum of clipped raster cells
     def returnArraySum(self,array):
-        return numpy.sum(array[array!=self.nodata])
+        try:
+            return numpy.sum(array[array!=self.nodata])
+        except ValueError:
+            return None
     
     # Returns mean of clipped raster cells
     def returnArrayMean(self,array):
-        return numpy.mean(array[array!=self.nodata])
+        try:
+            return numpy.mean(array[array!=self.nodata])
+        except ValueError:
+            return None
         
     # Returns standard deviation of clipped raster cells
     def returnArrayStd(self,array):
-        return numpy.std(array[array!=self.nodata])
+        try:
+            return numpy.std(array[array!=self.nodata])
+        except ValueError:
+            return None
     
     # Returns the minimum of clipped raster cells
     def returnArrayMin(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
-            return numpy.min(array[array!=self.nodata])
+            try:
+                return numpy.min(array[array!=self.nodata])
+            except ValueError: # doesn't work always if no-data is a normal integer?
+                return None
         else:
             return None
     
     # Returns the minimum of clipped raster cells
     def returnArrayMax(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
-            return numpy.max(array[array!=self.nodata])
+            try:
+                return numpy.max(array[array!=self.nodata])
+            except ValueError:
+                return None
         else:
             return None
         
     # Returns the median of clipped raster cells
     def returnArrayMedi(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
-            return numpy.median(array[array!=self.nodata])
+            try:
+                return numpy.median(array[array!=self.nodata])
+            except ValueError:
+                return None
         else:
             return None
     
     # Returns the weighed average of clipped raster cells
     def returnArrayLowerQuant(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
-            return scipy.percentile(array[array!=self.nodata],25)
+            try:
+                return scipy.percentile(array[array!=self.nodata],25)
+            except ValueError:
+                return None
         else:
             return None
     
     # Returns the weighed average of clipped raster cells
     def returnArrayHigherQuant(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
-            return scipy.percentile(array[array!=self.nodata],75)
+            try:
+                return scipy.percentile(array[array!=self.nodata],75)
+            except ValueError:
+                return None 
         else:
             return None
     
@@ -555,7 +579,7 @@ def listVectorStatistics():
 # Landscape vector processing. Ether use a grouping field or an overlaying grid
 # The calculation works by using SQL-queries
 class VectorBatchConverter():
-    def __init__(self,landscape,ID=None,classField=None,vectorPath=None):
+    def __init__(self,landscape,ID=None,classField=None,vectorPath=None,iface=None):
 #         landPath = "/home/martin/Downloads/qgis_testing/land_use_clipped.shp"
 #         ID = "Ponto"
 #         datasource = ogr.Open(str(landPath))

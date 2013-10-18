@@ -24,9 +24,9 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 # Sextante bindings
-from sextante.core.AlgorithmProvider import AlgorithmProvider
-from sextante.core.SextanteConfig import Setting, SextanteConfig
-from sextante.core.SextanteLog import SextanteLog
+from processing.core.AlgorithmProvider import AlgorithmProvider
+from processing.core.ProcessingConfig import Setting, ProcessingConfig
+from processing.core.ProcessingLog import ProcessingLog
 from lecos_sextantealgorithms import *
 
 # Import modules
@@ -76,17 +76,26 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
         
         self.preloadedAlgs = []        
         # Load in Algorithms from lecos_sextantealgorithms
+
+        # Landscape preperation
+        self.preloadedAlgs.append( CreateRandomLandscape() )        
+        self.preloadedAlgs.append( MatchLandscapes() )
+        self.preloadedAlgs.append( RasterWithRasterClip() )
+        
         # Landscape statistics
         self.preloadedAlgs.append( LandscapeStatistics() )
         self.preloadedAlgs.append( PatchStatistics() )
-        
-        # Landscape Polygon Overlay
+        self.preloadedAlgs.append( CountRasterCells() )
+        self.preloadedAlgs.append( ZonalStatistics() )
+
+        # Landscape Vector Overlay
         self.preloadedAlgs.append( RasterPolyOver() )
-        
+        self.preloadedAlgs.append( GetRasterValuesPoint() )
         #self.preloadedAlgs.append( VectorPolyOver() )
-        ## TODO: get command to extract fields in sextante
-        
+                
         # Landscape modifications
+        self.preloadedAlgs.append( LabelLandscapePatches() )
+        self.preloadedAlgs.append( NeighbourhoodAnalysis() )
         self.preloadedAlgs.append( IncreaseLandPatch() )
         self.preloadedAlgs.append( ExtractEdges() )
         self.preloadedAlgs.append( IsolateExtremePatch() )

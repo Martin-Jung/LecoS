@@ -1,5 +1,47 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-<html><head><meta name="qrichtext" content="1" /><style type="text/css">
-p, li { white-space: pre-wrap; }
-</style></head><body style=" font-family:'Sans'; font-size:10pt; font-weight:400; font-style:normal;">
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-size:8pt;">Returns a raster with the greatest/smallest identified landcover patch. If multiple patches fullfill this criteria, than all of them are returned.</span></p></body></html>
+<html>
+<head>
+	<meta name="qrichtext" content="1" />
+	<!-- Style -->
+   	<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<!-- body -->
+<body>
+
+<p align="center"><h2><span id="title">Identify greatest/smallest patch </span></h2><img id="icon" src="../icons/img_MaxMin.png" /></p>
+
+<p><span id="section">Brief Description</span></p>
+
+<p>Returns a raster with the greatest or smallest identified landcover patch. If multiple patches fullfill this criteria, than all of them are returned in a new raster.</p>
+
+<p><span id="section">Parameters</span></p>
+<ul>
+	<li><p>
+		<span>[param] Input landscape raster: </span>Classified raster to work on</p>
+	</li>
+	<li><p>
+		<span>[param] Landscape class: </span>The value of the pixels that should be looked for</p>
+	</li>
+	<li><p>
+		<span>[param] Output Raster: </span>Output result</p>
+	</li>	
+</ul>
+
+<p><span id="section">Limitations</span></p>
+	<p><ul><li>If used on many landcover classes it returns only the chosen class values in a new raster</li></ul></p>
+<p>
+<span id="section">Author</span>
+</p>
+
+<p>Martin Jung <b>|</b> <a href="http://conservationecology.wordpress.com/qgis-plugins-and-scripts/lecos-land-cover-statistics/"> LecoS Homepage </a> <b> | </b> <a href="http://hub.qgis.org/projects/lecos">Report Bugs</a></p>
+
+<p><u>Citation:</u> <i>Martin Jung (2012) LecoS - A QGIS plugin to conduct landscape ecology statistics, http://plugins.qgis.org/plugins/LecoS/ </i></p>
+
+<p><span id="section">Donation</span></p>
+<p> Was this function useful? Consider a donation to support future LecoS development.<br>
+<a id="donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=XMCVJQSAGQAVE"><img alt="PayPal Donate Button" src="donate.gif" /></a>
+</p>
+
+
+</body>
+</html>
