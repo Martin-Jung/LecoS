@@ -25,7 +25,11 @@ def name():
 def description():
     return "Contains several analytical functions for land cover analysis"
 def version():
+<<<<<<< HEAD
     return "Version 1.9.7"
+=======
+    return "Version 1.9"
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 def icon():
     return "icons/icon.png"
 def qgisMinimumVersion():

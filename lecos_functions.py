@@ -26,7 +26,10 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
+<<<<<<< HEAD
 from qgis.utils import *
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 #from qgis.analysis import *
 
 # Import base libraries
@@ -40,7 +43,11 @@ try:
 except ImportError:
     import gdal
 try:
+<<<<<<< HEAD
     from osgeo import ogr, osr
+=======
+    from osgeo import ogr
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 except ImportError:
     import ogr
 
@@ -234,9 +241,14 @@ def getAttributeList( vlayer, field):
   datasource = ogr.Open(str(path))
   layer = datasource.GetLayer(0)
   layerName = layer.GetName()
+<<<<<<< HEAD
   field = str(field)
   try:
     d = datasource.ExecuteSQL("SELECT %s FROM %s" % (field,layerName))
+=======
+  try:
+    d = datasource.ExecuteSQL("SELECT DISTINCT %s FROM %s" %(field,layerName))
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
   except RuntimeError:
     QMessageBox.warning(QDialog(),"LecoS: Warning","Failed to query the vector layers attribute table")
     return
@@ -335,10 +347,14 @@ def exportRaster(array,rasterSource,path,nodata=True):
   
   # flush data to disk, set the NoData value
   band.FlushCache()
+<<<<<<< HEAD
   try:
     band.SetNoDataValue(nodata)
   except TypeError:
     band.SetNoDataValue(-9999) # set -9999 in the meantime
+=======
+  band.SetNoDataValue(nodata)
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
   
   # georeference the image and set the projection
   outDs.SetGeoTransform(raster.GetGeoTransform())
@@ -398,7 +414,10 @@ def DisplayError(iface,header,text,type="WARNING",time=4,both=False):
 
 # Create basic raster without projection
 def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
+<<<<<<< HEAD
   
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
     driver = gdal.GetDriverByName(d)
     # Create File based in path
     try:
@@ -411,20 +430,27 @@ def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
 
     # flush data to disk, set the NoData value
     band.FlushCache()
+<<<<<<< HEAD
     try:
       band.SetNoDataValue(nodata)
     except TypeError:
       band.SetNoDataValue(-9999) # set -9999 in the meantime
+=======
+    band.SetNoDataValue(nodata)
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
     # georeference the image and set the projection
     tDs.SetGeoTransform(gt)
     
+<<<<<<< HEAD
     # Then set projection of current active layer
     #epsg = iface.mapCanvas().mapRenderer().destinationCrs().srsid() # activeLayer().crs().authid()
     #coord_system = osr.SpatialReference()
     #coord_system.ImportFromEPSG(epsg) 
     #tDs.SetProjection(coord_system.ExportToWkt())
     
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
     band = tDs = None # Close writing
     
 # Alternative count_nonzero function from scipy if available
@@ -434,5 +460,9 @@ def count_nonzero(array):
     elif hasattr(scipy,'count_nonzero'):
         return scipy.count_nonzero(array)
     else:
+<<<<<<< HEAD
         return (array != 0).sum()
         
+=======
+        return (array != 0).sum()
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17

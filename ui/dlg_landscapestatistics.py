@@ -2,8 +2,13 @@
 
 # Form implementation generated from reading ui file 'dlg_landscapestatistics.ui'
 #
+<<<<<<< HEAD
 # Created: Sun Oct 20 13:01:21 2013
 #      by: PyQt4 UI code generator 4.10.2
+=======
+# Created: Tue May 21 21:38:33 2013
+#      by: PyQt4 UI code generator 4.9.3
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,6 +17,7 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
+<<<<<<< HEAD
     def _fromUtf8(s):
         return s
 
@@ -22,6 +28,9 @@ try:
 except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
+=======
+    _fromUtf8 = lambda s: s
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 class Ui_Lecos(object):
     def setupUi(self, Lecos):
@@ -356,6 +365,7 @@ class Ui_Lecos(object):
         QtCore.QMetaObject.connectSlotsByName(Lecos)
 
     def retranslateUi(self, Lecos):
+<<<<<<< HEAD
         Lecos.setWindowTitle(_translate("Lecos", "Landcover Analysis", None))
         self.groupBox.setTitle(_translate("Lecos", "Landscape Statistics", None))
         self.label_3.setText(_translate("Lecos", "No-data:", None))
@@ -389,5 +399,40 @@ class Ui_Lecos(object):
         self.ch_div3.setText(_translate("Lecos", "Simpson Index", None))
         self.MetricTab.setTabText(self.MetricTab.indexOf(self.landMet), _translate("Lecos", "Landscape Metrics", None))
         self.btn_About.setText(_translate("Lecos", "About", None))
+=======
+        Lecos.setWindowTitle(QtGui.QApplication.translate("Lecos", "Landcover Analysis", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox.setTitle(QtGui.QApplication.translate("Lecos", "Landscape Statistics", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("Lecos", "No-data:", None, QtGui.QApplication.UnicodeUTF8))
+        self.where2Save.setText(QtGui.QApplication.translate("Lecos", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.rbDirect.setText(QtGui.QApplication.translate("Lecos", "Direct value output", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("Lecos", "Landcover grid", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("Lecos", "Cellsize:", None, QtGui.QApplication.UnicodeUTF8))
+        self.rbSAVE.setText(QtGui.QApplication.translate("Lecos", "Save results as csv", None, QtGui.QApplication.UnicodeUTF8))
+        self.MetricTab.setTabText(self.MetricTab.indexOf(self.singleMet), QtGui.QApplication.translate("Lecos", "Calculate Metric", None, QtGui.QApplication.UnicodeUTF8))
+        self.btn_right.setText(QtGui.QApplication.translate("Lecos", ">", None, QtGui.QApplication.UnicodeUTF8))
+        self.btn_left.setText(QtGui.QApplication.translate("Lecos", "<", None, QtGui.QApplication.UnicodeUTF8))
+        self.SelectAll.setText(QtGui.QApplication.translate("Lecos", "Select all/none", None, QtGui.QApplication.UnicodeUTF8))
+        self.rlistCounter.setText(QtGui.QApplication.translate("Lecos", "(0)", None, QtGui.QApplication.UnicodeUTF8))
+        self.SelectAll_2.setText(QtGui.QApplication.translate("Lecos", "Select all/none", None, QtGui.QApplication.UnicodeUTF8))
+        self.rlistCounter_2.setText(QtGui.QApplication.translate("Lecos", "(0)", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_4.setText(QtGui.QApplication.translate("Lecos", "Metric list", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_5.setText(QtGui.QApplication.translate("Lecos", "Joblist", None, QtGui.QApplication.UnicodeUTF8))
+        self.MetricTab.setTabText(self.MetricTab.indexOf(self.multiMet), QtGui.QApplication.translate("Lecos", "Select multiple Metrics", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC4.setText(QtGui.QApplication.translate("Lecos", "Maximum", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC1.setText(QtGui.QApplication.translate("Lecos", "Mean", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC2.setText(QtGui.QApplication.translate("Lecos", "Sum", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC3.setText(QtGui.QApplication.translate("Lecos", "Minimum", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC5.setText(QtGui.QApplication.translate("Lecos", "Standard Deviation", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC7.setText(QtGui.QApplication.translate("Lecos", "Median", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC6.setText(QtGui.QApplication.translate("Lecos", "Lower Quantile (25%)", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC8.setText(QtGui.QApplication.translate("Lecos", "Upper Quantile (25%)", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_6.setText(QtGui.QApplication.translate("Lecos", "Zonal statistics", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_7.setText(QtGui.QApplication.translate("Lecos", "Diversity", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_div1.setText(QtGui.QApplication.translate("Lecos", "Shannon Index", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_div2.setText(QtGui.QApplication.translate("Lecos", "Shannon equitability", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_div3.setText(QtGui.QApplication.translate("Lecos", "Simpson Index", None, QtGui.QApplication.UnicodeUTF8))
+        self.MetricTab.setTabText(self.MetricTab.indexOf(self.landMet), QtGui.QApplication.translate("Lecos", "Landscape Metrics", None, QtGui.QApplication.UnicodeUTF8))
+        self.btn_About.setText(QtGui.QApplication.translate("Lecos", "About", None, QtGui.QApplication.UnicodeUTF8))
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 import resources_rc

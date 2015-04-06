@@ -1,0 +1,15 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+       "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+		<title></title>
+	</head>
+
+	<body>
+	<h2>Effective Mesh Size</h2>
+	Equals the class patch areas squared and summed across all class patches and then divided by the total landscape area (includes all landcover classes). Similar to the Division Index, but instead of proportions area values are returned.
+
+For furthere information about the indices see:
+Jaeger, Jochen AG. "Landscape division, splitting index, and effective mesh size: new measures of landscape fragmentation." Landscape ecology 15.2 (2000): 115-130.
+	</body>
+</html>

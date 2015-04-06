@@ -1,2 +1,11 @@
 implement recreation of raster matrices on the landscape level
+<<<<<<< HEAD
 "patch density heatmap"
+=======
+"patch density heatmap"
+
+label --> calculate zonal statistics
+input zonal raster
+and input value raster
+calculate all values for 
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17

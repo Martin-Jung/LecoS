@@ -2,9 +2,12 @@
 <ui version="4.0">
  <class>BatchDialog</class>
  <widget class="QDialog" name="BatchDialog">
+<<<<<<< HEAD
   <property name="windowModality">
    <enum>Qt::WindowModal</enum>
   </property>
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
   <property name="geometry">
    <rect>
     <x>0</x>

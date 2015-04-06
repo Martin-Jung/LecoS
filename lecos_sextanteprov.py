@@ -34,6 +34,7 @@ import tempfile
 tmpdir = tempfile.gettempdir() # tempdir
 import os
 
+<<<<<<< HEAD
 # NLMPY
 nlmpy = False
 try:
@@ -44,6 +45,8 @@ if nlmpy:
     from nlmpy_sextantewrapper import *
 
 
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 class LecoSAlgorithmsProv(AlgorithmProvider):
 
     tmpdir = tmpdir
@@ -112,6 +115,7 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
         self.preloadedAlgs.append( CloseHoles() )
         self.preloadedAlgs.append( CleanSmallPixels() )
         
+<<<<<<< HEAD
         # NLMPY if available
         if nlmpy:
             self.preloadedAlgs.append( RandomElementNN() )
@@ -128,6 +132,8 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
             self.preloadedAlgs.append( ClassifyArray() )
             
         
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         for alg in self.preloadedAlgs:
             alg.provider = self # reset provider
 

@@ -2,8 +2,13 @@
 
 # Form implementation generated from reading ui file 'dlg_PolygonPerLandCover.ui'
 #
+<<<<<<< HEAD
 # Created: Sun Oct 20 13:01:21 2013
 #      by: PyQt4 UI code generator 4.10.2
+=======
+# Created: Tue May 21 21:38:34 2013
+#      by: PyQt4 UI code generator 4.9.3
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,6 +17,7 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
+<<<<<<< HEAD
     def _fromUtf8(s):
         return s
 
@@ -22,11 +28,17 @@ try:
 except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
+=======
+    _fromUtf8 = lambda s: s
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 class Ui_BatchDialog(object):
     def setupUi(self, BatchDialog):
         BatchDialog.setObjectName(_fromUtf8("BatchDialog"))
+<<<<<<< HEAD
         BatchDialog.setWindowModality(QtCore.Qt.WindowModal)
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         BatchDialog.resize(657, 574)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -307,6 +319,7 @@ class Ui_BatchDialog(object):
         BatchDialog.setTabOrder(self.Cl_Metrics, self.startButtons)
 
     def retranslateUi(self, BatchDialog):
+<<<<<<< HEAD
         BatchDialog.setWindowTitle(_translate("BatchDialog", "Polygon batch overlay", None))
         self.SettingsBox.setTitle(_translate("BatchDialog", "Settings:", None))
         self.rb_Landscape.setText(_translate("BatchDialog", "Landscape", None))
@@ -337,5 +350,37 @@ class Ui_BatchDialog(object):
         self.label_6.setText(_translate("BatchDialog", "Zonal statistics", None))
         self.ch_AddQGIS.setText(_translate("BatchDialog", "Add table to QGIS afterwards", None))
         self.btn_About.setText(_translate("BatchDialog", "About", None))
+=======
+        BatchDialog.setWindowTitle(QtGui.QApplication.translate("BatchDialog", "Polygon batch overlay", None, QtGui.QApplication.UnicodeUTF8))
+        self.SettingsBox.setTitle(QtGui.QApplication.translate("BatchDialog", "Settings:", None, QtGui.QApplication.UnicodeUTF8))
+        self.rb_Landscape.setText(QtGui.QApplication.translate("BatchDialog", "Landscape", None, QtGui.QApplication.UnicodeUTF8))
+        self.rb_Class.setText(QtGui.QApplication.translate("BatchDialog", "Class", None, QtGui.QApplication.UnicodeUTF8))
+        self.LabelClass.setText(QtGui.QApplication.translate("BatchDialog", "Choose class :", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("BatchDialog", "<html><head/><body><p>Output <span style=\" font-size:8pt; font-weight:400; font-style:italic;\">(unselect for direct output)</span>:</p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_saveResult.setText(QtGui.QApplication.translate("BatchDialog", "Save in file:", None, QtGui.QApplication.UnicodeUTF8))
+        self.where2Save.setText(QtGui.QApplication.translate("BatchDialog", "Select a destination or leave blank to create a temporary file", None, QtGui.QApplication.UnicodeUTF8))
+        self.locateDir.setText(QtGui.QApplication.translate("BatchDialog", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_addToTable.setText(QtGui.QApplication.translate("BatchDialog", "Save in attribute table", None, QtGui.QApplication.UnicodeUTF8))
+        self.LabelVector.setText(QtGui.QApplication.translate("BatchDialog", "Vector grid ID :", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("BatchDialog", "Landscape layer :", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("BatchDialog", "<html><head/><body><p>Overlaying grid :</p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_4.setText(QtGui.QApplication.translate("BatchDialog", "<html><head/><body><p><span style=\" font-weight:600;\">Selected Metrics</span><br/><span style=\" font-size:9pt; font-style:italic;\">(press CTRL for multiple selections)</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_selectAll.setText(QtGui.QApplication.translate("BatchDialog", "Select all", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_5.setText(QtGui.QApplication.translate("BatchDialog", "Diversity", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_div1.setText(QtGui.QApplication.translate("BatchDialog", "Shannon Index", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_div2.setText(QtGui.QApplication.translate("BatchDialog", "Shannon equitability", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_div3.setText(QtGui.QApplication.translate("BatchDialog", "Simpson Index", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC4.setText(QtGui.QApplication.translate("BatchDialog", "Maximum", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC1.setText(QtGui.QApplication.translate("BatchDialog", "Mean", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC2.setText(QtGui.QApplication.translate("BatchDialog", "Sum", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC3.setText(QtGui.QApplication.translate("BatchDialog", "Minimum", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC5.setText(QtGui.QApplication.translate("BatchDialog", "Standard Deviation", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC7.setText(QtGui.QApplication.translate("BatchDialog", "Median", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC6.setText(QtGui.QApplication.translate("BatchDialog", "Lower Quantile (25%)", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_LC8.setText(QtGui.QApplication.translate("BatchDialog", "Upper Quantile (25%)", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_6.setText(QtGui.QApplication.translate("BatchDialog", "Zonal statistics", None, QtGui.QApplication.UnicodeUTF8))
+        self.ch_AddQGIS.setText(QtGui.QApplication.translate("BatchDialog", "Add table to QGIS afterwards", None, QtGui.QApplication.UnicodeUTF8))
+        self.btn_About.setText(QtGui.QApplication.translate("BatchDialog", "About", None, QtGui.QApplication.UnicodeUTF8))
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 import resources_rc

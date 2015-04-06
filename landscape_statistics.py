@@ -96,9 +96,14 @@ def listStatistics():
     functionList.append(unicode("Smallest patch area")) # Return Smallest Patch area
     functionList.append(unicode("Mean patch area")) # Return Mean Patch area
     functionList.append(unicode("Median patch area")) # Return Median Patch area
+<<<<<<< HEAD
     #functionList.append(unicode("Mean patch distance")) # Return Mean Patch distance
     #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
     #functionList.append(unicode("Fractal Dimension Index")) # Return Fractal Dimension Index
+=======
+    functionList.append(unicode("Mean patch distance")) # Return Mean Patch distance
+    #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
     functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
     functionList.append(unicode("Overall Core area")) # Return Core area
     functionList.append(unicode("Landscape division")) # Return Landscape Division Index
@@ -190,11 +195,17 @@ class LandCoverAnalysis():
         elif(name == unicode("Median patch area")):
             return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"median")
         elif(name == unicode("Mean patch distance")):
+<<<<<<< HEAD
             return unicode(name), self.f_returnAvgPatchDist(self.cl_array,self.numpatches)
         elif(name == unicode("Mean patch perimeter")):
             return unicode(name), self.f_returnAvgPatchPerimeter(self.labeled_array)
         elif(name == unicode("Fractal Dimension Index")):
             return unicode(name), self.f_getFractalDimensionIndex(self.labeled_array,self.numpatches)
+=======
+            return unicode(name), self.f_returnAvgPatchDist(self.cl_array)
+        elif(name == unicode("Mean patch perimeter")):
+            return unicode(name), self.f_returnAvgPatchPerimeter(self.labeled_array)
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         elif(name == unicode("Mean patch shape ratio")):
             return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches)
         elif(name == unicode("Overall Core area")):
@@ -261,6 +272,7 @@ class LandCoverAnalysis():
             for cl in self.classes:
                 res = []
                 for i in self.classes:
+<<<<<<< HEAD
                     if i == 0: # If class 0 exists
                         arr = numpy.zeros_like(self.array)
                         arr[self.array==i] = 1
@@ -274,6 +286,13 @@ class LandCoverAnalysis():
                 else:
                     arr = numpy.copy(self.array)
                     arr[self.array!=cl] = 0
+=======
+                    arr = numpy.copy(self.array)
+                    arr[self.array!=i] = 0
+                    res.append(self.count_nonzero(arr))
+                arr = numpy.copy(self.array)
+                arr[self.array!=cl] = 0
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
                 prop = self.count_nonzero(arr) / float(sum(res))
                 sh.append(prop * math.log(prop))
             return sum(sh)*-1
@@ -283,6 +302,7 @@ class LandCoverAnalysis():
             cl_array[cl_array==int(nodata)] = 0
             for cl in self.classes:
                 res = []
+<<<<<<< HEAD
                 for i in self.classes:                    
                     if i == 0: # If class 0 exists
                         arr = numpy.zeros_like(self.array)
@@ -297,6 +317,14 @@ class LandCoverAnalysis():
                 else:
                     arr = numpy.copy(self.array)
                     arr[self.array!=cl] = 0
+=======
+                for i in self.classes:
+                    arr = numpy.copy(self.array)
+                    arr[self.array!=i] = 0
+                    res.append(self.count_nonzero(arr))
+                arr = numpy.copy(self.array)
+                arr[self.array!=cl] = 0
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
                 prop = self.count_nonzero(arr) / float(sum(res))
                 si.append(math.pow(prop,2))
             return 1-sum(si)
@@ -480,6 +508,7 @@ class LandCoverAnalysis():
         return numpy.unravel_index(labeled_array.argmax(),labeled_array.shape)
     
     # Get average distance between landscape patches
+<<<<<<< HEAD
     def f_returnAvgPatchDist(self,cl_array,numpatches):
         if numpatches == 1:
             return 0
@@ -497,6 +526,11 @@ class LandCoverAnalysis():
             #b[b==0] = numpy.nan
 
             return numpy.nanmax(b) / self.cellsize # Get mean distance 
+=======
+    def f_returnAvgPatchDist(self,cl_array):
+        b = spatial.distance.pdist(cl_array,metric="euclidean")
+        return numpy.mean(b)*self.cellsize # Get mean distance multiplied with the cellsize
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         
     # Get average Patch Perimeter of given landscape patch
     # FIXME: can't be right
@@ -570,7 +604,11 @@ class LandCoverAnalysis():
     def testing_def(self):
         #Teststuff
         pass
+<<<<<<< HEAD
 #         rasterPath = "/home/martin/Projekte/Bialowieza_TestData/fc.tif" 
+=======
+#         rasterPath = "/home/martin/Projekte/Bialowieza_TestData/fc_raster.tif" #load as a gdal image to get geotransform and full array
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 #         srcImage = gdal.Open(str(rasterPath))
 #         array = srcImage.GetRasterBand(1).ReadAsArray() # Convert first band to array
 #         cl_array = numpy.copy(array)
@@ -579,6 +617,7 @@ class LandCoverAnalysis():
 #         labeled_array, numpatches = ndimage.label(cl_array,s)
 #         (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = srcImage.GetGeoTransform()
 #         
+<<<<<<< HEAD
 #         import matplotlib.pyplot as plt
 #         plt.imshow(cl_array,interpolation='nearest')
 #         plt.axis('on')
@@ -613,3 +652,31 @@ class LandCoverAnalysis():
 #         b = a[1:-1, 1:-1]
 #         print(numpy.exp(ndimage.convolve(numpy.log(b), s, mode = 'constant')))
 #         result_array = numpy.zeros_like(a)
+=======
+#          import matplotlib.pyplot as plt
+#          plt.imshow(code,interpolation='nearest')
+#          plt.axis('on')
+#          plt.show()
+
+
+        import numpy
+        from scipy import ndimage
+        import matplotlib.pyplot as plt
+        
+        rasterPath = "/home/martin/Science/Bialowieza_TestData/fc_raster_plot23.tif"
+        raster = gdal.Open(str(rasterPath))
+        array = raster.GetRasterBand(1).ReadAsArray()
+        
+        plt.imshow(array)
+        plt.axis('on')
+        plt.show()
+
+        a = numpy.zeros((6,6), dtype=numpy.int) 
+        a[1:5, 1:5] = 1;a[3,3] = 0 ; a[2,2] = 2
+
+        s = ndimage.generate_binary_structure(2,2) # Binary structure
+        #.... Calculate Sum of 
+        b = a[1:-1, 1:-1]
+        print(numpy.exp(ndimage.convolve(numpy.log(b), s, mode = 'constant')))
+        result_array = numpy.zeros_like(a)
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17

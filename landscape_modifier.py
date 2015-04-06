@@ -145,4 +145,8 @@ class LandscapeMod():
         ras = ndimage.binary_opening(self.cl_array,s,iterations=n).astype(numpy.int)
         return(ras)
     
+<<<<<<< HEAD
     
+=======
+    
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17

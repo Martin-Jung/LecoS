@@ -2,8 +2,13 @@
 
 # Form implementation generated from reading ui file 'dlg_LandscapeModifier.ui'
 #
+<<<<<<< HEAD
 # Created: Sun Oct 20 13:01:21 2013
 #      by: PyQt4 UI code generator 4.10.2
+=======
+# Created: Tue May 21 21:38:34 2013
+#      by: PyQt4 UI code generator 4.9.3
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,6 +17,7 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
+<<<<<<< HEAD
     def _fromUtf8(s):
         return s
 
@@ -22,6 +28,9 @@ try:
 except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
+=======
+    _fromUtf8 = lambda s: s
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 class Ui_LandMod(object):
     def setupUi(self, LandMod):
@@ -320,6 +329,7 @@ class Ui_LandMod(object):
         QtCore.QMetaObject.connectSlotsByName(LandMod)
 
     def retranslateUi(self, LandMod):
+<<<<<<< HEAD
         LandMod.setWindowTitle(_translate("LandMod", "Landscape Modifier", None))
         self.label.setText(_translate("LandMod", "Class:", None))
         self.helpText.setHtml(_translate("LandMod", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
@@ -364,5 +374,51 @@ class Ui_LandMod(object):
         self.where2Save.setPlaceholderText(_translate("LandMod", "Choose output or leave blank for creating a temp file", None))
         self.btn_Save.setText(_translate("LandMod", "...", None))
         self.addToToc.setText(_translate("LandMod", "Add result to QGis afterwards", None))
+=======
+        LandMod.setWindowTitle(QtGui.QApplication.translate("LandMod", "Landscape Modifier", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("LandMod", "Class:", None, QtGui.QApplication.UnicodeUTF8))
+        self.helpText.setHtml(QtGui.QApplication.translate("LandMod", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Sans\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Extracts edges from each patch of the given class. Edge width can be specified by multiplying the cellsize.</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("LandMod", "x", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_4.setText(QtGui.QApplication.translate("LandMod", "Edge width", None, QtGui.QApplication.UnicodeUTF8))
+        self.box_RasCalc.setItemText(self.box_RasCalc.indexOf(self.PatchEdges), QtGui.QApplication.translate("LandMod", "Extract landscape patch edges", None, QtGui.QApplication.UnicodeUTF8))
+        self.helpText_2.setHtml(QtGui.QApplication.translate("LandMod", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Sans\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Returns a raster with the greatest/smallest identified landcover patch. If multiple patches fullfill this criteria, than all of them are returned.</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.rb_MaxMin1.setText(QtGui.QApplication.translate("LandMod", "Smallest", None, QtGui.QApplication.UnicodeUTF8))
+        self.rb_MaxMin2.setText(QtGui.QApplication.translate("LandMod", "Greatest", None, QtGui.QApplication.UnicodeUTF8))
+        self.box_RasCalc.setItemText(self.box_RasCalc.indexOf(self.IsoMaxMinPatch), QtGui.QApplication.translate("LandMod", "Isolate smallest or greatest patch", None, QtGui.QApplication.UnicodeUTF8))
+        self.helpText_3.setHtml(QtGui.QApplication.translate("LandMod", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Sans\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Let the user increase or decrease all landscape patches of a given class. The amount can be specified in the Spinbox.</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.sp_IncDecAm.setSuffix(QtGui.QApplication.translate("LandMod", " x", None, QtGui.QApplication.UnicodeUTF8))
+        self.cb_IncDec.setItemText(0, QtGui.QApplication.translate("LandMod", "Increase", None, QtGui.QApplication.UnicodeUTF8))
+        self.cb_IncDec.setItemText(1, QtGui.QApplication.translate("LandMod", "Decrease", None, QtGui.QApplication.UnicodeUTF8))
+        self.box_RasCalc.setItemText(self.box_RasCalc.indexOf(self.IncDecLand), QtGui.QApplication.translate("LandMod", "Increase or decrease landscape patches", None, QtGui.QApplication.UnicodeUTF8))
+        self.helpText_4.setHtml(QtGui.QApplication.translate("LandMod", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Sans\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Closes holes (inner rings) in all patches of the specified landcover class</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.box_RasCalc.setItemText(self.box_RasCalc.indexOf(self.fillHoles), QtGui.QApplication.translate("LandMod", "Fill Holes inside landscape patches", None, QtGui.QApplication.UnicodeUTF8))
+        self.helpText_5.setHtml(QtGui.QApplication.translate("LandMod", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Sans\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Returns a raster with all pixels smaller than the structure removed. User can determine how many iterations should be performed.</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.sp_CleanIter.setSuffix(QtGui.QApplication.translate("LandMod", " x", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("LandMod", "Taxicab structure", None, QtGui.QApplication.UnicodeUTF8))
+        self.box_RasCalc.setItemText(self.box_RasCalc.indexOf(self.cleanPixel), QtGui.QApplication.translate("LandMod", "Cleans landscape of small border pixels", None, QtGui.QApplication.UnicodeUTF8))
+        self.where2Save.setPlaceholderText(QtGui.QApplication.translate("LandMod", "Choose output or leave blank for creating a temp file", None, QtGui.QApplication.UnicodeUTF8))
+        self.btn_Save.setText(QtGui.QApplication.translate("LandMod", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.addToToc.setText(QtGui.QApplication.translate("LandMod", "Add result to QGis afterwards", None, QtGui.QApplication.UnicodeUTF8))
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 import res_PatchModify_rc

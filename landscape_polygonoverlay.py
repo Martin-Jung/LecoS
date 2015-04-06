@@ -46,10 +46,14 @@ from scipy import ndimage # import ndimage module seperately for easy access
 
 # Try to import PIL
 try:
+<<<<<<< HEAD
     try:
         import Image, ImageDraw
     except ImportError:
         from PIL import Image, ImageDraw
+=======
+    import Image, ImageDraw
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 except ImportError:
     QMessageBox.critical(QDialog(),"LecoS: Warning","You need to have the image library PIL installed.")
     sys.exit(0)
@@ -290,6 +294,7 @@ class BatchConverter():
     # Assumes that the polygon is inside the rasters extent!
     def getClipArray(self,poly):
         # Convert the polygon extent to image pixel coordinates
+<<<<<<< HEAD
         try:
             geom = poly.GetGeometryRef()
         except AttributeError:
@@ -302,12 +307,24 @@ class BatchConverter():
             minX, maxX, minY, maxY = self.lyr.GetExtent() # geom.GetEnvelope()
             ulX, ulY = self.world2Pixel(self.geoTrans, minX, maxY)
             lrX, lrY = self.world2Pixel(self.geoTrans, maxX, minY)
+=======
+        geom = poly.GetGeometryRef()
+        if geom.GetGeometryCount() > 1:
+            # TODO: What to do with multipolygons?
+            clip2 = None
+        else:
+            minX, maxX, minY, maxY = geom.GetEnvelope() #self.lyr.GetExtent()
+            ulX, ulY = self.world2Pixel(self.geoTrans, minX, maxY)
+            lrX, lrY = self.world2Pixel(self.geoTrans, maxX, minY)
+        
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
             # Calculate the pixel size of the new image
             pxWidth = int(lrX - ulX)
             pxHeight = int(lrY - ulY)
                         
             # Clip the raster to the shapes boundingbox
             clip = self.srcArray[ulY:lrY, ulX:lrX]
+<<<<<<< HEAD
 
             # Create a new geomatrix for the image that is covered by the layer 
             geoTrans = list(self.geoTrans)
@@ -333,6 +350,31 @@ class BatchConverter():
                 except ValueError, MemoryError:
                     self.error = self.error + 1
                     clip2 = None # Shape mismatch or Memory Error
+=======
+            
+            # Create a new geomatrix for the image
+            geoTrans = list(self.geoTrans)
+            geoTrans[0] = minX
+            geoTrans[3] = maxY
+            
+            # Map points to pixels for drawing the boundary on a blank 8-bit, black and white, mask image.
+            points = []
+            pixels = []
+            pts = geom.GetGeometryRef(0)
+            for p in range(pts.GetPointCount()):
+                points.append((pts.GetX(p), pts.GetY(p)))
+            for p in points:
+                pixels.append(self.world2Pixel(geoTrans, p[0], p[1]))
+            rasterPoly = Image.new("L", (pxWidth, pxHeight), 0)
+            ImageDraw.Draw(rasterPoly).polygon(pixels, 0)
+            mask = self.imageToArray(rasterPoly)
+            if mask != None:
+                try:
+                    clip2 = numpy.choose(mask,(clip, 0)).astype(self.srcArray.dtype)
+                except ValueError:
+                    self.error = self.error + 1
+                    clip2 = None # Outside range
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
             else:
                 self.error = self.error + 1
                 clip2 = None # Image to array failed because polygon outside range
@@ -894,4 +936,8 @@ class VectorBatchConverter():
         pass
     
     def f_EvenessIndex(self,name="DIV_EV"):
+<<<<<<< HEAD
         pass
+=======
+        pass
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17

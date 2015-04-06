@@ -2,8 +2,13 @@
 
 # Form implementation generated from reading ui file 'dlg_RasterIndexer.ui'
 #
+<<<<<<< HEAD
 # Created: Sun Oct 20 13:01:21 2013
 #      by: PyQt4 UI code generator 4.10.2
+=======
+# Created: Tue May 21 21:38:34 2013
+#      by: PyQt4 UI code generator 4.9.3
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,6 +17,7 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
+<<<<<<< HEAD
     def _fromUtf8(s):
         return s
 
@@ -22,6 +28,9 @@ try:
 except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
+=======
+    _fromUtf8 = lambda s: s
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 class Ui_RasterIndexer(object):
     def setupUi(self, RasterIndexer):
@@ -159,6 +168,7 @@ class Ui_RasterIndexer(object):
         QtCore.QMetaObject.connectSlotsByName(RasterIndexer)
 
     def retranslateUi(self, RasterIndexer):
+<<<<<<< HEAD
         RasterIndexer.setWindowTitle(_translate("RasterIndexer", "Dialog", None))
         self.label_2.setText(_translate("RasterIndexer", "<html><head/><body><p>Creates a forest fragmentation index map after <a href=\"http://www.consecol.org/vol4/iss2/art3/\"><span style=\" text-decoration: underline; color:#0000ff;\">Riitters et al.</span></a></p></body></html>", None))
         self.groupBox.setTitle(_translate("RasterIndexer", "Input", None))
@@ -169,4 +179,16 @@ class Ui_RasterIndexer(object):
         self.label_5.setText(_translate("RasterIndexer", "<html><head/><body><p>Where to save</p></body></html>", None))
         self.checkBox.setText(_translate("RasterIndexer", "Append to table of contents afterwards", None))
         self.groupBox_3.setTitle(_translate("RasterIndexer", "Method:", None))
+=======
+        RasterIndexer.setWindowTitle(QtGui.QApplication.translate("RasterIndexer", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("RasterIndexer", "<html><head/><body><p>Creates a forest fragmentation index map after <a href=\"http://www.consecol.org/vol4/iss2/art3/\"><span style=\" text-decoration: underline; color:#0000ff;\">Riitters et al.</span></a></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox.setTitle(QtGui.QApplication.translate("RasterIndexer", "Input", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_4.setText(QtGui.QApplication.translate("RasterIndexer", "Size of moving Window (odd number)", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("RasterIndexer", "<html><head/><body><p>Forest raster layer </p><p>(where forest=1, non-forest=0)</p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_2.setTitle(QtGui.QApplication.translate("RasterIndexer", "Output", None, QtGui.QApplication.UnicodeUTF8))
+        self.btn_Save.setText(QtGui.QApplication.translate("RasterIndexer", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_5.setText(QtGui.QApplication.translate("RasterIndexer", "<html><head/><body><p>Where to save</p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBox.setText(QtGui.QApplication.translate("RasterIndexer", "Append to table of contents afterwards", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_3.setTitle(QtGui.QApplication.translate("RasterIndexer", "Method:", None, QtGui.QApplication.UnicodeUTF8))
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 

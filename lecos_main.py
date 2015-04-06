@@ -59,17 +59,29 @@ class LecoS( object ):
     def initGui(self):
         # Create action that will start the LecoS Plugin
         self.actionLecoS = QAction(QIcon(self.plugin_dir+"/icons/icon.png"),\
+<<<<<<< HEAD
             u"Landscape statistics", self.iface.mainWindow())
+=======
+            u"Land cover statistics", self.iface.mainWindow())
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         QObject.connect(self.actionLecoS, SIGNAL("triggered()"), self.run)
         
         # Create action for small batch dialog
         self.actionBatch = QAction(QIcon(self.plugin_dir+"/icons/icon_batchCover.png"),\
+<<<<<<< HEAD
             u"Landscape vector overlay", self.iface.mainWindow())
+=======
+            u"Land cover polygon overlay", self.iface.mainWindow())
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         QObject.connect(self.actionBatch, SIGNAL("triggered()"), self.runBatch)
         
         # Create action for small RasterModifier dialog
         self.actionLMod = QAction(QIcon(self.plugin_dir+"/icons/icon_LandMod.png"),\
+<<<<<<< HEAD
             u"Landscape modifications", self.iface.mainWindow())
+=======
+            u"Landscape Modifier", self.iface.mainWindow())
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         QObject.connect(self.actionLMod, SIGNAL("triggered()"), self.runLMod)
 
         # check if Raster menu available
@@ -112,7 +124,11 @@ class LecoS( object ):
             from lecos_sextanteprov import LecoSAlgorithmsProv
             
             self.provider = LecoSAlgorithmsProv() # Load LecoS Algorithm Provider
+<<<<<<< HEAD
             Processing.addProvider(self.provider,updateList=True)
+=======
+            Processing.addProvider(self.provider)
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         
     # run method that performs all the real work
     def run(self):
@@ -126,7 +142,10 @@ class LecoS( object ):
     def runBatch(self):
         dlg = BatchDialog( self.iface )
         dlg.show()
+<<<<<<< HEAD
         #dlg.overrideWindowFlags(Qt.WA_DeleteOnClose)
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         result = dlg.exec_()
         
     # Executes small LandscapeMod gui

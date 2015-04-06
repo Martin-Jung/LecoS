@@ -22,6 +22,7 @@
 # Import Processing bindings
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.Processing import Processing
+<<<<<<< HEAD
 try:
     from processing.core.ProcessingUtils import ProcessingUtils
 except ImportError: # for qgis dev
@@ -75,6 +76,30 @@ except ImportError:
     from processing.core.parameters import ParameterExtent
     from processing.core.parameters import ParameterFile
     from processing.core.parameters import ParameterCrs
+=======
+from processing.core.ProcessingUtils import ProcessingUtils
+from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
+from processing.core.QGisLayers import QGisLayers
+
+from processing.outputs.OutputVector import OutputVector
+from processing.outputs.OutputRaster import OutputRaster
+from processing.outputs.OutputTable import OutputTable
+
+from processing.parameters.ParameterBoolean import ParameterBoolean
+from processing.parameters.ParameterMultipleInput import ParameterMultipleInput
+from processing.parameters.ParameterNumber import ParameterNumber
+from processing.parameters.ParameterRaster import ParameterRaster
+from processing.parameters.ParameterString import ParameterString
+from processing.parameters.ParameterTable import ParameterTable
+from processing.parameters.ParameterVector import ParameterVector
+from processing.parameters.ParameterTableField import ParameterTableField
+from processing.parameters.ParameterSelection import ParameterSelection
+from processing.parameters.ParameterRange import ParameterRange
+from processing.parameters.ParameterFixedTable import ParameterFixedTable
+from processing.parameters.ParameterExtent import ParameterExtent
+from processing.parameters.ParameterFile import ParameterFile
+from processing.parameters.ParameterCrs import ParameterCrs
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 # Import PyQT bindings
 from PyQt4.QtCore import *
@@ -143,7 +168,11 @@ class CreateRandomLandscape(GeoAlgorithm):
        
         self.name = "Create random Landscape (Distribution)"
         self.cmdName = "createrandomraster"
+<<<<<<< HEAD
         self.group = "Landscape preparation"
+=======
+        self.group = "Landscape preperation"
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         
         self.addParameter(ParameterSelection(self.WHAT, "Choose value distribution", self.w, 0))
         self.addParameter(ParameterExtent(self.EXTENT, "New extent",False))
@@ -179,8 +208,13 @@ class CreateRandomLandscape(GeoAlgorithm):
         gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
         
+<<<<<<< HEAD
         cols = int( round( (xmax-xmin)/cs ) )
         rows = int( round( (ymax-ymin)/cs ) )
+=======
+        rows = int( round( (xmax-xmin)/cs ) )
+        cols = int( round( (ymax-ymin)/cs ) )
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         
         # Processing
         if what == 'Constant value':
@@ -244,7 +278,11 @@ class MatchLandscapes(GeoAlgorithm):
 
         self.name = "Match two landscapes"
         self.cmdName = "preplandscape"
+<<<<<<< HEAD
         self.group = "Landscape preparation"
+=======
+        self.group = "Landscape preperation"
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
         self.addParameter(ParameterRaster(self.LAND1, "Source landscape", False))
         self.addParameter(ParameterRaster(self.LAND2, "Target landscape", False))
@@ -318,7 +356,11 @@ class RasterWithRasterClip(GeoAlgorithm):
 
         self.name = "Intersect Landscapes"
         self.cmdName = "landintersect"
+<<<<<<< HEAD
         self.group = "Landscape preparation"
+=======
+        self.group = "Landscape preperation"
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
         self.addParameter(ParameterRaster(self.LAND1, "Source landscape", False))
         self.addParameter(ParameterRaster(self.LAND2, "Target landscape", False))
@@ -396,7 +438,10 @@ class RasterWithRasterClip(GeoAlgorithm):
         line = int((ulY - y) / xDist)
         return (pixel, line)     
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 ## Landscape Statistics
 import landscape_statistics as lcs
 class LandscapeStatistics(GeoAlgorithm):
@@ -438,11 +483,14 @@ class LandscapeStatistics(GeoAlgorithm):
         # Processing
         nodata = lcs.f_returnNoDataValue(inputFilename) # Get Nodata-value
         classes, array = lcs.f_landcover(inputFilename,nodata) # Get classes and data array
+<<<<<<< HEAD
 
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         
         if QGis.QGIS_VERSION_INT < 10900:
             pixelSize = rasterlayer.rasterUnitsPerPixel()
@@ -502,11 +550,14 @@ class CountRasterCells(GeoAlgorithm):
             raise GeoAlgorithmExecutionException("Input Raster to big. Try to slize it up.")
         nodata = band.GetNoDataValue() # Get Nodata-value
         raster = None # close gdal
+<<<<<<< HEAD
 
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
                 
         # Get unique values
         classes = sorted(numpy.unique(array)) # get classes
@@ -569,6 +620,7 @@ class PatchStatistics(GeoAlgorithm):
         # Processing
         nodata = lcs.f_returnNoDataValue(inputFilename) # Get Nodata-value
         classes, array = lcs.f_landcover(inputFilename,nodata) # Get classes and data array
+<<<<<<< HEAD
 
         # Needed to see if class in inside raster
         if cl not in classes:
@@ -579,6 +631,8 @@ class PatchStatistics(GeoAlgorithm):
         if nodata == None:
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The landscape layer %s has no valid nodata value (no number)!" % (ln)) 
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         
         if QGis.QGIS_VERSION_INT < 10900:
             pixelSize = rasterlayer.rasterUnitsPerPixel()
@@ -590,10 +644,13 @@ class PatchStatistics(GeoAlgorithm):
                 raise GeoAlgorithmExecutionException("The cells in the landscape layer are not square. Calculated values will be incorrect")
         
         cl_analys = lcs.LandCoverAnalysis(array,pixelSize,classes)
+<<<<<<< HEAD
         # Conduct the con. comp. labeling
         cl_array = numpy.copy(array) # new working array
         cl_array[cl_array!=cl] = 0
         cl_analys.f_ccl(cl_array) # CC-labeling
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         res = []
         name, result = cl_analys.execSingleMetric(what,cl)                                    
         res.append([name, result])
@@ -662,11 +719,14 @@ class ZonalStatistics(GeoAlgorithm):
         l_classes, l_array = lcs.f_landcover(landFilename,nodata) # Get classes and data array of landscape array
         z_classes, z_array = lcs.f_landcover(zoneFilename,lcs.f_returnNoDataValue(zoneFilename)) # Get classes and data array of zones array
         
+<<<<<<< HEAD
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(landFilename))
             raise GeoAlgorithmExecutionException("The landscape layer %s has no valid nodata value (no number)!" % (ln))        
         
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         # Check for equal shape
         if l_array.shape != z_array.shape:
             raise GeoAlgorithmExecutionException("Make sure both layers have the same number of rows and columns. Use the 'Match two landscapes' tool beforehand!")
@@ -811,11 +871,15 @@ class RasterPolyOver(GeoAlgorithm):
                 raise GeoAlgorithmExecutionException("The cells in the landscape layer are not square. Calculated values will be incorrect")
         
         results = []
+<<<<<<< HEAD
         if isCl == True: # class metrics        
             # Needed to see if class in inside raster
             if cl not in classes:
                 ln = str(path.basename(inputFilename))
                 raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
+=======
+        if isCl == True: # class metrics
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
             err, r = bat.go(whatC,cl,pixelSize)
         else: # landscape metric
             err, r = bat.go(whatL,None,pixelSize)
@@ -1064,6 +1128,7 @@ class LabelLandscapePatches(GeoAlgorithm):
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         classes, array = lcs.f_landcover(str(inputFilename)) # get classes and array
 
+<<<<<<< HEAD
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(inputFilename))
@@ -1074,6 +1139,8 @@ class LabelLandscapePatches(GeoAlgorithm):
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
             
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         # Build 
         cl_array = numpy.copy(array)
         cl_array[cl_array!=int(cl)] = 0
@@ -1132,12 +1199,16 @@ class NeighbourhoodAnalysis(GeoAlgorithm):
         self.nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         self.classes, array = lcs.f_landcover(str(inputFilename))
         raster = None # close gdal
+<<<<<<< HEAD
 
         # Check for nodata value
         if self.nodata == None:
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
 
+=======
+        
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         if what=="mean":
             result = ndimage.generic_filter(array, numpy.mean, size=size, mode=mode)
         elif what =="sum":
@@ -1233,6 +1304,7 @@ class IncreaseLandPatch(GeoAlgorithm):
         amount = self.getParameterValue(self.TAXICAB)
         output = self.getOutputValue(self.OUTPUT_RASTER)
                 
+<<<<<<< HEAD
         # Check for nodata value
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         if nodata == None:
@@ -1245,6 +1317,8 @@ class IncreaseLandPatch(GeoAlgorithm):
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))        
 
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
         results = mod.InDecPatch(what,amount)
@@ -1289,6 +1363,7 @@ class ExtractEdges(GeoAlgorithm):
         amount = self.getParameterValue(self.TAXICAB)
         output = self.getOutputValue(self.OUTPUT_RASTER)
                 
+<<<<<<< HEAD
         # Check for nodata value
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         if nodata == None:
@@ -1304,6 +1379,12 @@ class ExtractEdges(GeoAlgorithm):
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
         results = mod.extractEdges(amount)
+=======
+        # Processing
+        mod = lmod.LandscapeMod(inputFilename,cl)
+        results = mod.extractEdges(amount)
+        
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         # Create the output layer 
         func.exportRaster(results,inputFilename,output)
 
@@ -1347,6 +1428,7 @@ class IsolateExtremePatch(GeoAlgorithm):
         what = self.getParameterValue(self.WHAT)
         output = self.getOutputValue(self.OUTPUT_RASTER)
                 
+<<<<<<< HEAD
         # Check for nodata value
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         if nodata == None:
@@ -1359,6 +1441,8 @@ class IsolateExtremePatch(GeoAlgorithm):
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
         
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
         if what == 0:
@@ -1402,6 +1486,7 @@ class CloseHoles(GeoAlgorithm):
         inputFilename = self.getParameterValue(self.LAND_GRID)
         cl = self.getParameterValue(self.LC_CLASS)
         output = self.getOutputValue(self.OUTPUT_RASTER)
+<<<<<<< HEAD
         
         # Check for nodata value
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
@@ -1415,6 +1500,9 @@ class CloseHoles(GeoAlgorithm):
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
         
+=======
+                
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
         results = mod.closeHoles()
@@ -1459,6 +1547,7 @@ class CleanSmallPixels(GeoAlgorithm):
         cl = self.getParameterValue(self.LC_CLASS)
         amount = self.getParameterValue(self.TAXICAB)
         output = self.getOutputValue(self.OUTPUT_RASTER)
+<<<<<<< HEAD
         
         # Check for nodata value
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
@@ -1472,6 +1561,9 @@ class CleanSmallPixels(GeoAlgorithm):
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
         
+=======
+                
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
         results = mod.cleanRaster(amount)

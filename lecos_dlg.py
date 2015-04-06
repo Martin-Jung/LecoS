@@ -29,7 +29,11 @@ from qgis.gui import *
 #from qgis.analysis import *
 
 # Import base libraries
+<<<<<<< HEAD
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect, time
+=======
+import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 from os import path
 
 # Import functions and metrics
@@ -379,9 +383,15 @@ class LecosDialog(QDialog, Ui_Lecos):
                 return
             # Processing 
             try:
+<<<<<<< HEAD
                 int(nodata)
             except ValueError, TypeError:
                 func.DisplayError(self.iface,"LecoS: Warning" ,"Please classify your raster with a correct integer nodata value","WARNING")
+=======
+                print int(nodata)
+            except ValueError, TypeError:
+                func.DisplayError(self.iface,"LecoS: Warning" ,"Please classify your raster with a correct nodata value","WARNING")
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
                 return
             classes, array = lcs.f_landcover(rasterPath,nodata) # Get classes and value
             self.progressBar.setValue( self.progressBar.value() + 1 )
@@ -413,7 +423,10 @@ class BatchDialog(QDialog, Ui_BatchDialog):
 
         # Initialize the Dialog
         QDialog.__init__( self )
+<<<<<<< HEAD
         
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         self.setupUi(self)
         self.iface = iface
         
@@ -433,11 +446,17 @@ class BatchDialog(QDialog, Ui_BatchDialog):
         QObject.connect( self.ch_saveResult, SIGNAL( "stateChanged( int )" ), self.EnableStuff) # Change output
 
         # Button box 
+<<<<<<< HEAD
         #self.AcceptButton = self.startButtons.button( QDialogButtonBox.Ok )
         self.AcceptButton = self.startButtons.button( QDialogButtonBox.Ok )
         self.closeButton = self.startButtons.button( QDialogButtonBox.Cancel )
         #QObject.connect( self.AcceptButton, SIGNAL( "clicked()" ), self.go )
         #self.closeButton = self.startButtons.button( QDialogButtonBox.Cancel )
+=======
+        self.AcceptButton = self.startButtons.button( QDialogButtonBox.Ok )
+        QObject.connect( self.AcceptButton, SIGNAL( "clicked()" ), self.go )
+        self.closeButton = self.startButtons.button( QDialogButtonBox.Cancel )
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         QObject.connect( self.btn_About, SIGNAL( "clicked()" ), self.showAbout )
 
         #Startup
@@ -546,7 +565,11 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                     self.cb_SelD.setEnabled( True )
                     self.loadIDFields()
                 else:
+<<<<<<< HEAD
                     self.cb_SelD.setEnabled( False ) 
+=======
+                    self.cb_SelD.setEnabled( False )
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
                     self.cb_SelD.clear()
 
             # Check Status of output    
@@ -583,12 +606,17 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                         self.cb_SelD.addItem( field.name() )
         
         else: # RasterLayer is current layer
+<<<<<<< HEAD
             self.cb_SelD.setEnabled( True )
             self.cb_SelD.clear()
             # Load Grouping ID for vector field and table output
             fields = func.getFieldList( test )
             for field in fields:
                 self.cb_SelD.addItem( field.name() )
+=======
+            self.cb_SelD.setEnabled( False )
+            self.cb_SelD.clear()
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
                
     # Get landscape classes
     def loadClasses(self,typ):
@@ -664,11 +692,19 @@ class BatchDialog(QDialog, Ui_BatchDialog):
         lastUsedDir = func.lastUsedDir()
         fileName = QFileDialog.getSaveFileName( self, self.tr( "Save data as" ),\
         lastUsedDir, "CSV files (*.csv *.CSV)" )
+<<<<<<< HEAD
         if len(fileName) < 1:
             return
         func.setLastUsedDir( fileName )
         # ensure the user never ommited the extension from the file name
         if not fileName.lower().endswith( ".csv" ):
+=======
+        if fileName.isEmpty():
+            return
+        func.setLastUsedDir( fileName )
+        # ensure the user never ommited the extension from the file name
+        if not fileName.toLower().endsWith( ".csv" ):
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
             fileName += ".csv"
         self.where2Save.setText( fileName )
         self.where2Save.setEnabled( True ) 
@@ -720,7 +756,11 @@ class BatchDialog(QDialog, Ui_BatchDialog):
         return res
         
     # Runs the routine
+<<<<<<< HEAD
     def accept(self):
+=======
+    def go(self):
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         # Error catching and variable returning
         if self.cb_Raster.currentIndex() == -1:
             func.DisplayError(self.iface,"LecoS: Warning" ,"Please load and select a classified landscape layer first","WARNING")
@@ -779,7 +819,11 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             self.FileSavePath = self.where2Save.text()
             # If no output has been defined -> create a temporary file
             if self.FileSavePath == "Select a destination or leave blank to create a temporary file":
+<<<<<<< HEAD
                 self.FileSavePath = tmpdir+os.path.sep+"temp_"+str(self.cb_Raster.currentText())+"_"+str(int(time.time()))+"_results.csv"              
+=======
+                self.FileSavePath = tmpdir+os.path.sep+"temp_"+str(self.cb_Raster.currentText())+"_results.csv"              
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
         else:
             self.FileSave = False
         if self.ch_addToTable.isChecked(): # Add to Attribute Table
@@ -833,6 +877,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             except TypeError, ValueError:
                 func.DisplayError(self.iface,"LecoS: Warning" ,"Please classify your raster with a correct nodata value","WARNING")
                 return
+<<<<<<< HEAD
             # Check if polygon is correctly set
             try:
                 v = ogr.Open(str( self.vectorPath ))
@@ -841,6 +886,8 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             except AttributeError:   
                 func.DisplayError(self.iface,"LecoS: Warning" ,"There is something wrong with your polygon layer. Try to save it to a new file.","WARNING")
                 return
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
             # Look for smaller rasters than polygons
             rasE = self.landscape.extent()
 #            vecE = self.vector.extent()
@@ -894,12 +941,16 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                         error = error + len(err)
                 self.DLmessagebar(error,err)
                 self.Output(results)
+<<<<<<< HEAD
     
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
     # Dialog for to messagebar
     def DLmessagebar(self,n,err):
         if n > 0 and QGis.QGIS_VERSION_INT >= 10900:
             error = str(n / len(self.metrics))
             
+<<<<<<< HEAD
             text = "There were no overlay values for "+error+" vector features. All features unable to compute are selected now for inspectation."            
             widget = self.iface.messageBar().createMessage("LecoS - Warning",text)
             # Combobox for selecting. Not found entries selected
@@ -912,6 +963,16 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             #return btn
             for item in err:
                 self.selectFeatID(item)
+=======
+            text = "There were no overlay values for "+error+" vector features. The following features were not inside the raster shapes bounding box:"            
+            widget = self.iface.messageBar().createMessage("LecoS - Warning",text)
+            btn = QComboBox()
+            QObject.connect( btn, SIGNAL( "currentIndexChanged( QString )" ), self.selectFeatID ) 
+            widget.layout().addWidget(btn)
+            self.iface.messageBar().pushWidget(widget, QgsMessageBar.WARNING)
+            for item in err:
+               btn.addItem(str(item))
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
     
     # Select features with ID
     def selectFeatID(self,ID):
@@ -933,9 +994,12 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 title = ["GroupingField"]
             else:
                 title = ["PolygonFeatureID"]
+<<<<<<< HEAD
                 # Add grouping ID if selected
                 if self.LandID != "" or None:
                     title.append(str(self.LandID))
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
             for x in results:
                 try: # Catch in case there are no results
                     title.append( str(x[0][1]) ) 
@@ -945,10 +1009,13 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             f = open(self.FileSavePath, "wb" )
             writer = csv.writer(f,delimiter=';',quotechar="",quoting=csv.QUOTE_NONE)
             writer.writerow(title)
+<<<<<<< HEAD
             # Get values of Overlay grouping ID
             if type(self.landscape) == QgsRasterLayer:
                 if self.LandID != "" or None:
                     attr = func.getAttributeList(self.vector,self.LandID)
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
             # Get number of polygon features
             feat = range(0,len(results[0]))
             for feature in feat: # Write feature to new line
@@ -956,9 +1023,12 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                     r = [results[0][feature][0]]                    
                 else:
                     r = [feature]
+<<<<<<< HEAD
                     # Add Grouping Field value
                     if self.LandID != "" or None:
                         r.append(attr[feature])
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
                 for item in results:
                     r.append(item[feature][2])
                 writer.writerow(r)
@@ -1046,9 +1116,12 @@ class LandMod(QDialog, Ui_LandMod):
             raster = gdal.Open(str(rasterPath))
             band = raster.GetRasterBand(1)
             nodata = band.GetNoDataValue()
+<<<<<<< HEAD
             if nodata == None: # raise error
                 func.DisplayError(self.iface,"LecoS: Warning" ,"The layer %s has no valid no-data value (no number)!" % (self.cb_Raster.currentText()),"CRITICAL")
                 
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
             array = band.ReadAsArray()
             self.classes = sorted(numpy.unique(array)) # get array of classes
             try:

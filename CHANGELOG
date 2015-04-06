@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Version 1.9.7
 - Make sure that the Processing algorithms are updating
 
@@ -23,6 +24,8 @@
 # Version 1.9.1
 - Some bugs fixed and useability improved
 
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 # Version 1.9
 ### Major Update: ###
 - Added new tools to the Processing toolbox for use in complex models
@@ -35,7 +38,10 @@
 	- Function to conduct ZonalStatistics based on two landscapes (ZonalStatistics with raster layers in ArcGIS)
 - Improved the overall documentation for the Processing Toolbox and created new simple icons
 - Fixed Bug: http://hub.qgis.org/issues/8810
+<<<<<<< HEAD
 - Various small bugs fixed
+=======
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
 
 # Version 1.8.2
 - Small bug fixing (Processing interface not working)
@@ -118,4 +124,8 @@ Splitting Index and Effective Mesh Size
 - Other Gui related things
 
 # Version 1.0
+<<<<<<< HEAD
 First Release
+=======
+First Release
+>>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
