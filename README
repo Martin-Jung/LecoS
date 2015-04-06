@@ -1,8 +1,0 @@
-Description:
-LecoS - Land cover statistics is plugin for the QGIS GIS software suite. It converts classified raster layers to arrays using the powerful numpy library. Based on a Connected Component Labeling approach it further identifies class patches and calculates landscape metrics. The use can choose to calculate single or several metrics for the raster classes.
-
-Usecase:
-See http://conservationecology.wordpress.com/lecos-land-cover-statistics/
-
-Licence:
-This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.                                
