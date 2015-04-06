@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="Icons">
+    <file>../icons/about.png</file>
+    <file>../icons/icon_batchCover.png</file>
+    <file>../icons/icon.png</file>
+  </qresource>
+  <qresource prefix="pics">
+    <file>../icons/evora_small.jpg</file>
+  </qresource>
+</RCC>

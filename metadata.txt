@@ -1,0 +1,32 @@
+# This file contains metadata for your plugin. Beginning
+# with version 1.8 this is the preferred way to supply information about a
+# plugin. The current method of embedding metadata in __init__.py will
+# be supported until version 2.0
+
+# This file should be included when you package your plugin.
+
+[general]
+name=LecoS - Landscape Ecology Statistics
+qgisMinimumVersion=2.0
+description=Contains several analytical functions for land cover analysis
+version=1.9.7
+
+# Uncomment the following line and add your changelog entries:
+changelog= see CHANGELOG file for old versions
+
+# tags are comma separated with spaces allowed
+tags=Ecology,Landscape,Analytical tools,Statistics,Land Cover
+
+homepage=http://conservationecology.wordpress.com/lecos-land-cover-statistics/
+tracker=http://hub.qgis.org/projects/lecos
+repository=https://github.com/Curlew/LecoS
+icon=icons/icon.png
+# experimental flag
+experimental=False
+
+# deprecated flag (applies to the whole plugin, not just a single version
+deprecated=False
+
+# Author contact information
+author=Martin Jung
+email=martinjung-at-zoho.com
