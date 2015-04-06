@@ -1,0 +1,9 @@
+pyuic4 dlg_landscapestatistics.ui > dlg_landscapestatistics.py
+pyuic4 dlg_PolygonPerLandCover.ui > dlg_PolygonPerLandCover.py
+pyuic4 dlg_PolygonPerLandCover.ui > dlg_PolygonPerLandCover.py
+pyuic4 dlg_RasterIndexer.ui > dlg_RasterIndexer.py
+pyuic4 dlg_LandscapeModifier.ui > dlg_LandscapeModifier.py
+
+# Resources
+pyrcc4 resources.qrc -o resources_rc.py
+pyrcc4 res_PatchModify.qrc -o res_PatchModify_rc.py

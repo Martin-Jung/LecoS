@@ -1,0 +1,110 @@
+# Version 1.9.4
+- Fixed errors with new Processing version QGIS-2.6
+
+# Version 1.9.3
+- Bug fixing within the vector overlay tool
+
+# Version 1.9.2
+- Little fixes to make LecoS ready for QGIS master dev
+- added a grouping vector field to the Batch Polygon Overlay tool
+- Selection of non-working polygon features now working
+
+# Version 1.9.1
+- Some bugs fixed and useability improved
+
+# Version 1.9
+### Major Update: ###
+- Added new tools to the Processing toolbox for use in complex models
+	- Function to count Raster cells -> Output as table
+	- Function to query raster values below a point layer
+	- Function to intersect two landscape (raster) layers -> Output clipped raster
+	- Function to creates a new random raster based on values from a statistical distribution -> Output raster
+	- Function to conduct a Neighborhood analysis (analogous to r.neighbors. or Focal Statistics in ArcGis)
+	- Function to conduct a connected component labeling of connected patches
+	- Function to conduct ZonalStatistics based on two landscapes (ZonalStatistics with raster layers in ArcGIS)
+- Improved the overall documentation for the Processing Toolbox and created new simple icons
+- Fixed Bug: http://hub.qgis.org/issues/8810
+- Various small bugs fixed
+
+# Version 1.8.2
+- Small bug fixing (Processing interface not working)
+
+# Version 1.8.1
+- Update for the integration of SEXTANTE into QGIS (now called Processing)
+
+# Version 1.8
+- Updated for new QGIS 2.0 API
+
+# Version 1.7.5
+- SEXTANTE support!
+- Fixed bug with the overlay calculation of landscape metrics (included no-data values)
+
+# Version 1.7.4
+- Fixed Bug with the rasterUnitsPerPixel extraction for QGIS 1.9/2.0. Now raises a warning if cells are not square
+- Improved Input response
+
+# Version 1.7.3
+- Some Improvements with the mismatching shapes and extents -> now uses polygon extent instead of the whole shapefile
+- Fixed Error with the Shannon Equitability
+- Fixed Errors with Diversity indices and shapefile edits
+- Fixed Bug causing QGIS to crash -> http://hub.qgis.org/issues/7612
+- The Batchoverlay now displays the progress in the QGIS main window taskbar 
+
+# Version 1.7.2
+- Enabled the calculation of landscape statistics for vector layers
+- Replaced QMessageBoxes with QMessageBar messages if a newer QGIS version (>= 10900) is used
+- Removed the landscape diversity tool and merged options to calculate landscape diversity into the other toolset
+- Fixed some small bugs with the GreatestPatch - SmallestPatch Metric
+- Fixed some bugs with mismatching shapes and extents (maybe better solution in the future)
+
+# Version 1.7.1
+- Fixed the "Add Table to QGIS"-Bug on Windows systems
+- Enables the option to save Results in the overlaying vectors attribute table
+
+# Version 1.7
+- Added new metrics: Median patch area, Mean patch distance, Mean patch perimeter, Mean patch shape ratio
+- Fixed some small bugs with the landscape modifier
+- Recreated the Batch-overlay tool from scratch and added several new functionalities to it
+- Fixed a bug for Windows using old numpy / scipy version where the function "count_nonzero" was not available
+
+# Version 1.6.1
+- Implemented a check-routine for the landscape diversity module.
+- Removed the icons from the toolbar as the functions increase. SEXTANTE support will be coming to enable easy access to LecoS
+- Build hasattr and try-catch phrases around import modules
+- Fixed small bug with the polygon-overlay
+
+# Version 1.6
+- Added the landscape modifier and several function to LecoS
+
+# Version 1.5.1
+- Implemented a small try-catch routine for gdal driver related issues
+
+# Version 1.5
+- Small Fixes. Implemented some error catching routines
+
+# Version 1.4.9
+- Fixed Errors resulting from the QGIS API Changes
+
+# Version 1.4
+- Added the options to calculate the median, upper and lower quantile, the minimum and the maximum as well
+as the standard deviation from unclassified raster shapes in the polygon overlay tool
+
+# Version 1.3
+- Created the Polygon Landcover Overlay tool, which is capable of extracting values per polygon feature from 
+underlying raster shapes. Both classified and non-classified raster shapes are supported. 
+
+# Version 1.2
+- Switched to a object orientied programming style. However parts of the code are still extremely slow :-(
+- Added several new metrics including Total edge length, Edge Density, Landscape Division Index,
+Splitting Index and Effective Mesh Size
+- Fixed an Error with the Greatest Patch Size detection
+- Added no-data field in the selection menu
+- Removed Custom tab for now (maybe an implementation fill follow later if i have time)
+
+# Version 1.1
+- Moved Plugin completely to the raster toolbar
+- Info Button moved to LecoS GUI
+- Other Gui related things
+
+# Version 1.0
+First Release

@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="Modify_Res" lang="img_EdgeExtract">
+    <file>../icons/img_CleanRas.png</file>
+    <file>../icons/img_closeHole.png</file>
+    <file>../icons/icon_LandMod.png</file>
+    <file>../icons/img_IncDec.png</file>
+    <file>../icons/img_MaxMin.png</file>
+    <file>../icons/img_EdgeExtract.png</file>
+  </qresource>
+</RCC>
