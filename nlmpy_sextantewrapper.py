@@ -184,8 +184,12 @@ class SpatialRandom(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 class PlanarGradient(GeoAlgorithm):
     # Define constants
@@ -245,8 +249,12 @@ class PlanarGradient(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 class EdgeGradient(GeoAlgorithm):
     # Define constants
@@ -306,8 +314,12 @@ class EdgeGradient(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 class DistanceGradient(GeoAlgorithm):
     # Define constants
@@ -358,8 +370,12 @@ class DistanceGradient(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,src_geotrans)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
         
 class MidpointDisplacement(GeoAlgorithm):
     
@@ -420,8 +436,12 @@ class MidpointDisplacement(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
         
 class RandomRectangularCluster(GeoAlgorithm):
     # Define constants
@@ -484,8 +504,12 @@ class RandomRectangularCluster(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 class RandomElementNN(GeoAlgorithm):
     # Define constants
@@ -545,8 +569,12 @@ class RandomElementNN(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 class RandomClusterNN(GeoAlgorithm):
     # Define constants
@@ -610,8 +638,12 @@ class RandomClusterNN(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None      
         
 class LinearRescale01(GeoAlgorithm):
     # Define constants
@@ -655,8 +687,12 @@ class LinearRescale01(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,src_geotrans)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None      
 
 class RandomUniformed01(GeoAlgorithm):
     # Define constants
@@ -713,8 +749,12 @@ class RandomUniformed01(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")        
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None              
         
         
 class MeanOfCluster(GeoAlgorithm):
@@ -767,8 +807,12 @@ class MeanOfCluster(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,src_geotrans)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")        
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None            
 
 class ClassifyArray(GeoAlgorithm):
     # Define constants
@@ -826,5 +870,9 @@ class ClassifyArray(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,src_geotrans)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")   
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None

@@ -223,8 +223,12 @@ class CreateRandomLandscape(GeoAlgorithm):
         # Create output raster
         func.createRaster(output,cols,rows,array,nodata,gt)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None        
 
 # Inspired from here: http://stackoverflow.com/questions/10454316/how-to-project-and-resample-a-grid-to-match-another-grid-with-gdal-python
 class MatchLandscapes(GeoAlgorithm):
@@ -300,9 +304,14 @@ class MatchLandscapes(GeoAlgorithm):
         del dst # Flush
         
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None      
+
+
 class RasterWithRasterClip(GeoAlgorithm):
     # Define constants
     LAND1 = "LAND1"
@@ -377,9 +386,12 @@ class RasterWithRasterClip(GeoAlgorithm):
             # Write to new raster
             func.exportRaster(result,inputTarget,output,nodata)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
     def world2Pixel(self,geoMatrix, x, y):
         """
@@ -460,8 +472,12 @@ class LandscapeStatistics(GeoAlgorithm):
         # Create the output
         func.saveToCSV(res,["Metric","Value"],output)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 # Lists all unique raster cells of a raster
 # Returns the total number per cell in a table
@@ -525,9 +541,12 @@ class CountRasterCells(GeoAlgorithm):
         # Create the output layer 
         func.saveToCSV(res,("Value","Number"),output)
         
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 class PatchStatistics(GeoAlgorithm):
     # Define constants
@@ -600,8 +619,13 @@ class PatchStatistics(GeoAlgorithm):
         # Create the output
         func.saveToCSV(res,["Metric","Value"],output)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None      
+            
 
 # Calculates zonal statistics using a source and zone grid
 # Output as table or raster
@@ -725,10 +749,12 @@ class ZonalStatistics(GeoAlgorithm):
             # Export the raster
             func.exportRaster(resr,zoneFilename,outputR)
         
-
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 
 ## Polygon Batch Overlay
@@ -842,8 +868,12 @@ class RasterPolyOver(GeoAlgorithm):
             writer.writerow(r)
         f.close()        
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 # Returns the raster values below a point layer, Output Results as table
 class GetRasterValuesPoint(GeoAlgorithm):
@@ -929,8 +959,13 @@ class GetRasterValuesPoint(GeoAlgorithm):
         line = int((ulY - y) / xDist)
         return (pixel, line)     
     
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
+
 
 # Overlay vector landscape layer with another polygon
 class VectorPolyOver(GeoAlgorithm):
@@ -1024,8 +1059,13 @@ class VectorPolyOver(GeoAlgorithm):
             writer.writerow(r)
         f.close()        
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
+
 
 ## Landscape Modifier algorithms
 import landscape_modifier as lmod
@@ -1084,8 +1124,12 @@ class LabelLandscapePatches(GeoAlgorithm):
         # Create the output layer 
         func.exportRaster(results,inputFilename,output)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 # Conducts neighbourhood analysis based on a moving window approach
 class NeighbourhoodAnalysis(GeoAlgorithm):
@@ -1189,9 +1233,12 @@ class NeighbourhoodAnalysis(GeoAlgorithm):
             sh.append(r)
         return sum(sh)*-1
     
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 class IncreaseLandPatch(GeoAlgorithm):
     # Define constants
@@ -1252,8 +1299,12 @@ class IncreaseLandPatch(GeoAlgorithm):
         # Create the output layer 
         func.exportRaster(results,inputFilename,output)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
 
 class ExtractEdges(GeoAlgorithm):
     # Define constants
@@ -1307,8 +1358,13 @@ class ExtractEdges(GeoAlgorithm):
         # Create the output layer 
         func.exportRaster(results,inputFilename,output)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
+
         
 class IsolateExtremePatch(GeoAlgorithm):
     # Define constants
@@ -1370,8 +1426,12 @@ class IsolateExtremePatch(GeoAlgorithm):
         # Create the output layer 
         func.exportRaster(results,inputFilename,output)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
         
 class CloseHoles(GeoAlgorithm):
     # Define constants
@@ -1422,8 +1482,13 @@ class CloseHoles(GeoAlgorithm):
         # Create the output layer 
         func.exportRaster(results,inputFilename,output)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
+
 
 class CleanSmallPixels(GeoAlgorithm):
     # Define constants
@@ -1479,6 +1544,10 @@ class CleanSmallPixels(GeoAlgorithm):
         # Create the output layer 
         func.exportRaster(results,inputFilename,output)
 
-    def helpFile(self):
-        return os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+    def help(self):
+        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
+        if os.path.isfile(helppath):
+            return False, helppath
+        else:
+            return False, None
         
