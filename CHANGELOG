@@ -1,5 +1,7 @@
 # Version 1.9.8
 - Corrected and overwrite the relative help file link
+- Fixed some unicode errors
+- Added error message for Bug report #12427
 
 # Version 1.9.7
 - Make sure that the Processing algorithms are updating

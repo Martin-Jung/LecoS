@@ -28,6 +28,7 @@ from qgis.core import *
 from qgis.gui import *
 from qgis.utils import *
 #from qgis.analysis import *
+from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
@@ -404,9 +405,12 @@ def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
     try:
         tDs = driver.Create(output, cols, rows, 1, gdal.GDT_Float32)
     except RuntimeError:
-        raise GeoAlgorithmExecutionException("Could not generate output file")
+        raise GeoAlgorithmExecutionException("Could not generate output file.")
     
-    band = tDs.GetRasterBand(1)
+    try:
+        band = tDs.GetRasterBand(1)
+    except AttributeError:
+        raise GeoAlgorithmExecutionException("Please load a projected file first!")
     band.WriteArray(array)
 
     # flush data to disk, set the NoData value

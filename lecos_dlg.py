@@ -124,7 +124,7 @@ class LecosDialog(QDialog, Ui_Lecos):
         if rasterName != -1:
             raster = func.getRasterLayerByName( self.cbRaster.currentText() )
             rasterPath = raster.source()
-            raster = gdal.Open(str(rasterPath))
+            raster = gdal.Open(unicode(rasterPath))
             band = raster.GetRasterBand(1)
             nodata = band.GetNoDataValue()
             self.NoDataVal.setEnabled( True )
@@ -136,7 +136,7 @@ class LecosDialog(QDialog, Ui_Lecos):
                     pass
                     #QMessageBox.warning( self, self.tr( "LecoS: Warning" ),self.tr( "Please format your rasters no-data value to integer (-99999 <-> 99999)" ) )
                 
-            self.NoDataVal.setText( str(nodata) ) 
+            self.NoDataVal.setText( unicode(nodata) ) 
             
     # Update Cellsize if a valid raster-file is selected
     def cellSizer( self, rasterName ):
@@ -596,7 +596,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             rasterName = func.getRasterLayerByName( self.cb_Raster.currentText() )
             if rasterName != "":
                 rasterPath = rasterName.source()
-                raster = gdal.Open(str(rasterPath))
+                raster = gdal.Open(unicode(rasterPath))
                 band = raster.GetRasterBand(1)
                 nodata = band.GetNoDataValue()
                 array = band.ReadAsArray()
@@ -638,7 +638,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
     def vectorClass(self,cl):
         vectorName = func.getLayerByName( self.cb_Raster.currentText() )
         if type(vectorName) == QgsVectorLayer:
-            cur = str(self.cb_LClass.currentText())
+            cur = unicode(self.cb_LClass.currentText())
             if cur != "":
                 self.VCl.clear()
                 self.VCl.setEnabled( True )
@@ -826,7 +826,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
         if type(self.landscape) == QgsRasterLayer:
             # Get None Nulldata Error
             try:
-                image = gdal.Open(str(self.landPath))
+                image = gdal.Open(unicode(self.landPath))
                 band = image.GetRasterBand(1)
                 nd = band.GetNoDataValue()
                 int(nd)
@@ -835,7 +835,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 return
             # Check if polygon is correctly set
             try:
-                v = ogr.Open(str( self.vectorPath ))
+                v = ogr.Open(unicode( self.vectorPath ))
                 l = v.GetLayer()
                 l.GetFeature(0).GetGeometryRef()
             except AttributeError:   
@@ -1043,7 +1043,7 @@ class LandMod(QDialog, Ui_LandMod):
         rasterName = func.getRasterLayerByName( self.cb_Raster.currentText() )
         if rasterName != "":
             rasterPath = rasterName.source()
-            raster = gdal.Open(str(rasterPath))
+            raster = gdal.Open(unicode(rasterPath))
             band = raster.GetRasterBand(1)
             nodata = band.GetNoDataValue()
             if nodata == None: # raise error
