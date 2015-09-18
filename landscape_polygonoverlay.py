@@ -305,6 +305,12 @@ class BatchConverter():
             # Calculate the pixel size of the new image
             pxWidth = int(lrX - ulX)
             pxHeight = int(lrY - ulY)
+
+            # If the clipping features extend out-of-bounds and ABOVE the raster...
+            if self.geoTrans[3] < maxY:
+                # In such a case... ulY ends up being negative--can't have that!
+                iY = ulY
+                ulY = 0
                         
             # Clip the raster to the shapes boundingbox
             clip = self.srcArray[ulY:lrY, ulX:lrX]
@@ -317,71 +323,61 @@ class BatchConverter():
             # Map points to pixels for drawing the boundary on a blank 8-bit, black and white, mask image.
             points = []
             pixels = []
-            pts = geom.GetGeometryRef(0)            
+            pts = geom.GetGeometryRef(0)     
+                   
             for p in range(pts.GetPointCount()):
                 points.append((pts.GetX(p), pts.GetY(p)))
+                
             for p in points:
                 pixels.append(self.world2Pixel(geoTrans, p[0], p[1])) # Transform nodes to geotrans of raster
+                
             rasterPoly = Image.new("L", (pxWidth, pxHeight), 1)            
             rasterize = ImageDraw.Draw(rasterPoly)
             rasterize.polygon(pixels, 0)
-            mask = self.imageToArray(rasterPoly)      
             
+
+            # If the clipping features extend out-of-bounds and ABOVE the raster...
+            if self.geoTrans[3] < maxY:
+                # The clip features were "pushed down" to match the bounds of the
+                #   raster; this step "pulls" them back up
+                premask = self.imageToArray(rasterPoly)
+                # We slice out the piece of our clip features that are "off the map"
+                mask = numpy.ndarray((premask.shape[-2] - abs(iY), premask.shape[-1]), premask.dtype)
+                mask[:] = premask[abs(iY):, :]
+                mask.resize(premask.shape) # Then fill in from the bottom
+        
+                # Most importantly, push the clipped piece down
+                geotrans[3] = maxY - (maxY - self.geoTrans[3])        
+            else:
+                mask = self.imageToArray(rasterPoly)      
+            
+            # Do the actual clipping
             if mask != None:
                 try:
                     clip2 = numpy.choose(mask,(clip, 0),mode='raise').astype(self.srcArray.dtype)
-                except ValueError, MemoryError:
+                except MemoryError:
                     self.error = self.error + 1
                     clip2 = None # Shape mismatch or Memory Error
+                except ValueError:
+                    # Cut the clipping features to the raster
+                    rshp = list(mask.shape)
+                    if mask.shape[-2] != clip2.shape[-2]:
+                        rshp[0] = clip2.shape[-2]
+                    if mask.shape[-1] != clip2.shape[-1]:
+                        rshp[1] = clip2.shape[-1]
+                    # Resize to the clip
+                    mask.resize(*rshp, refcheck=False)
+                                        
+                    try:
+                        clip2 = numpy.choose(mask,(clip,0),mode='raise').astype(self.srcArray.dtype)
+                    except ValueError, MemoryError:
+                        self.error = self.error + 1
+                        clip2 = None # Shape mismatch or Memory Error                    
             else:
                 self.error = self.error + 1
                 clip2 = None # Image to array failed because polygon outside range
         return clip2            
-    
-    def _getClipArray_OLD(self,poly):
-        # Convert the layer extent to image pixel coordinates
-        minX, maxX, minY, maxY = self.lyr.GetExtent()
-        ulX, ulY = self.world2Pixel(self.geoTrans, minX, maxY)
-        lrX, lrY = self.world2Pixel(self.geoTrans, maxX, minY)
         
-        # Calculate the pixel size of the new image
-        pxWidth = int(lrX - ulX)
-        pxHeight = int(lrY - ulY)
-        
-        # Clip the raster to the shapes boundingbox
-        clip = self.srcArray[ulY:lrY, ulX:lrX]
-
-        # Create a new geomatrix for the image
-        geoTrans = list(self.geoTrans)
-        geoTrans[0] = minX
-        geoTrans[3] = maxY
-        
-        # Map points to pixels for drawing the 
-        # boundary on a blank 8-bit, 
-        # black and white, mask image.
-        points = []
-        pixels = []
-        geom = poly.GetGeometryRef()
-        if geom.GetGeometryCount() > 1:
-            clip2 = None
-        else:
-            pts = geom.GetGeometryRef(0)
-            for p in range(pts.GetPointCount()):
-                points.append((pts.GetX(p), pts.GetY(p)))
-            for p in points:
-                pixels.append(self.world2Pixel(geoTrans, p[0], p[1]))
-            rasterPoly = Image.new("L", (pxWidth, pxHeight), 1)
-            rasterize = ImageDraw.Draw(rasterPoly)
-            rasterize.polygon(pixels, 0)
-            mask = self.imageToArray(rasterPoly)
-            # Clip the image using the mask
-            try:
-                clip2 = numpy.choose(mask,(clip, 0)).astype(self.srcArray.dtype)
-            except ValueError:
-                #QMessageBox.warning(QDialog(),"LecoS: Warning","Please make sure that all vector features are within the raster grid!")
-                clip2 = None
-        return clip2
-    
     # Bounding box intersection test
     def BBoxIntersect(self,rasE,polyE):
         #rasE = (6271.190835569453, 14271.195806587984, -94342.91093178833, -86548.67193043727)
