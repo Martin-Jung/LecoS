@@ -77,10 +77,10 @@ except ImportError:
     import gdalconst
     
 # Register gdal and ogr drivers
-if hasattr(gdal,"AllRegister"): # Can register drivers
-    gdal.AllRegister() # register all gdal drivers
-if hasattr(ogr,"RegisterAll"):
-    ogr.RegisterAll() # register all ogr drivers
+#if hasattr(gdal,"AllRegister"): # Can register drivers
+#    gdal.AllRegister() # register all gdal drivers
+#if hasattr(ogr,"RegisterAll"):
+#    ogr.RegisterAll() # register all ogr drivers
 
 # BUG
 # # Try to use exceptions with gdal and ogr
@@ -333,8 +333,7 @@ class BatchConverter():
                 
             rasterPoly = Image.new("L", (pxWidth, pxHeight), 1)            
             rasterize = ImageDraw.Draw(rasterPoly)
-            rasterize.polygon(pixels, 0)
-            
+            rasterize.polygon(pixels, 0)            
 
             # If the clipping features extend out-of-bounds and ABOVE the raster...
             if self.geoTrans[3] < maxY:

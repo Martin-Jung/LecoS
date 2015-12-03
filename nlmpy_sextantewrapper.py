@@ -113,10 +113,10 @@ try:
 except ImportError:
     pass
 # Register gdal and ogr drivers
-if hasattr(gdal,"AllRegister"): # Can register drivers
-    gdal.AllRegister() # register all gdal drivers
-if hasattr(ogr,"RegisterAll"):
-    ogr.RegisterAll() # register all ogr drivers
+#if hasattr(gdal,"AllRegister"): # Can register drivers
+#    gdal.AllRegister() # register all gdal drivers
+#if hasattr(ogr,"RegisterAll"):
+#    ogr.RegisterAll() # register all ogr drivers
 
 import os, sys
 

@@ -63,10 +63,10 @@ except ImportError:
     import gdalconst
     
 # Register gdal and ogr drivers
-if hasattr(gdal,"AllRegister"): # Can register drivers
-    gdal.AllRegister() # register all gdal drivers
-if hasattr(ogr,"RegisterAll"):
-    ogr.RegisterAll() # register all ogr drivers
+#if hasattr(gdal,"AllRegister"): # Can register drivers
+#    gdal.AllRegister() # register all gdal drivers
+#if hasattr(ogr,"RegisterAll"):
+#    ogr.RegisterAll() # register all ogr drivers
 
 #BUG
 # Try to use exceptions with gdal and ogr

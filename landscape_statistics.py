@@ -65,10 +65,10 @@ except ImportError:
     import gdalconst
     
 # Register gdal and ogr drivers
-if hasattr(gdal,"AllRegister"): # Can register drivers
-    gdal.AllRegister() # register all gdal drivers
-if hasattr(ogr,"RegisterAll"):
-    ogr.RegisterAll() # register all ogr drivers
+#if hasattr(gdal,"AllRegister"): # Can register drivers
+#    gdal.AllRegister() # register all gdal drivers
+#if hasattr(ogr,"RegisterAll"):
+#    ogr.RegisterAll() # register all ogr drivers
 
 # BUG
 # Try to use exceptions with gdal and ogr
@@ -153,9 +153,6 @@ class LandCoverAnalysis():
         self.cellsize = cellsize
         self.cellsize_2 = math.pow(cellsize,2)
         self.classes = classes
-        
-        # Do basic Preprocessing 
-        self.f_LandscapeArea() # Calculate LArea
     
     # Alternative count_nonzero function from scipy if available
     def count_nonzero(self,array):
@@ -217,20 +214,20 @@ class LandCoverAnalysis():
         
     ## Landscape Metrics
     def execLandMetric(self,name,nodata):        
-        if name == "LC_Mean":
-            return unicode(name), numpy.mean(self.array[self.array!=nodata])       
+        if name == "LC_Mean":            
+            return unicode(name), numpy.mean(self.array[self.array!=nodata],dtype=numpy.float64)       
         if name == "LC_Sum":
-            return unicode(name), numpy.sum(self.array[self.array!=nodata])
+            return unicode(name), numpy.sum(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_Min":
-            return unicode(name), numpy.min(self.array[self.array!=nodata])
+            return unicode(name), numpy.min(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_Max":
-            return unicode(name), numpy.max(self.array[self.array!=nodata])
+            return unicode(name), numpy.max(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_SD":
-            return unicode(name), numpy.std(self.array[self.array!=nodata])
+            return unicode(name), numpy.std(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_LQua":
             return unicode(name), scipy.percentile(self.array[self.array!=nodata],25)
         if name == "LC_Med":
-            return unicode(name), numpy.median(self.array[self.array!=nodata])
+            return unicode(name), numpy.median(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_UQua":
             return unicode(name), scipy.percentile(self.array[self.array!=nodata],75)
         if name == "DIV_SH":
@@ -322,6 +319,7 @@ class LandCoverAnalysis():
     
     # Return Patchdensity
     def f_patchDensity(self, numpatches):
+        self.f_LandscapeArea() # Calculate LArea
         try:
             val = (float(numpatches) / float(self.Larea))
         except ZeroDivisionError:
@@ -407,6 +405,7 @@ class LandCoverAnalysis():
     
     # Return Edge Density
     def f_returnEdgeDensity(self,labeled_array):
+        self.f_LandscapeArea() # Calculate LArea
         try:
             val = float(self.f_returnEdgeLength(labeled_array)) / float(self.Larea)
         except ZeroDivisionError:
@@ -536,6 +535,7 @@ class LandCoverAnalysis():
     
     # Returns the Splitting index for the given array
     def f_returnSplittingIndex(self,array,numpatches,labeled_array,cl):
+        self.f_LandscapeArea() # Calculate LArea
         res = []
         sizes = ndimage.sum(array,labeled_array,range(1,numpatches+1))
         sizes = sizes[sizes!=0] # remove zeros
@@ -553,6 +553,7 @@ class LandCoverAnalysis():
     
     # Returns the Effective Mesh Size Index for the given array
     def f_returnEffectiveMeshSize(self,array,labeled_array,numpatches,cl):
+        self.f_LandscapeArea() # Calculate LArea
         res = []
         sizes = ndimage.sum(array,labeled_array,range(1,numpatches+1))
         sizes = sizes[sizes!=0] # remove zeros
