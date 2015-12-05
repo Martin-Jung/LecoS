@@ -74,7 +74,7 @@ def ShowResultTableDialog( metric_names, results ):
   dlg.setSizePolicy(sizePolicy)
 
   lines = QVBoxLayout( dlg )
-  
+
   rowCount = len(results)
   colCount = len(metric_names)
   tableWidget = QTableWidget()
@@ -83,7 +83,7 @@ def ShowResultTableDialog( metric_names, results ):
   tableWidget.setHorizontalHeaderLabels(metric_names) # add header
   tableWidget.setContextMenuPolicy(Qt.ActionsContextMenu)
   tableWidget.resizeColumnsToContents()
-  
+
   for id, item in enumerate(results):
     for place, value in enumerate(item):
       newItem = QTableWidgetItem(unicode(value))
@@ -109,7 +109,7 @@ def ShowResultTableDialog2( metric_names, results ):
   dlg.setSizePolicy(sizePolicy)
 
   lines = QVBoxLayout( dlg )
-  
+
   rowCount = len(results[0])
   colCount = len(metric_names)
   tableWidget = QTableWidget()
@@ -118,7 +118,7 @@ def ShowResultTableDialog2( metric_names, results ):
   tableWidget.setHorizontalHeaderLabels(metric_names) # add header
   tableWidget.setContextMenuPolicy(Qt.ActionsContextMenu)
   tableWidget.resizeColumnsToContents()
-  
+
   for id, item in enumerate(results):
     for place, value in enumerate(item):
       idItem = QTableWidgetItem(unicode(value[0]))
@@ -158,7 +158,7 @@ def AboutDlg( ):
   # Citation
   lines.addWidget( QLabel( QApplication.translate( "LecoS", "<b>Citation:</b>") ) )
   cit = QLineEdit()
-  cit.setText("Martin Jung, 2012, LecoS - A QGIS plugin to conduct landscape ecology statistics, http://plugins.qgis.org/plugins/LecoS/")
+  cit.setText("Martin Jung (2016) LecoS - A python plugin for automated landscape ecology analysis, Ecological Informatics, 31, 18-21 http://dx.doi.org/10.1016/j.ecoinf.2015.11.006")
   lines.addWidget( cit )
   # Supported by
   lines.addWidget( QLabel( QApplication.translate( "LecoS", "<b>Supported by:</b>") ) )
@@ -185,7 +185,7 @@ def setLastUsedDir( lastDir ):
   path = QFileInfo( lastDir ).absolutePath()
   settings = QSettings( "Lecoto", "lecos" )
   settings.setValue( "lastUsedDir", str( path ) )
-  
+
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def getRasterLayerByName( layerName ):
   layerMap = QgsMapLayerRegistry.instance().mapLayers()
@@ -195,7 +195,7 @@ def getRasterLayerByName( layerName ):
           return layer
         else:
           return None
-          
+
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def getRasterLayersNames():
   layerList = []
@@ -214,7 +214,7 @@ def getVectorLayerByName( layerName ):
         return layer
       else:
         return None
-  
+
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def getVectorLayersNames():
   layerList = []
@@ -246,7 +246,7 @@ def getAttributeList( vlayer, field):
     f = d.GetFeature(i)
     attr.append(f.GetField(0))
   return attr
-  
+
 # General function to retrieve layers
 def getLayerByName( layerName ):
   layerMap = QgsMapLayerRegistry.instance().mapLayers()
@@ -263,7 +263,7 @@ def addAttributesToLayer(layer,results):
   # Open a Shapefile, and get field names
   provider = layer.dataProvider()
   caps = provider.capabilities()
-    
+
   for metric in xrange(0,len(results)):
     # Create Attribute Column
     # Name Formating
@@ -300,12 +300,12 @@ def addAttributesToLayer(layer,results):
           return False
     else:
       return False
-  
+
   layer.commitChanges()
   return True
 
-  
-    
+
+
 # Save a rasterfile as geotiff to a given directory
 # Need the previous raster (for output size and projection)
 # and a path with writing permissions
@@ -319,7 +319,7 @@ def exportRaster(array,rasterSource,path,nodata=True):
     nodata = 0
   else: # take nodata as it comes
     nodata = nodata
-  
+
   driver = gdal.GetDriverByName('GTiff')
   # Create File based in path
   try:
@@ -330,21 +330,21 @@ def exportRaster(array,rasterSource,path,nodata=True):
   if outDs is None:
     QMessageBox.warning(QDialog(),"Could not create output File. Check permissions!")
     return
-      
+
   band = outDs.GetRasterBand(1)
   band.WriteArray(array)
-  
+
   # flush data to disk, set the NoData value
   band.FlushCache()
   try:
     band.SetNoDataValue(nodata)
   except TypeError:
     band.SetNoDataValue(-9999) # set -9999 in the meantime
-  
+
   # georeference the image and set the projection
   outDs.SetGeoTransform(raster.GetGeoTransform())
   outDs.SetProjection(raster.GetProjection())
-  
+
   band = outDs = None # Close writing
 
 # Adds a generated Raster to the QGis table of contents
@@ -355,9 +355,9 @@ def rasterInQgis(rasterPath):
   rlayer = QgsRasterLayer(fileName, baseName)
   if not rlayer.isValid():
     QMessageBox.warning(QDialog(),"Failed to add the generated Layer to QGis")
-  
+
   QgsMapLayerRegistry.instance().addMapLayer(rlayer)
-  
+
 # Adds a vector layer to the QGis table of contents
 def tableInQgis(vectorPath):
   fileName = str(vectorPath)
@@ -368,7 +368,7 @@ def tableInQgis(vectorPath):
   if not vlayer.isValid():
     QMessageBox.warning(QDialog(),"LecoS: Warning","Failed to add the Layer to QGis")
   QgsMapLayerRegistry.instance().addMapLayer(vlayer)
-  
+
 # Error messages wrapper
 def DisplayError(iface,header,text,type="WARNING",time=4,both=False):
   if QGis.QGIS_VERSION_INT >= 10900:
@@ -378,10 +378,10 @@ def DisplayError(iface,header,text,type="WARNING",time=4,both=False):
     elif type=="WARNING":
       ob = QgsMessageBar.WARNING
     elif type=="CRITICAL":
-      ob = QgsMessageBar.CRITICAL  
+      ob = QgsMessageBar.CRITICAL
 
     # Show the Message Bar
-    iface.messageBar().pushMessage(header,text, ob, time)    
+    iface.messageBar().pushMessage(header,text, ob, time)
     if both: # Should the Messagebox also be shown?
       if type == "WARNING":
         QMessageBox.warning( QDialog(), header, text )
@@ -399,14 +399,14 @@ def DisplayError(iface,header,text,type="WARNING",time=4,both=False):
 
 # Create basic raster without projection
 def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
-  
+
     driver = gdal.GetDriverByName(d)
     # Create File based in path
     try:
         tDs = driver.Create(output, cols, rows, 1, gdal.GDT_Float32)
     except RuntimeError:
         raise GeoAlgorithmExecutionException("Could not generate output file.")
-    
+
     try:
         band = tDs.GetRasterBand(1)
     except AttributeError:
@@ -422,15 +422,15 @@ def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
 
     # georeference the image and set the projection
     tDs.SetGeoTransform(gt)
-    
+
     # Then set projection of current active layer
     #epsg = iface.mapCanvas().mapRenderer().destinationCrs().srsid() # activeLayer().crs().authid()
     #coord_system = osr.SpatialReference()
-    #coord_system.ImportFromEPSG(epsg) 
+    #coord_system.ImportFromEPSG(epsg)
     #tDs.SetProjection(coord_system.ExportToWkt())
-    
+
     band = tDs = None # Close writing
-    
+
 # Alternative count_nonzero function from scipy if available
 def count_nonzero(array):
     if hasattr(numpy,'count_nonzero'):
@@ -439,4 +439,4 @@ def count_nonzero(array):
         return scipy.count_nonzero(array)
     else:
         return (array != 0).sum()
-        
+
