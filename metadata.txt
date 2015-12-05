@@ -13,14 +13,14 @@ version=2.0
 about=LecoS is based on metrics taken from FRAGSTATS: http://www.umass.edu/landeco/research/fragstats/fragstats.html Functions include the calculation of metrics on rasters and vector layers. A polygon overlay tool is also available to ease up computation. Additionally LecoS provides some functionalities to manipulate classified raster images.
 
 ; Start of changelog file
-changelog = 
+changelog =
 	Version 2.0
 	- LecoS now has an official reference and publication
 	- Fixed bug #13940
 
 	Version 1.9.9:
 	- Improved polygon clipping algorithm to account for rough edges
-	- Metadata and readme change 
+	- Metadata and readme change
 
 	Version 1.9.8:
 	- Corrected and overwrite the relative help file link
@@ -87,7 +87,7 @@ changelog =
 	- Fixed Error with the Shannon Equitability
 	- Fixed Errors with Diversity indices and shapefile edits
 	- Fixed Bug causing QGIS to crash -> http://hub.qgis.org/issues/7612
-	- The Batchoverlay now displays the progress in the QGIS main window taskbar 
+	- The Batchoverlay now displays the progress in the QGIS main window taskbar
 
 	Version 1.7.2:
 	- Enabled the calculation of landscape statistics for vector layers
@@ -129,8 +129,8 @@ changelog =
 	as the standard deviation from unclassified raster shapes in the polygon overlay tool
 
 	Version 1.3:
-	- Created the Polygon Landcover Overlay tool, which is capable of extracting values per polygon feature from 
-	underlying raster shapes. Both classified and non-classified raster shapes are supported. 
+	- Created the Polygon Landcover Overlay tool, which is capable of extracting values per polygon feature from
+	underlying raster shapes. Both classified and non-classified raster shapes are supported.
 
 	Version 1.2:
 	- Switched to a object orientied programming style. However parts of the code are still extremely slow :-(
