@@ -75,7 +75,7 @@ try:
     from osgeo import gdalconst
 except ImportError:
     import gdalconst
-    
+
 # Register gdal and ogr drivers
 #if hasattr(gdal,"AllRegister"): # Can register drivers
 #    gdal.AllRegister() # register all gdal drivers
@@ -91,9 +91,9 @@ except ImportError:
 
 ## CODE START ##
 # Many functions stolen from here :-)
-# http://geospatialpython.com/2011/02/clip-raster-using-shapefile.html 
+# http://geospatialpython.com/2011/02/clip-raster-using-shapefile.html
 class BatchConverter():
-    def __init__(self,rasterPath,vectorPath,iface=None):        
+    def __init__(self,rasterPath,vectorPath,iface=None):
         # load as a gdal image to get geotransform and full array
         self.srcImage = gdal.Open(str(rasterPath))
         band = self.srcImage.GetRasterBand(1)
@@ -101,29 +101,29 @@ class BatchConverter():
         if self.nodata == None:
             print "Nodata-value is not specified in the raster layer"
             self.nodata = 0
-        
+
         self.geoTrans = self.srcImage.GetGeoTransform()
         try:
             self.srcArray = self.srcImage.GetRasterBand(1).ReadAsArray() # Convert first band to array
         except ValueError:
             QMessageBox.warning(QDialog(),"LecoS: Warning","Raster file is to big for processing. Please crop the file and try again.")
-            return        
+            return
         # Create an OGR layer from a boundary shapefile used to clip
         self.shapef = ogr.Open("%s" % str(vectorPath))
         self.lyr = self.shapef.GetLayer()
-        
+
         # Raster extent
         ext = self.GetExtent(self.geoTrans,self.srcImage.RasterXSize,self.srcImage.RasterYSize)
         self.extent = (ext[0][0],ext[2][0],ext[1][1],ext[0][1]) # Format to the same tuple structure as the vector layer
         # Failure Clip counter
         self.featFailed = []
-        
+
         # Interface to QGIS
         self.iface = iface
-        
+
         # Error Counter
         self.error = 0
-        
+
     # Alternative count_nonzero function from scipy if available
     def count_nonzero(self,array):
         if hasattr(numpy,'count_nonzero'):
@@ -132,7 +132,7 @@ class BatchConverter():
             return scipy.count_nonzero(array)
         else:
             return (array != 0).sum()
-        
+
     #Iterate through all features and executes the named command
     #Values are returned as array per feature
     def go(self,cmd,cl,cellsize=1,landID=None,rasE=None):
@@ -142,7 +142,7 @@ class BatchConverter():
                 poly = self.lyr.GetFeature(0)
             else:
                 poly = self.lyr.GetFeature(i)
-                
+
             # Test if polygon feature is inside raster extent, otherwise return None as result
             #geom = poly.GetGeometryRef()
             #f_coord = geom.GetEnvelope()
@@ -153,7 +153,7 @@ class BatchConverter():
                 classes = sorted(numpy.unique(array)) # get classes
                 for val in (self.nodata,0):# Remove raster nodata value and zeros from class list
                     try:
-                        classes.remove(val) 
+                        classes.remove(val)
                     except ValueError:
                         pass
                 # Classified Methods -> Use landscape_statistics module
@@ -162,7 +162,7 @@ class BatchConverter():
                     cl_array = numpy.copy(array) # new working array
                     cl_array[cl_array!=cl] = 0
                     cl_analys.f_ccl(cl_array) # CC-labeling
-                    name, r = cl_analys.execSingleMetric(cmd,cl)             
+                    name, r = cl_analys.execSingleMetric(cmd,cl)
                     # Get FieldValue of given Field
                     #id = self.getFieldValue(poly,landID)
                     id = poly.GetFID()
@@ -203,7 +203,7 @@ class BatchConverter():
                             r = None
                     # Get FieldValue of given Field
                     #id = self.getFieldValue(poly,landID)
-                    
+
                     id = poly.GetFID()
                     b = [id,cmd,r]
                     res.append(b)
@@ -222,14 +222,14 @@ class BatchConverter():
             # Update the Statusbar of the current process
             if self.iface != None:
                 self.iface.mainWindow().statusBar().showMessage("%s calculated for feature %s out of %s (%s impossible)" % (cmd, poly.GetFID()+1,self.lyr.GetFeatureCount(),len(self.featFailed) ))
-        
+
         # Display number of errors in statusbar
         if self.error != 0:
             if self.iface != None:
                 self.iface.mainWindow().statusBar().showMessage("%s could not be calculated for %s features" % (cmd,self.error ))
 
         return self.featFailed, res
-    
+
     # Get value of a field name within a given feature of a ogr layer
     def getFieldValue(self,feat,name):
         i = feat.GetFieldIndex(str(name))
@@ -237,12 +237,12 @@ class BatchConverter():
         if id == None:
             id = feat.GetFID()
         return id
-    
-    # This function will convert the rasterized clipper shapefile 
-    # to a mask for use within GDAL.    
+
+    # This function will convert the rasterized clipper shapefile
+    # to a mask for use within GDAL.
     def imageToArray(self,i):
         """
-        Converts a Python Imaging Library array to a 
+        Converts a Python Imaging Library array to a
         gdalnumeric image.
         """
         try:
@@ -255,17 +255,17 @@ class BatchConverter():
 
     def arrayToImage(self,a):
         """
-        Converts a gdalnumeric array to a 
+        Converts a gdalnumeric array to a
         Python Imaging Library Image.
         """
         i=Image.fromstring('L',(a.shape[1],a.shape[0]),
                 (a.astype('b')).tostring())
         return i
-    
+
     def world2Pixel(self,geoMatrix, x, y):
         """
         Uses a gdal geomatrix (gdal.GetGeoTransform()) to calculate
-        the pixel location of a geospatial coordinate 
+        the pixel location of a geospatial coordinate
         """
         ulX = geoMatrix[0]
         ulY = geoMatrix[3]
@@ -275,8 +275,8 @@ class BatchConverter():
         rtnY = geoMatrix[4]
         pixel = int((x - ulX) / xDist)
         line = int((ulY - y) / xDist)
-        return (pixel, line) 
-    
+        return (pixel, line)
+
     def Pixel2world(self,geoMatrix, x, y):
         ulX = geoMatrix[0]
         ulY = geoMatrix[3]
@@ -285,7 +285,7 @@ class BatchConverter():
         coorX = (ulX + (x * xDist))
         coorY = (ulY + (y * yDist))
         return (coorX, coorY)
-        
+
     # Returns an array from the given polygon feature
     # Assumes that the polygon is inside the rasters extent!
     def getClipArray(self,poly):
@@ -311,11 +311,11 @@ class BatchConverter():
                 # In such a case... ulY ends up being negative--can't have that!
                 iY = ulY
                 ulY = 0
-                        
+
             # Clip the raster to the shapes boundingbox
             clip = self.srcArray[ulY:lrY, ulX:lrX]
 
-            # Create a new geomatrix for the image that is covered by the layer 
+            # Create a new geomatrix for the image that is covered by the layer
             geoTrans = list(self.geoTrans)
             geoTrans[0] = minX
             geoTrans[3] = maxY
@@ -323,17 +323,17 @@ class BatchConverter():
             # Map points to pixels for drawing the boundary on a blank 8-bit, black and white, mask image.
             points = []
             pixels = []
-            pts = geom.GetGeometryRef(0)     
-                   
+            pts = geom.GetGeometryRef(0)
+
             for p in range(pts.GetPointCount()):
                 points.append((pts.GetX(p), pts.GetY(p)))
-                
+
             for p in points:
                 pixels.append(self.world2Pixel(geoTrans, p[0], p[1])) # Transform nodes to geotrans of raster
-                
-            rasterPoly = Image.new("L", (pxWidth, pxHeight), 1)            
+
+            rasterPoly = Image.new("L", (pxWidth, pxHeight), 1)
             rasterize = ImageDraw.Draw(rasterPoly)
-            rasterize.polygon(pixels, 0)            
+            rasterize.polygon(pixels, 0)
 
             # If the clipping features extend out-of-bounds and ABOVE the raster...
             if self.geoTrans[3] < maxY:
@@ -344,12 +344,12 @@ class BatchConverter():
                 mask = numpy.ndarray((premask.shape[-2] - abs(iY), premask.shape[-1]), premask.dtype)
                 mask[:] = premask[abs(iY):, :]
                 mask.resize(premask.shape) # Then fill in from the bottom
-        
+
                 # Most importantly, push the clipped piece down
-                geotrans[3] = maxY - (maxY - self.geoTrans[3])        
+                geoTrans[3] = maxY - (maxY - self.geoTrans[3])
             else:
-                mask = self.imageToArray(rasterPoly)      
-            
+                mask = self.imageToArray(rasterPoly)
+
             # Do the actual clipping
             if mask != None:
                 try:
@@ -366,17 +366,17 @@ class BatchConverter():
                         rshp[1] = clip2.shape[-1]
                     # Resize to the clip
                     mask.resize(*rshp, refcheck=False)
-                                        
+
                     try:
                         clip2 = numpy.choose(mask,(clip,0),mode='raise').astype(self.srcArray.dtype)
                     except ValueError, MemoryError:
                         self.error = self.error + 1
-                        clip2 = None # Shape mismatch or Memory Error                    
+                        clip2 = None # Shape mismatch or Memory Error
             else:
                 self.error = self.error + 1
                 clip2 = None # Image to array failed because polygon outside range
-        return clip2            
-        
+        return clip2
+
     # Bounding box intersection test
     def BBoxIntersect(self,rasE,polyE):
         #rasE = (6271.190835569453, 14271.195806587984, -94342.91093178833, -86548.67193043727)
@@ -386,25 +386,25 @@ class BatchConverter():
         b1_y = rasE[2]
         b1_w = rasE[1] - rasE[0]
         b1_h = rasE[0] - rasE[2]
-        
+
         b2_x = polyE[0]
         b2_y = polyE[2]
         b2_w = polyE[1] - polyE[0]
         b2_h = polyE[0] - polyE[2]
-        
+
         # is b1 on the right side of b2? # is b1 under b2? # is b2 on the right side of b1? # is b2 under b1?
-        if (b1_x > b2_x + b2_w- 1 ) or (b1_y > b2_y + b2_h - 1 ) or (b2_x > b1_x + b1_w - 1 ) or (b2_y > b1_y + b1_h - 1 ):                
+        if (b1_x > b2_x + b2_w- 1 ) or (b1_y > b2_y + b2_h - 1 ) or (b2_x > b1_x + b1_w - 1 ) or (b2_y > b1_y + b1_h - 1 ):
             # no collision
             return False
         else:
             # collision
             return True
-    
+
     # Returns list of corner coordinates from a geotransform
     # Code from here http://gis.stackexchange.com/questions/57834/how-to-get-raster-corner-coordinates-using-python-gdal-bindings
     def GetExtent(self,gt,cols,rows):
         ''' Return list of corner coordinates from a geotransform
-    
+
             @type gt:   C{tuple/list}
             @param gt: geotransform
             @type cols:   C{int}
@@ -417,7 +417,7 @@ class BatchConverter():
         ext=[]
         xarr=[0,cols]
         yarr=[0,rows]
-    
+
         for px in xarr:
             for py in yarr:
                 x=gt[0]+(px*gt[1])+(py*gt[2])
@@ -425,11 +425,11 @@ class BatchConverter():
                 ext.append([x,y])
             yarr.reverse()
         return ext
-        
+
     # Returns number of given cells
     def returnLCnumber(self,array,cl):
         return int(self.count_nonzero(array[array==cl]))
-    
+
     # Returns the proportion of the labeled class in the landscape
     def returnLCproportion(self,array,cl):
         res = []
@@ -451,21 +451,21 @@ class BatchConverter():
             return numpy.sum(array[array!=self.nodata])
         except ValueError:
             return None
-    
+
     # Returns mean of clipped raster cells
     def returnArrayMean(self,array):
         try:
             return numpy.mean(array[array!=self.nodata])
         except ValueError:
             return None
-        
+
     # Returns standard deviation of clipped raster cells
     def returnArrayStd(self,array):
         try:
             return numpy.std(array[array!=self.nodata])
         except ValueError:
             return None
-    
+
     # Returns the minimum of clipped raster cells
     def returnArrayMin(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
@@ -475,7 +475,7 @@ class BatchConverter():
                 return None
         else:
             return None
-    
+
     # Returns the minimum of clipped raster cells
     def returnArrayMax(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
@@ -485,7 +485,7 @@ class BatchConverter():
                 return None
         else:
             return None
-        
+
     # Returns the median of clipped raster cells
     def returnArrayMedi(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
@@ -495,7 +495,7 @@ class BatchConverter():
                 return None
         else:
             return None
-    
+
     # Returns the weighed average of clipped raster cells
     def returnArrayLowerQuant(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
@@ -505,18 +505,18 @@ class BatchConverter():
                 return None
         else:
             return None
-    
+
     # Returns the weighed average of clipped raster cells
     def returnArrayHigherQuant(self,array):
         if numpy.size(array) != 0 and self.count_nonzero(array) != 0:
             try:
                 return scipy.percentile(array[array!=self.nodata],75)
             except ValueError:
-                return None 
+                return None
         else:
             return None
-    
-    # Calculates the Shannon Index    
+
+    # Calculates the Shannon Index
     def f_returnShannonIndex(self,array,classes):
         sh = []
         cl_array = numpy.copy(array) # create working array
@@ -532,7 +532,7 @@ class BatchConverter():
             prop = self.count_nonzero(arr) / float(sum(res))
             sh.append(prop * math.log(prop))
         return sum(sh)*-1
-    
+
     # Calculates the Simpson Index
     def f_returnSimpsonIndex(self,array,classes):
         si = []
@@ -557,7 +557,7 @@ class BatchConverter():
 # List all available landscape vector functions for use in the VectorBatchConverter class
 def listVectorStatistics():
     functionList = []
-    
+
     functionList.append(unicode("Class area")) # Calculate area of class
     functionList.append(unicode("Landscape Proportion")) # Landscape Proportion of class
     functionList.append(unicode("Number of Patches")) # Return Number of Patches
@@ -575,7 +575,7 @@ def listVectorStatistics():
     # Shape Metric
     functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
     #functionList.append(unicode("Overall Core area")) # Return Core area
-    
+
     return functionList
 
 
@@ -602,7 +602,7 @@ class VectorBatchConverter():
             return
         else:
             self.layer = self.datasource.GetLayer(0) # Import layer 0 --> only works with shapefiles
-        
+
         self.layerName = str( self.layer.GetName() )# Save the Layersname
         # Save the names of unique groups in an array
         d = self.datasource.ExecuteSQL("SELECT DISTINCT %s FROM %s" % (self.ID,self.layerName))
@@ -610,7 +610,7 @@ class VectorBatchConverter():
         for i in range(0,d.GetFeatureCount()):
             f = d.GetFeature(i)
             self.groups.append(f.GetField(0))
-                
+
     # Runs a defined metric
     def go(self,name,cl=None):
         cl = str(cl)
@@ -631,7 +631,7 @@ class VectorBatchConverter():
         if(name == unicode("Greatest patch area")): # Return Greatest Patch area
             return self.f_MaxPatchArea(cl)
         if(name == unicode("Smallest patch area")): # Return Smallest Patch area
-            return self.f_MinPatchArea(cl)  
+            return self.f_MinPatchArea(cl)
         # Edge Metrics
         if(name == unicode("Edge length")): # Calculates total edge length
             return self.f_EdgeLength(cl)
@@ -658,7 +658,7 @@ class VectorBatchConverter():
         if(name == unicode("LC_LQua")):
             return self.f_MedianPatchArea(None,"LC_Med",25)
         if(name == unicode("LC_UQua")):
-            return self.f_MedianPatchArea(None,"LC_Med",75)             
+            return self.f_MedianPatchArea(None,"LC_Med",75)
         if(name == unicode("DIV_SH")):
             pass
             #return self.f_ShannonIndex()
@@ -673,14 +673,14 @@ class VectorBatchConverter():
         if cl == None:
             layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE %s = '%s'" % (self.layerName, self.ID, group) )
         else:
-            layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE (%s = '%s') AND (%s = '%s')" % (self.layerName, self.ID, group,self.classField,cl) )        
+            layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE (%s = '%s') AND (%s = '%s')" % (self.layerName, self.ID, group,self.classField,cl) )
         res = []
         for i in range(0,layers.GetFeatureCount()):
             f = layers.GetFeature(i)
             g = f.GetGeometryRef()
-            res.append(g.Area()) 
+            res.append(g.Area())
         return res
-    
+
     # Returns a list with the perimeters of all features within a given group
     def returnGroupPerimeter(self,group,cl=None):
         if cl == None:
@@ -694,7 +694,7 @@ class VectorBatchConverter():
             pts = ref_geometry.GetGeometryRef(0)
             points = []
             for p in xrange(pts.GetPointCount()):
-                points.append((pts.GetX(p), pts.GetY(p)))        
+                points.append((pts.GetX(p), pts.GetY(p)))
             Nedges = len(points)-1
             length = []
             for i in xrange(Nedges):
@@ -702,15 +702,15 @@ class VectorBatchConverter():
                 bx, by = points[i+1]
                 length.append(math.hypot(bx-ax, by-ay))
             res.append(numpy.sum(length))
-        return res    
-    
+        return res
+
     # Returns the number of all patches within a given group with optional class
     def returnGroupPatchNumber(self,group,cl=None):
         if cl == None:
             layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE %s = '%s'" % (self.layerName, self.ID, group) )
         else:
             layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE (%s = '%s') AND (%s = '%s')" % (self.layerName, self.ID, group,self.classField,cl) )
-            
+
         return layers.GetFeatureCount()
 
     # Get mean patch area for each group and optionally class
@@ -724,7 +724,7 @@ class VectorBatchConverter():
                 v = "NULL"
             res.append( [group,name,v] )
         return res
-    
+
     # Get mean patch area for each group and optionally class
     def f_SDPatchArea(self,cl=None,name="StDev patch area"):
         res = []
@@ -736,7 +736,7 @@ class VectorBatchConverter():
                 v = "NULL"
             res.append( [group,name,v] )
         return res
-    
+
     # Get median patch area for each group and optionally class
     def f_MedianPatchArea(self,cl=None,name="Median patch area",niv=50):
         res = []
@@ -748,7 +748,7 @@ class VectorBatchConverter():
                 v = "NULL"
             res.append( [group,name,v] )
         return res
-    
+
     # Get greatest patch area for each group and optionally class
     def f_MaxPatchArea(self,cl=None,name="Greatest patch area"):
         res = []
@@ -760,7 +760,7 @@ class VectorBatchConverter():
                 v = "NULL"
             res.append( [group,name,v] )
         return res
-    
+
     # Get smallest patch area for each group and optionally class
     def f_MinPatchArea(self,cl=None,name="Smallest patch area"):
         res = []
@@ -772,7 +772,7 @@ class VectorBatchConverter():
                 v = "NULL"
             res.append( [group,name,v] )
         return res
-    
+
     # Get patch density for each group and optionally class
     def f_PatchDensity(self,cl=None,name="Patch density"):
         res = []
@@ -781,7 +781,7 @@ class VectorBatchConverter():
             r = self.returnGroupArea(group,None)
             try:
                 v = numpy.sum(r)
-                pd = (n / float(numpy.sum(r))) 
+                pd = (n / float(numpy.sum(r)))
             except ValueError: # Catch empty array
                 pd = "NULL"
             res.append( [group,name,pd] )
@@ -798,7 +798,7 @@ class VectorBatchConverter():
                 v = "NULL"
             res.append( [group,name,v] )
         return res
-    
+
     # Get Edge density for each group and optionally class
     def f_EdgeDensity(self,cl=None,name="Edge density"):
         res = []
@@ -811,7 +811,7 @@ class VectorBatchConverter():
                 a = (float(numpy.sum(p)) / float(numpy.sum(r)) )
             res.append( [group,name,a] )
         return res
-    
+
     # Get Mean total edge length for all patches for each group and optionally class
     def f_MeanEdgeLength(self,cl=None,name="Mean patch edge length"):
         res = []
@@ -823,7 +823,7 @@ class VectorBatchConverter():
                 v = "NULL"
             res.append( [group,name,v] )
         return res
-    
+
     # Get Number of patches for each group and optionally class
     def f_NumberPatches(self,cl=None,name="Number of Patches"):
         res = []
@@ -831,8 +831,8 @@ class VectorBatchConverter():
             n = self.returnGroupPatchNumber(group,cl)
             res.append( [group,name,n] )
         return res
-    
-    # Get Mean shape ratio (ratio perimeter/area) for all patches for each group and optionally class  
+
+    # Get Mean shape ratio (ratio perimeter/area) for all patches for each group and optionally class
     def f_MeanShapeRatio(self,cl=None,name="Mean patch shape ratio"):
         res = []
         for group in self.groups:
@@ -845,7 +845,7 @@ class VectorBatchConverter():
                 r = numpy.mean(r)
             res.append( [group,name,r] )
         return res
-    
+
     # Get Patch area size for each group and class
     # CLASS METRIC ONLY
     def f_ClassArea(self,cl=None,name="Class area"):
@@ -858,7 +858,7 @@ class VectorBatchConverter():
                 v = "NULL"
             res.append( [group,name,v] )
         return res
-    
+
     # Get Landscape proportion for each group and class
     # CLASS METRIC ONLY
     def f_LandscapeProportion(self,cl=None,name="Landscape Proportion"):
@@ -887,6 +887,6 @@ class VectorBatchConverter():
 
     def f_SimpsonIndex(self,name="DIV_SI"):
         pass
-    
+
     def f_EvenessIndex(self,name="DIV_EV"):
         pass
