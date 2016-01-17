@@ -99,7 +99,7 @@ def listStatistics():
     functionList.append(unicode("Largest Patch Index")) # Return Largest patch Index
     #functionList.append(unicode("Mean patch distance")) # Return Mean Patch distance
     #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
-    #functionList.append(unicode("Fractal Dimension Index")) # Return Fractal Dimension Index
+    functionList.append(unicode("Fractal Dimension Index")) # Return Fractal Dimension Index
     functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
     functionList.append(unicode("Mean Shape Index")) # Return Mean Patch shape    
     functionList.append(unicode("Overall Core area")) # Return Core area
@@ -438,7 +438,6 @@ class LandCoverAnalysis():
         return ndimage.sum(newlab) * self.cellsize_2
     
     # Calculates the Fractal dimension index patchwise
-    # Returns a list with all values
     def f_getFractalDimensionIndex(self,labeled_array,numpatches):
         # Calculate patchwise
         frac = numpy.array([]).astype(float)
@@ -446,9 +445,9 @@ class LandCoverAnalysis():
             feature = self.f_returnPatch(labeled_array,i)
             a = float( self.f_returnArea(feature) )
             p = float( self.f_returnEdgeLength(feature) )
-            fdi = ( 2.0 * math.log( 0.25 * p ) ) / math.log( a )
+            fdi = ( 2.0 * numpy.log( 0.25 * p ) ) / numpy.log( a )
             frac = numpy.append(frac,fdi)        
-        return frac
+        return numpy.mean(frac)
     
     # Return greatest, smallest or mean patch area
     def f_returnPatchArea(self,cl_array,labeled_array,numpatches,what):
