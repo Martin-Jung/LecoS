@@ -96,6 +96,7 @@ def listStatistics():
     functionList.append(unicode("Smallest patch area")) # Return Smallest Patch area
     functionList.append(unicode("Mean patch area")) # Return Mean Patch area
     functionList.append(unicode("Median patch area")) # Return Median Patch area
+    functionList.append(unicode("Largest Patch Index")) # Return Largest patch Index
     #functionList.append(unicode("Mean patch distance")) # Return Mean Patch distance
     #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
     #functionList.append(unicode("Fractal Dimension Index")) # Return Fractal Dimension Index
@@ -188,6 +189,8 @@ class LandCoverAnalysis():
             return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"median")
         elif(name == unicode("Mean patch distance")):
             return unicode(name), self.f_returnAvgPatchDist(self.cl_array,self.numpatches)
+        elif(name == unicode("Largest Patch Index")):
+            return unicode(name), self.f_returnLargestPatchIndex(self.cl_array,self.labeled_array,self.numpatches)
         elif(name == unicode("Mean patch perimeter")):
             return unicode(name), self.f_returnAvgPatchPerimeter(self.labeled_array)
         elif(name == unicode("Fractal Dimension Index")):
@@ -332,7 +335,13 @@ class LandCoverAnalysis():
         feature = numpy.zeros_like(labeled_array, dtype=int)
         feature[labeled_array == patch] = 1
         return feature
-    
+
+    # The largest patch index
+    def f_returnLargestPatchIndex(self,cl_array,labeled_array,numpatches):
+        ma = self.f_returnPatchArea(cl_array,labeled_array,numpatches,"max")
+        self.f_LandscapeArea()
+        return ( ma / self.Larea ) * 100
+  
     # Iter through all identified patches and count adjacent cells
     # FIXME: Obsolete. Can be deleted. Now serves as bin for snippets
     def f_IterPatches(self,array,labeled_array,numpatches,s,overlap=False):
