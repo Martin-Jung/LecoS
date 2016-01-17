@@ -101,6 +101,7 @@ def listStatistics():
     #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
     #functionList.append(unicode("Fractal Dimension Index")) # Return Fractal Dimension Index
     functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
+    functionList.append(unicode("Mean Shape Index")) # Return Mean Patch shape    
     functionList.append(unicode("Overall Core area")) # Return Core area
     functionList.append(unicode("Landscape division")) # Return Landscape Division Index
     functionList.append(unicode("Effective Meshsize")) # Return Effectiv Mesh Size      
@@ -197,6 +198,8 @@ class LandCoverAnalysis():
             return unicode(name), self.f_getFractalDimensionIndex(self.labeled_array,self.numpatches)
         elif(name == unicode("Mean patch shape ratio")):
             return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches)
+        elif(name == unicode("Mean Shape Index")):
+            return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches,correction=True)
         elif(name == unicode("Overall Core area")):
             return unicode(name), self.f_getCoreArea(self.labeled_array)
         elif(name == unicode("Landscape division")):
@@ -514,7 +517,7 @@ class LandCoverAnalysis():
         return AvgPeri * self.cellsize 
     
     # Average shape (ratio perimeter/area) of each patches of each lc-class
-    def f_returnAvgShape(self,labeled_array,cl_array, numpatches):        
+    def f_returnAvgShape(self,labeled_array,cl_array, numpatches,correction=False):        
         perim = numpy.array([]).astype(float)
         for i in xrange(1,numpatches + 1): # Very slow!
                 feature = self.f_returnPatch(labeled_array,i)
@@ -522,7 +525,12 @@ class LandCoverAnalysis():
                 perim = numpy.append(perim,p)        
         area = ndimage.sum(cl_array, labeled_array, range(numpatches + 1)).astype(float)
         area = area[area !=0]
-        d = numpy.divide(perim,area).astype(float)
+        if correction:
+            a = 0.25 * perim
+            b = numpy.sqrt(area)
+            d = numpy.divide(a,b).astype(float)
+        else:
+            d = numpy.divide(perim,area).astype(float)
         return numpy.mean(d)
 
     # Returns the Landscape division Index for the given array
