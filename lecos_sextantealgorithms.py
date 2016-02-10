@@ -1176,11 +1176,13 @@ class NeighbourhoodAnalysis(GeoAlgorithm):
         self.nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         self.classes, array = lcs.f_landcover(str(inputFilename))
         raster = None # close gdal
-
+        
         # Check for nodata value
         if self.nodata == None:
             ln = str(path.basename(inputFilename))
             raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+        # Format nodata to numpy.nan
+        array[array==self.nodata] = numpy.nan
 
         if what=="mean":
             result = ndimage.generic_filter(array, numpy.mean, size=size, mode=mode)
