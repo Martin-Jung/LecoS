@@ -354,7 +354,7 @@ class BatchConverter():
             if mask != None:
                 try:
                     clip2 = numpy.choose(mask,(clip, 0),mode='raise').astype(self.srcArray.dtype)
-                except MemoryError:
+                except Exception:
                     self.error = self.error + 1
                     clip2 = None # Shape mismatch or Memory Error
                 except ValueError:
@@ -369,7 +369,7 @@ class BatchConverter():
 
                     try:
                         clip2 = numpy.choose(mask,(clip,0),mode='raise').astype(self.srcArray.dtype)
-                    except ValueError, MemoryError:
+                    except ValueError:
                         self.error = self.error + 1
                         clip2 = None # Shape mismatch or Memory Error
             else:
