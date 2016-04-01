@@ -407,6 +407,7 @@ class LandCoverAnalysis():
     # Returns total Edge length
     def f_returnEdgeLength(self,labeled_array):
         TotalEdgeLength = self.f_returnPatchPerimeter(labeled_array)
+        #Todo: Mask out the boundary cells
         return TotalEdgeLength * self.cellsize
     
     # Returns sum of patches perimeter
@@ -503,10 +504,15 @@ class LandCoverAnalysis():
             coords = numpy.vstack((x,y)).T
             
             b = spatial.distance.pdist(coords, lambda u, v: numpy.sqrt( ( ((u-v)*self.cellsize)**2).sum() ) )
+            b = spatial.distance.pdist(coords, 'cityblock')
+            
+            # kd tree
+            # 
+            
             #b = spatial.distance.squareform(b)
             #b[b==0] = numpy.nan
 
-            return numpy.nanmax(b) / self.cellsize # Get mean distance 
+            return numpy.nanmean(b) / self.cellsize # Get mean distance 
         
     # Get average Patch Perimeter of given landscape patch
     # FIXME: can't be right

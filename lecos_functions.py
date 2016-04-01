@@ -27,11 +27,13 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 from qgis.utils import *
+import qgis.utils
 #from qgis.analysis import *
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
+import re # regular matching
 import numpy
 import scipy
 
@@ -424,10 +426,10 @@ def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
     tDs.SetGeoTransform(gt)
 
     # Then set projection of current active layer
-    #epsg = iface.mapCanvas().mapRenderer().destinationCrs().srsid() # activeLayer().crs().authid()
-    #coord_system = osr.SpatialReference()
-    #coord_system.ImportFromEPSG(epsg)
-    #tDs.SetProjection(coord_system.ExportToWkt())
+    epsg = qgis.utils.iface.activeLayer().crs().authid() #mapCanvas().mapRenderer().destinationCrs().srsid()
+    coord_system = osr.SpatialReference()    
+    coord_system.ImportFromEPSG( int(re.findall('\d+', epsg)[0]) )
+    tDs.SetProjection(coord_system.ExportToWkt())
 
     band = tDs = None # Close writing
 

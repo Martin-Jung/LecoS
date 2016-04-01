@@ -75,7 +75,6 @@ except ImportError:
     from processing.core.parameters import ParameterExtent
     from processing.core.parameters import ParameterFile
     from processing.core.parameters import ParameterCrs
-
 # Import PyQT bindings
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -83,6 +82,8 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
+# QGIS utils
+import qgis.utils
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
@@ -178,7 +179,6 @@ class CreateRandomLandscape(GeoAlgorithm):
         ymax = float(ext[3])
         gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
-        
         cols = int( round( (xmax-xmin)/cs ) )
         rows = int( round( (ymax-ymin)/cs ) )
         
@@ -219,7 +219,7 @@ class CreateRandomLandscape(GeoAlgorithm):
             array = numpy.random.lognormal(avg,std,(rows,cols))
         elif what == "Weibull":
             array = numpy.random.weibull(avg,(rows,cols))
-        
+                
         # Create output raster
         func.createRaster(output,cols,rows,array,nodata,gt)
 
