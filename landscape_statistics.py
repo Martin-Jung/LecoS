@@ -103,6 +103,7 @@ def listStatistics():
     functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
     functionList.append(unicode("Mean Shape Index")) # Return Mean Patch shape    
     functionList.append(unicode("Overall Core area")) # Return Core area
+    functionList.append(unicode("Patch cohesion index")) 
     functionList.append(unicode("Landscape division")) # Return Landscape Division Index
     functionList.append(unicode("Effective Meshsize")) # Return Effectiv Mesh Size      
     functionList.append(unicode("Splitting Index")) # Return Splitting Index
@@ -202,6 +203,8 @@ class LandCoverAnalysis():
             return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches,correction=True)
         elif(name == unicode("Overall Core area")):
             return unicode(name), self.f_getCoreArea(self.labeled_array)
+        elif(name == unicode("Patch cohesion index")):
+            return unicode(name), self.f_getCohesionIndex(self.cl_array,self.labeled_array,self.numpatches)
         elif(name == unicode("Landscape division")):
             return unicode(name), self.f_returnLandscapeDivisionIndex(self.array,self.labeled_array,self.numpatches,cl)
         elif(name == unicode("Splitting Index")):
@@ -415,7 +418,16 @@ class LandCoverAnalysis():
         labeled_array = self.f_setBorderZero(labeled_array) # make a border with zeroes
         TotalPerimeter = numpy.sum(labeled_array[:,1:] != labeled_array[:,:-1]) + numpy.sum(labeled_array[1:,:] != labeled_array[:-1,:])
         return TotalPerimeter
-    
+
+    # Internal edge (of core zone)
+    def f_returnInternalEdge(self,cl_array):
+        # Internal edge: Count of neighboring non-zero cell       
+        kernel = ndimage.generate_binary_structure(2, 1) # Make a kernel
+        kernel[1, 1] = 0
+        b = ndimage.convolve(cl_array, kernel, mode="constant")
+        n_interior = b[cl_array != 0].sum() # Number of interiror edges
+        return n_interior
+
     # Return Edge Density
     def f_returnEdgeDensity(self,labeled_array):
         self.f_LandscapeArea() # Calculate LArea
@@ -437,6 +449,23 @@ class LandCoverAnalysis():
         s = ndimage.generate_binary_structure(2,2)
         newlab = ndimage.binary_erosion(labeled_array,s).astype(labeled_array.dtype)
         return ndimage.sum(newlab) * self.cellsize_2
+    
+    # Calculate the cohesion index    
+    # Hint: Likely wrong behaviour of internal edges
+    def f_getCohesionIndex(self,cl_array,labeled_array,numpatches):
+        # First calculate internal edges and number of cells of each patch
+        internalEdges = numpy.array([]).astype(float)
+        areas = numpy.array([]).astype(float)
+        for i in xrange(1,numpatches + 1): # Very slow!
+            feature = self.f_returnPatch(labeled_array,i)
+            areas = numpy.append(areas, float( self.count_nonzero(feature) ) )
+            internalEdges = numpy.append(internalEdges, float( self.f_returnInternalEdge(feature) ) )
+        Larea = cl_array.size # The total number of cells in the landscape
+        val = ((1-(numpy.sum(internalEdges)/numpy.sum(numpy.multiply(internalEdges,numpy.sqrt(areas)))) )*((1-1/numpy.sqrt(Larea))/10))*100
+        return val
+
+
+    
     
     # Calculates the Fractal dimension index patchwise
     def f_getFractalDimensionIndex(self,labeled_array,numpatches):
