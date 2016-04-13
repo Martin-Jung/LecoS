@@ -97,13 +97,14 @@ def listStatistics():
     functionList.append(unicode("Mean patch area")) # Return Mean Patch area
     functionList.append(unicode("Median patch area")) # Return Median Patch area
     functionList.append(unicode("Largest Patch Index")) # Return Largest patch Index
-    #functionList.append(unicode("Mean patch distance")) # Return Mean Patch distance
+    functionList.append(unicode("Euclidean Nearest-Neighbor Distance")) # "Euclidean Nearest-Neighbor Distance"
     #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
     functionList.append(unicode("Fractal Dimension Index")) # Return Fractal Dimension Index
     functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
     functionList.append(unicode("Mean Shape Index")) # Return Mean Patch shape    
-    functionList.append(unicode("Overall Core area")) # Return Core area
-    functionList.append(unicode("Patch cohesion index")) 
+    functionList.append(unicode("Overall Core area")) # Return Core area    
+    functionList.append(unicode("Like adjacencies")) # Like adjacencies
+    functionList.append(unicode("Patch cohesion index")) # Patch cohesion index
     functionList.append(unicode("Landscape division")) # Return Landscape Division Index
     functionList.append(unicode("Effective Meshsize")) # Return Effectiv Mesh Size      
     functionList.append(unicode("Splitting Index")) # Return Splitting Index
@@ -203,6 +204,10 @@ class LandCoverAnalysis():
             return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches,correction=True)
         elif(name == unicode("Overall Core area")):
             return unicode(name), self.f_getCoreArea(self.labeled_array)
+        elif(name == unicode("Like adjacencies")):
+            return unicode(name), self.f_getPropLikeAdj(self.labeled_array,self.numpatches)            
+        elif(name == unicode("Euclidean Nearest-Neighbor Distance")):
+            return unicode(name), self.f_returnAvgPatchDist(self.labeled_array,self.numpatches,metric = "euclidean")
         elif(name == unicode("Patch cohesion index")):
             return unicode(name), self.f_getCohesionIndex(self.cl_array,self.labeled_array,self.numpatches)
         elif(name == unicode("Landscape division")):
@@ -419,7 +424,7 @@ class LandCoverAnalysis():
         TotalPerimeter = numpy.sum(labeled_array[:,1:] != labeled_array[:,:-1]) + numpy.sum(labeled_array[1:,:] != labeled_array[:-1,:])
         return TotalPerimeter
 
-    # Internal edge (of core zone)
+    # Internal edge
     def f_returnInternalEdge(self,cl_array):
         # Internal edge: Count of neighboring non-zero cell       
         kernel = ndimage.generate_binary_structure(2, 1) # Make a kernel
@@ -464,8 +469,17 @@ class LandCoverAnalysis():
         val = ((1-(numpy.sum(internalEdges)/numpy.sum(numpy.multiply(internalEdges,numpy.sqrt(areas)))) )*((1-1/numpy.sqrt(Larea))/10))*100
         return val
 
-
-    
+    # Calculate adjacenies
+    def f_getPropLikeAdj(self,labeled_array,numpatches):
+        internalEdges = numpy.array([]).astype(float)
+        outerEdges = numpy.array([]).astype(float)
+        for i in xrange(1,numpatches + 1): # Very slow!
+            feature = self.f_returnPatch(labeled_array,i)
+            outerEdges = numpy.append(outerEdges, float( self.f_returnPatchPerimeter(feature) ) )
+            internalEdges = numpy.append(internalEdges, float( self.f_returnInternalEdge(feature) ) )
+        
+        prop = numpy.sum(internalEdges) / numpy.sum(internalEdges+outerEdges*2)
+        return prop
     
     # Calculates the Fractal dimension index patchwise
     def f_getFractalDimensionIndex(self,labeled_array,numpatches):
@@ -520,28 +534,50 @@ class LandCoverAnalysis():
         return numpy.unravel_index(labeled_array.argmax(),labeled_array.shape)
     
     # Get average distance between landscape patches
-    def f_returnAvgPatchDist(self,cl_array,numpatches):
+    def f_returnAvgPatchDist(self,labeled_array,numpatches,metric = "euclidean"):
         if numpatches == 1:
             return 0
         else:
-            #b = spatial.distance.pdist(cl_array,metric="euclidean")
+#            a = numpy.zeros((8,8), dtype=numpy.int)
+#            cellsize = 10            
+#            a[1,1] = a[1,2] = a[2,1] = a[2,2] = a[3,1] = a[3,2] = 1
+#            a[5,5] = a[5,6] = a[6,5] = a[6,6] = a[7,5] = a[7,6] = 1           
+#            lbl,numpatches = ndimage.label(a)
+#            coords = ndimage.measurements.center_of_mass(a, lbl, [x+1 for x in range(numpatches) ])
+#            b = spatial.distance.pdist(coords, 'cityblock')
+#            # Euclidean
+#            b = spatial.distance.pdist(coords, lambda u, v: numpy.sqrt( ( ((u-v)*cellsize)**2).sum() ) )
+            # manhattan
+#            b = spatial.distance.pdist(coords, lambda u, v: ( (numpy.abs(u-v)*cellsize)).sum() ) 
 
-            # Extract basic edge skeleton
-            edge = ndimage.distance_transform_edt(cl_array == 0) == 1
-            #straight_line_distance = sqrt ( ( x2 - x1 )**2 + ( y2 - y1 )**2 ); 
-            x,y = numpy.where(edge)
-            coords = numpy.vstack((x,y)).T
+            # For number of patches
+            closest_points = []
+            for patch in [x+1 for x in range(numpatches)]:
+                # Get coordinates of first patch
+                x,y = numpy.where(labeled_array==patch)
+                coords = numpy.vstack((x,y)).T # transform into array
+                # Built a KDtree of the coords of the first patch
+                mt = spatial.cKDTree(coords)
+                
+                for patch2 in [i+1 for i in range(numpatches)]:
+                    if patch == patch2: # If patch is the same as the first, skip
+                        continue
+                    # Get coordinates of second patch
+                    x2,y2 = numpy.where(labeled_array==patch2)
+                    coords2 = numpy.vstack((x2,y2)).T
+                                                      
+                    # Now loop through points
+                    min_res = []
+                    for pi in range(len(coords2)):
+                        dist, indexes = mt.query(coords2[pi]) # query the distance and index
+                        min_res.append([dist,pi])
+                    m = numpy.vstack(min_res)
+                    # Find minimum as closed point and get index of coordinates
+                    closest_points.append( coords2[m[numpy.argmin(m,axis=0)[0]][1]] )
             
-            b = spatial.distance.pdist(coords, lambda u, v: numpy.sqrt( ( ((u-v)*self.cellsize)**2).sum() ) )
-            b = spatial.distance.pdist(coords, 'cityblock')
-            
-            # kd tree
-            # 
-            
-            #b = spatial.distance.squareform(b)
-            #b[b==0] = numpy.nan
-
-            return numpy.nanmean(b) / self.cellsize # Get mean distance 
+            # Finally calculate pairwise distances of the closest points and calculate the average            
+            res = (spatial.distance.pdist(closest_points,metric = metric) * self.cellsize).mean()
+            return res
         
     # Get average Patch Perimeter of given landscape patch
     # FIXME: can't be right

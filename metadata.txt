@@ -9,14 +9,19 @@
 name=LecoS - Landscape Ecology Statistics
 qgisMinimumVersion=2.0
 description=Contains several analytical functions for land cover analysis
-version=2.0.3
+version=2.0.4
 about=LecoS is based on metrics taken from FRAGSTATS: http://www.umass.edu/landeco/research/fragstats/fragstats.html Functions include the calculation of metrics on rasters and vector layers. A polygon overlay tool is also available to ease up computation. Additionally LecoS provides some functionalities to manipulate classified raster images.
 
 ; Start of changelog file
 changelog =
+	Version 2.0.4
+	- Added new metric: Euclidean Nearest-Neighbor Distance	
+
 	Version 2.0.3
 	- Fixed PIL Error with most recent version
 	- #14602 - Enable default output SRS for random and neutral landscapes.
+	- Added new landscape metric: Proportion of like adjacencies
+	- Added new landscape metric: Patch cohesion index
 
 	Version 2.0.2
 	- Fixed Bug #14270 for the Moving Window analysis tool
