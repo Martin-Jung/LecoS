@@ -15,7 +15,8 @@ about=LecoS is based on metrics taken from FRAGSTATS: http://www.umass.edu/lande
 ; Start of changelog file
 changelog =
 	Version 2.0.4
-	- Added new metric: Euclidean Nearest-Neighbor Distance	
+	- Added new metric: Euclidean Nearest-Neighbor Distance
+	- Attempt to fix tobytes bug #14700	
 
 	Version 2.0.3
 	- Fixed PIL Error with most recent version

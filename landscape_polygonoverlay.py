@@ -246,9 +246,12 @@ class BatchConverter():
         gdalnumeric image.
         """
         try:
-            a=numpy.fromstring(i.tobytes(),'b')
-        except SystemError:
-            a = None
+            a = numpy.fromstring(i.tostring(),'b')
+        except AttributeError:
+            try:
+                a = numpy.fromstring(i.tobytes(),'b')   
+            except SystemError:
+                a = None
         if a != None:
             a.shape=i.im.size[1], i.im.size[0]
         return a
@@ -259,7 +262,7 @@ class BatchConverter():
         Python Imaging Library Image.
         """
         i=Image.fromstring('L',(a.shape[1],a.shape[0]),
-                (a.astype('b')).tobytes())
+                (a.astype('b')).tostring())
         return i
 
     def world2Pixel(self,geoMatrix, x, y):
