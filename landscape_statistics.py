@@ -190,14 +190,12 @@ class LandCoverAnalysis():
             return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"mean")
         elif(name == unicode("Median patch area")):
             return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"median")
-        elif(name == unicode("Mean patch distance")):
-            return unicode(name), self.f_returnAvgPatchDist(self.cl_array,self.numpatches)
         elif(name == unicode("Largest Patch Index")):
             return unicode(name), self.f_returnLargestPatchIndex(self.cl_array,self.labeled_array,self.numpatches)
         elif(name == unicode("Mean patch perimeter")):
             return unicode(name), self.f_returnAvgPatchPerimeter(self.labeled_array)
         elif(name == unicode("Fractal Dimension Index")):
-            return unicode(name), self.f_getFractalDimensionIndex(self.labeled_array,self.numpatches)
+            return unicode(name), self.f_getFractalDimensionIndex(self.cl_array,self.labeled_array,self.numpatches)
         elif(name == unicode("Mean patch shape ratio")):
             return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches)
         elif(name == unicode("Mean Shape Index")):
@@ -352,66 +350,7 @@ class LandCoverAnalysis():
         ma = self.f_returnPatchArea(cl_array,labeled_array,numpatches,"max")
         self.f_LandscapeArea()
         return ( ma / self.Larea ) * 100
-  
-    # Iter through all identified patches and count adjacent cells
-    # FIXME: Obsolete. Can be deleted. Now serves as bin for snippets
-    def f_IterPatches(self,array,labeled_array,numpatches,s,overlap=False):
-        res = []
-        if overlap:
-            for i in range(1,numpatches + 1):
-                feature = f_returnPatch(labeled_array,i)
-                ov = (feature * ndimage.convolve((feature == 0).astype(int), s)).sum()
-                res.append(ov)
-        else:
-            for i in range(1, numpatches + 1):
-                feature = f_returnPatch(labeled_array,i)
-                dil = ndimage.binary_dilation(feature,s).astype(feature.dtype)
-                n = dil - feature
-                res.append(self.count_nonzero(n))
-        return sum(res)
-    
-        import matplotlib.pyplot as plt
-        plt.imshow(feature,interpolation='nearest')
-        plt.axis('on')
-        plt.show()
-        print a[2]
-    
-        s = ndimage.generate_binary_structure(2,2)
-        a = numpy.zeros((6,6), dtype=numpy.int)
-        for i in range(0,6):
-            a[i,i] = 1
-        print a
-        c = ndimage.binary_dilation(a,s).astype(a.dtype)
-        print c
-        b = c - a
-        print b
-        c = ndimage.distance_transform_cdt(a == 0,metric='taxicab') == 1
-        c = c.astype(int)
-        plt.imshow(a,interpolation='nearest')
-        plt.axis('on')
-        plt.show()
-        
-        # correct multiple count without overlap
-        b, c = ndimage.label(a,s)
-        e = numpy.zeros(a.shape)
-        for i in xrange(c):
-            e += ndimage.distance_transform_cdt((b == i + 1) == 0) == 1
-        print int(numpy.sum(e))
-        # alternative
-        b = ndimage.binary_closing(a,s) - a
-        b = ndimage.binary_dilation(b.astype(int),s)
-    
-        c = ndimage.distance_transform_cdt(a == 0) == 1
-    
-        e = c.astype(numpy.int) * b 
-    
-        print numpy.sum(e)
-        
-        
-        print ((a * ndimage.convolve((a == 1).astype(int), s)))
-        print (a * ndimage.convolve((a == 0).astype(int), s)) 
-        print numpy.sum(b)    
-    
+          
     # Returns total Edge length
     def f_returnEdgeLength(self,labeled_array):
         TotalEdgeLength = self.f_returnPatchPerimeter(labeled_array)
@@ -482,9 +421,20 @@ class LandCoverAnalysis():
         return prop
     
     # Calculates the Fractal dimension index patchwise
-    def f_getFractalDimensionIndex(self,labeled_array,numpatches):
+    def f_getFractalDimensionIndex(self,cl_array,labeled_array,numpatches):
         # Calculate patchwise
         frac = numpy.array([]).astype(float)
+#        sizes = ndimage.sum(cl_array,labeled_array,range(1,numpatches+1)) # all area sizes
+#        sizes = sizes[sizes!=0] # remove zeros        
+#        def func(x):
+#            return x.sum()
+
+ #       b = ndimage.distance_transform_edt(cl_array == 0) == 1
+ #       lbl2, n = ndimage.label(b,ndimage.generate_binary_structure(2,2))
+ #       o = ndimage.labeled_comprehension(input = b,labels = lbl2,index = range(1, n+1),func = func,out_dtype='float', default=-1)        
+        
+#        fdi = (2.0 * numpy.log(sizes * 0.25) ) / numpy.log( o )
+#        numpy.mean(fdi)               
         for i in xrange(1,numpatches + 1): # Very slow!
             feature = self.f_returnPatch(labeled_array,i)
             a = float( self.f_returnArea(feature) )
@@ -540,15 +490,27 @@ class LandCoverAnalysis():
         else:
 #            a = numpy.zeros((8,8), dtype=numpy.int)
 #            cellsize = 10            
-#            a[1,1] = a[1,2] = a[2,1] = a[2,2] = a[3,1] = a[3,2] = 1
+#            a[2,2] = a[3,1] = a[3,2] = 1
+#            a[2,6] = a[2,7] = a[1,6] = 1
 #            a[5,5] = a[5,6] = a[6,5] = a[6,6] = a[7,5] = a[7,6] = 1           
 #            lbl,numpatches = ndimage.label(a)
 #            coords = ndimage.measurements.center_of_mass(a, lbl, [x+1 for x in range(numpatches) ])
+            
+#            d = ndimage.distance_transform_edt(a==0)    
+#            from scipy.sparse.csgraph import minimum_spanning_tree
+#            tr = minimum_spanning_tree(d)
+#            tr.toarray()
+            
 #            b = spatial.distance.pdist(coords, 'cityblock')
 #            # Euclidean
 #            b = spatial.distance.pdist(coords, lambda u, v: numpy.sqrt( ( ((u-v)*cellsize)**2).sum() ) )
             # manhattan
 #            b = spatial.distance.pdist(coords, lambda u, v: ( (numpy.abs(u-v)*cellsize)).sum() ) 
+
+            # invert ones and zeros
+            # ndimage.distance_transform_edt(a) calculates euclidean distance
+            # overlay with other patch, find smallest value
+            # or full array. sum values between minmal zeros
 
             # For number of patches
             closest_points = []
@@ -574,10 +536,13 @@ class LandCoverAnalysis():
                     m = numpy.vstack(min_res)
                     # Find minimum as closed point and get index of coordinates
                     closest_points.append( coords2[m[numpy.argmin(m,axis=0)[0]][1]] )
-            
-            # Finally calculate pairwise distances of the closest points and calculate the average            
-            res = (spatial.distance.pdist(closest_points,metric = metric) * self.cellsize).mean()
-            return res
+            # Safe test
+            if len(closest_points) < 2:
+                return numpy.nan
+            else:
+                # Finally calculate pairwise distances of the closest points and calculate the average            
+                res = (spatial.distance.pdist(closest_points,metric = metric) * self.cellsize).mean()
+                return res
         
     # Get average Patch Perimeter of given landscape patch
     # FIXME: can't be right
@@ -658,7 +623,7 @@ class LandCoverAnalysis():
     def testing_def(self):
         #Teststuff
         pass
-#         rasterPath = "/home/martin/Projekte/Bialowieza_TestData/fc.tif" 
+#         rasterPath = "/home/martin/Projekte/Bialowieza_TestData/fc_raster.tif" 
 #         srcImage = gdal.Open(str(rasterPath))
 #         array = srcImage.GetRasterBand(1).ReadAsArray() # Convert first band to array
 #         cl_array = numpy.copy(array)
