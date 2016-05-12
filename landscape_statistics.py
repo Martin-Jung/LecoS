@@ -461,15 +461,10 @@ class LandCoverAnalysis():
             
     # Returns the proportion of the labeled class in the landscape
     def f_returnProportion(self,array,cl):
-        res = []
-        for i in self.classes:
-            arr = numpy.copy(array)
-            arr[array!=i] = 0
-            res.append(self.count_nonzero(arr))
         arr = numpy.copy(array)
         arr[array!=cl] = 0
         try:
-            prop = self.count_nonzero(arr) / float(sum(res))
+            prop = self.count_nonzero(arr) / float(self.count_nonzero(array))
         except ZeroDivisionError:
             prop = None
         return prop
