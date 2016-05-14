@@ -1,4 +1,4 @@
-# This file contains metadata for your plugin. Beginning
+﻿# This file contains metadata for your plugin. Beginning
 # with version 1.8 this is the preferred way to supply information about a
 # plugin. The current method of embedding metadata in __init__.py will
 # be supported until version 2.0
@@ -9,14 +9,15 @@
 name=LecoS - Landscape Ecology Statistics
 qgisMinimumVersion=2.0
 description=Contains several analytical functions for land cover analysis
-version=2.0.4
+version=2.0.5
 about=LecoS is based on metrics taken from FRAGSTATS: http://www.umass.edu/landeco/research/fragstats/fragstats.html Functions include the calculation of metrics on rasters and vector layers. A polygon overlay tool is also available to ease up computation. Additionally LecoS provides some functionalities to manipulate classified raster images.
 
 ; Start of changelog file
 changelog =
-	Version 2.0.4
-	- Added new metric: Euclidean Nearest-Neighbor Distance
+	Version 2.0.5
+	- Added new metric: Euclidean Nearest-Neighbor Distance and improved speed
 	- Attempt to fix tobytes bug #14700	
+	- Speed improvement for landscape proportion. Thanks to @lselzer
 
 	Version 2.0.3
 	- Fixed PIL Error with most recent version

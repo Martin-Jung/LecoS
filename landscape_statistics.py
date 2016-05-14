@@ -41,6 +41,7 @@ except ImportError:
     sys.exit(0)
 from scipy import ndimage # import ndimage module seperately for easy access
 from scipy import spatial # Import spatial for average distance
+from scipy.spatial.distance import cdist
 
 # Try to import functions from osgeo
 try:
@@ -483,61 +484,33 @@ class LandCoverAnalysis():
         if numpatches == 1:
             return 0
         else:
-#            a = numpy.zeros((8,8), dtype=numpy.int)
-#            cellsize = 10            
-#            a[2,2] = a[3,1] = a[3,2] = 1
-#            a[2,6] = a[2,7] = a[1,6] = 1
-#            a[5,5] = a[5,6] = a[6,5] = a[6,6] = a[7,5] = a[7,6] = 1           
-#            lbl,numpatches = ndimage.label(a)
-#            coords = ndimage.measurements.center_of_mass(a, lbl, [x+1 for x in range(numpatches) ])
-            
-#            d = ndimage.distance_transform_edt(a==0)    
-#            from scipy.sparse.csgraph import minimum_spanning_tree
-#            tr = minimum_spanning_tree(d)
-#            tr.toarray()
-            
-#            b = spatial.distance.pdist(coords, 'cityblock')
-#            # Euclidean
-#            b = spatial.distance.pdist(coords, lambda u, v: numpy.sqrt( ( ((u-v)*cellsize)**2).sum() ) )
-            # manhattan
-#            b = spatial.distance.pdist(coords, lambda u, v: ( (numpy.abs(u-v)*cellsize)).sum() ) 
-
-            # invert ones and zeros
-            # ndimage.distance_transform_edt(a) calculates euclidean distance
-            # overlay with other patch, find smallest value
-            # or full array. sum values between minmal zeros
-
-            # For number of patches
-            closest_points = []
-            for patch in [x+1 for x in range(numpatches)]:
-                # Get coordinates of first patch
-                x,y = numpy.where(labeled_array==patch)
-                coords = numpy.vstack((x,y)).T # transform into array
-                # Built a KDtree of the coords of the first patch
-                mt = spatial.cKDTree(coords)
-                
-                for patch2 in [i+1 for i in range(numpatches)]:
-                    if patch == patch2: # If patch is the same as the first, skip
-                        continue
-                    # Get coordinates of second patch
-                    x2,y2 = numpy.where(labeled_array==patch2)
-                    coords2 = numpy.vstack((x2,y2)).T
-                                                      
-                    # Now loop through points
-                    min_res = []
-                    for pi in range(len(coords2)):
-                        dist, indexes = mt.query(coords2[pi]) # query the distance and index
-                        min_res.append([dist,pi])
-                    m = numpy.vstack(min_res)
-                    # Find minimum as closed point and get index of coordinates
-                    closest_points.append( coords2[m[numpy.argmin(m,axis=0)[0]][1]] )
-            # Safe test
-            if len(closest_points) < 2:
-                return numpy.nan
-            else:
-                # Finally calculate pairwise distances of the closest points and calculate the average            
-                res = (spatial.distance.pdist(closest_points,metric = metric) * self.cellsize).mean()
-                return res
+            """
+            Takes a labeled array as returned by scipy.ndimage.label and 
+            returns an intra-feature distance matrix.
+            Solution by @morningsun at StackOverflow
+            """
+            I, J = numpy.nonzero(labeled_array)
+            labels = labeled_array[I,J]
+            coords = numpy.column_stack((I,J))
+        
+            sorter = numpy.argsort(labels)
+            labels = labels[sorter]
+            coords = coords[sorter]
+        
+            sq_dists = cdist(coords, coords, 'sqeuclidean')
+        
+            start_idx = numpy.flatnonzero(numpy.r_[1, numpy.diff(labels)])
+            nonzero_vs_feat = numpy.minimum.reduceat(sq_dists, start_idx, axis=1)
+            feat_vs_feat = numpy.minimum.reduceat(nonzero_vs_feat, start_idx, axis=0)
+        
+            # Get lower triangle and zero distances to nan
+            b = numpy.tril( feature_dist(labeled_array) )
+            b[b == 0 ] = numpy.nan
+            # Multiply with cellsize
+            b = b * self.cellsize
+            res = numpy.nanmean(b) # Calculate mean
+        
+            return res
         
     # Get average Patch Perimeter of given landscape patch
     # FIXME: can't be right
