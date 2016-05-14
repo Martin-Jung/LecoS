@@ -504,7 +504,7 @@ class LandCoverAnalysis():
             feat_vs_feat = numpy.minimum.reduceat(nonzero_vs_feat, start_idx, axis=0)
         
             # Get lower triangle and zero distances to nan
-            b = numpy.tril( feature_dist(labeled_array) )
+            b = numpy.tril( feat_vs_feat )
             b[b == 0 ] = numpy.nan
             # Multiply with cellsize
             b = b * self.cellsize
