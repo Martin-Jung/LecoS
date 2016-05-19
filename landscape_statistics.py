@@ -481,14 +481,16 @@ class LandCoverAnalysis():
     
     # Get average distance between landscape patches
     def f_returnAvgPatchDist(self,labeled_array,numpatches,metric = "euclidean"):
-        if numpatches == 1:
+        if numpatches == 0:
+            return numpy.nan
+        elif numpatches < 2:
             return 0
         else:
-            """
+ """
             Takes a labeled array as returned by scipy.ndimage.label and 
             returns an intra-feature distance matrix.
             Solution by @morningsun at StackOverflow
-            """
+            """         
             I, J = numpy.nonzero(labeled_array)
             labels = labeled_array[I,J]
             coords = numpy.column_stack((I,J))
@@ -499,16 +501,14 @@ class LandCoverAnalysis():
         
             sq_dists = cdist(coords, coords, 'sqeuclidean')
         
-            start_idx = numpy.flatnonzero(numpy.r_[1, numpy.diff(labels)])
+            start_idx = numpy.flatnonzero(numpy.r_[1, numpy.diff(labels)])            
             nonzero_vs_feat = numpy.minimum.reduceat(sq_dists, start_idx, axis=1)
             feat_vs_feat = numpy.minimum.reduceat(nonzero_vs_feat, start_idx, axis=0)
         
             # Get lower triangle and zero distances to nan
-            b = numpy.tril( feat_vs_feat )
+            b = numpy.tril( numpy.sqrt( feat_vs_feat ) )
             b[b == 0 ] = numpy.nan
-            # Multiply with cellsize
-            b = b * self.cellsize
-            res = numpy.nanmean(b) # Calculate mean
+            res = numpy.nanmean(b) * self.cellsize # Calculate mean and multiply with cellsize
         
             return res
         
