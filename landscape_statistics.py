@@ -102,7 +102,7 @@ def listStatistics():
     #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
     functionList.append(unicode("Fractal Dimension Index")) # Return Fractal Dimension Index
     functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
-    functionList.append(unicode("Mean Shape Index")) # Return Mean Patch shape    
+    #functionList.append(unicode("Mean Shape Index")) # Return Mean Patch shape    
     functionList.append(unicode("Overall Core area")) # Return Core area    
     functionList.append(unicode("Like adjacencies")) # Like adjacencies
     functionList.append(unicode("Patch cohesion index")) # Patch cohesion index
@@ -486,7 +486,7 @@ class LandCoverAnalysis():
         elif numpatches < 2:
             return 0
         else:
- """
+            """
             Takes a labeled array as returned by scipy.ndimage.label and 
             returns an intra-feature distance matrix.
             Solution by @morningsun at StackOverflow
