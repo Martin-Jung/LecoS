@@ -9,11 +9,14 @@
 name=LecoS - Landscape Ecology Statistics
 qgisMinimumVersion=2.0
 description=Contains several analytical functions for land cover analysis
-version=2.0.5
+version=2.0.6
 about=LecoS is based on metrics taken from FRAGSTATS: http://www.umass.edu/landeco/research/fragstats/fragstats.html Functions include the calculation of metrics on rasters and vector layers. A polygon overlay tool is also available to ease up computation. Additionally LecoS provides some functionalities to manipulate classified raster images.
 
 ; Start of changelog file
 changelog =
+	Version 2.0.6
+	- Added new metric: Average inner Edge distance
+	
 	Version 2.0.5
 	- Added new metric: Euclidean Nearest-Neighbor Distance and improved speed
 	- Attempt to fix tobytes bug #14700	
