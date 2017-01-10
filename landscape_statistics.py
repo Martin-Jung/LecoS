@@ -232,15 +232,15 @@ class LandCoverAnalysis():
         if name == "LC_Sum":
             return unicode(name), numpy.sum(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_Min":
-            return unicode(name), numpy.min(self.array[self.array!=nodata],dtype=numpy.float64)
+            return unicode(name), numpy.min(self.array[self.array!=nodata])
         if name == "LC_Max":
-            return unicode(name), numpy.max(self.array[self.array!=nodata],dtype=numpy.float64)
+            return unicode(name), numpy.max(self.array[self.array!=nodata])
         if name == "LC_SD":
             return unicode(name), numpy.std(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_LQua":
             return unicode(name), scipy.percentile(self.array[self.array!=nodata],25)
         if name == "LC_Med":
-            return unicode(name), numpy.median(self.array[self.array!=nodata],dtype=numpy.float64)
+            return unicode(name), numpy.median(self.array[self.array!=nodata])
         if name == "LC_UQua":
             return unicode(name), scipy.percentile(self.array[self.array!=nodata],75)
         if name == "DIV_SH":
