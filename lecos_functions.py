@@ -236,14 +236,15 @@ def getAttributeList( vlayer, field):
   path = vlayer.source()
   datasource = ogr.Open(str(path))
   layer = datasource.GetLayer(0)
-  layerName = layer.GetName()
+  layerName = ( layer.GetName() )
   field = str(field)
+  attr = [] # Output list
+  sql = ("SELECT %s FROM %s" % (field, layerName)).encode('utf-8')
   try:
-    d = datasource.ExecuteSQL("SELECT %s FROM %s" % (field,layerName))
-  except RuntimeError:
+    d = datasource.ExecuteSQL(sql , dialect='SQLITE')
+  except TypeError, RuntimeError:
     QMessageBox.warning(QDialog(),"LecoS: Warning","Failed to query the vector layers attribute table")
     return
-  attr = []
   for i in range(0,d.GetFeatureCount()):
     f = d.GetFeature(i)
     attr.append(f.GetField(0))

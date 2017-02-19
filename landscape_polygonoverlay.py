@@ -247,7 +247,7 @@ class BatchConverter():
         """
         try:
             a = numpy.fromstring(i.tostring(),'b')
-        except AttributeError:
+        except Exception, AttributeError:
             try:
                 a = numpy.fromstring(i.tobytes(),'b')   
             except SystemError:
