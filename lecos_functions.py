@@ -47,6 +47,9 @@ try:
 except ImportError:
     import ogr
 
+# Avoiding python 3 troubles
+from __future__ import division
+
 # Register gdal and ogr drivers
 if hasattr(gdal,"AllRegister"): # Can register drivers
     gdal.AllRegister() # register all gdal drivers
@@ -267,7 +270,7 @@ def addAttributesToLayer(layer,results):
   provider = layer.dataProvider()
   caps = provider.capabilities()
 
-  for metric in xrange(0,len(results)):
+  for metric in range(0,len(results)):
     # Create Attribute Column
     # Name Formating
     cmd = str( results[metric][0][1] )

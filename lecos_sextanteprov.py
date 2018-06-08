@@ -34,6 +34,9 @@ import tempfile
 tmpdir = tempfile.gettempdir() # tempdir
 import os
 
+# Avoiding python 3 troubles
+from __future__ import division
+
 # NLMPY
 nlmpy = False
 try:

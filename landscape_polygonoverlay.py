@@ -76,6 +76,9 @@ try:
 except ImportError:
     import gdalconst
 
+# Avoiding python 3 troubles
+from __future__ import division
+
 # Register gdal and ogr drivers
 #if hasattr(gdal,"AllRegister"): # Can register drivers
 #    gdal.AllRegister() # register all gdal drivers
@@ -99,7 +102,7 @@ class BatchConverter():
         band = self.srcImage.GetRasterBand(1)
         self.nodata = band.GetNoDataValue()
         if self.nodata == None:
-            print "Nodata-value is not specified in the raster layer"
+            print("Nodata-value is not specified in the raster layer")
             self.nodata = 0
 
         self.geoTrans = self.srcImage.GetGeoTransform()
@@ -137,7 +140,7 @@ class BatchConverter():
     #Values are returned as array per feature
     def go(self,cmd,cl,cellsize=1,landID=None,rasE=None):
         res = []
-        for i in xrange(0,self.lyr.GetFeatureCount()):
+        for i in range(0,self.lyr.GetFeatureCount()):
             if self.lyr.GetFeatureCount() == 1:
                 poly = self.lyr.GetFeature(0)
             else:
@@ -696,11 +699,11 @@ class VectorBatchConverter():
             ref_geometry = f.GetGeometryRef()
             pts = ref_geometry.GetGeometryRef(0)
             points = []
-            for p in xrange(pts.GetPointCount()):
+            for p in range(pts.GetPointCount()):
                 points.append((pts.GetX(p), pts.GetY(p)))
             Nedges = len(points)-1
             length = []
-            for i in xrange(Nedges):
+            for i in range(Nedges):
                 ax, ay = points[i]
                 bx, by = points[i+1]
                 length.append(math.hypot(bx-ax, by-ay))

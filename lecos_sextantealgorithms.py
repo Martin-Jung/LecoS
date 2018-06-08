@@ -115,6 +115,9 @@ try:
 except ImportError:
     import ogr
 
+# Avoiding python 3 troubles
+from __future__ import division
+
 # Register gdal and ogr drivers
 #if hasattr(gdal,"AllRegister"): # Can register drivers
 #    gdal.AllRegister() # register all gdal drivers

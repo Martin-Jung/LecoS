@@ -119,6 +119,8 @@ except ImportError:
 #    ogr.RegisterAll() # register all ogr drivers
 
 import os, sys
+# Avoiding python 3 troubles
+from __future__ import division
 
 # Import functions and metrics
 import lecos_functions as func

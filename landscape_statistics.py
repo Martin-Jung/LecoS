@@ -65,6 +65,9 @@ try:
 except ImportError:
     import gdalconst
     
+# Avoiding python 3 troubles
+from __future__ import division
+
 # Register gdal and ogr drivers
 #if hasattr(gdal,"AllRegister"): # Can register drivers
 #    gdal.AllRegister() # register all gdal drivers
@@ -401,7 +404,7 @@ class LandCoverAnalysis():
         # First calculate internal edges and number of cells of each patch
         internalEdges = numpy.array([]).astype(float)
         areas = numpy.array([]).astype(float)
-        for i in xrange(1,numpatches + 1): # Very slow!
+        for i in range(1,numpatches + 1): # Very slow!
             feature = self.f_returnPatch(labeled_array,i)
             areas = numpy.append(areas, float( self.count_nonzero(feature) ) )
             internalEdges = numpy.append(internalEdges, float( self.f_returnInternalEdge(feature) ) )
@@ -413,7 +416,7 @@ class LandCoverAnalysis():
     def f_getPropLikeAdj(self,labeled_array,numpatches):
         internalEdges = numpy.array([]).astype(float)
         outerEdges = numpy.array([]).astype(float)
-        for i in xrange(1,numpatches + 1): # Very slow!
+        for i in range(1,numpatches + 1): # Very slow!
             feature = self.f_returnPatch(labeled_array,i)
             outerEdges = numpy.append(outerEdges, float( self.f_returnPatchPerimeter(feature) ) )
             internalEdges = numpy.append(internalEdges, float( self.f_returnInternalEdge(feature) ) )
@@ -436,7 +439,7 @@ class LandCoverAnalysis():
         
 #        fdi = (2.0 * numpy.log(sizes * 0.25) ) / numpy.log( o )
 #        numpy.mean(fdi)               
-        for i in xrange(1,numpatches + 1): # Very slow!
+        for i in range(1,numpatches + 1): # Very slow!
             feature = self.f_returnPatch(labeled_array,i)
             a = float( self.f_returnArea(feature) )
             p = float( self.f_returnEdgeLength(feature) )
@@ -522,7 +525,7 @@ class LandCoverAnalysis():
     # Average shape (ratio perimeter/area) of each patches of each lc-class
     def f_returnAvgShape(self,labeled_array,cl_array, numpatches,correction=False):        
         perim = numpy.array([]).astype(float)
-        for i in xrange(1,numpatches + 1): # Very slow!
+        for i in range(1,numpatches + 1): # Very slow!
                 feature = self.f_returnPatch(labeled_array,i)
                 p = numpy.sum(feature[:,1:] != feature[:,:-1]) + numpy.sum(feature[1:,:] != feature[:-1,:])
                 perim = numpy.append(perim,p)        
@@ -621,10 +624,10 @@ class LandCoverAnalysis():
 #         layerName = layer.GetName()
 #         for i in range(0,layer.GetFeatureCount()):
 #            f = layer.GetFeature(i)
-#            print (f.GetField(0))
+#            print(f.GetField(0))
 # 
 #         a = BatchConverter(rasterPath,landPath)
-#         print a.go("LC_Sum",None)
+#         print(a.go("LC_Sum",None))
 # 
 #         a = numpy.zeros((6,6), dtype=numpy.int) 
 #         a[1:5, 1:5] = 1;a[3,3] = 0 ; a[2,2] = 2

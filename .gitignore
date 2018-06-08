@@ -2,9 +2,7 @@
 deps
 *.o
 *.beam
-<<<<<<< HEAD
 *.plt
 *.*~
-=======
 *.plt
->>>>>>> 65921568b9b284489a185a1ce6ee679dcc996b17
+.spyderworkspace

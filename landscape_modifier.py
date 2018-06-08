@@ -61,6 +61,9 @@ try:
     from osgeo import gdalconst
 except ImportError:
     import gdalconst
+
+# Avoiding python 3 troubles
+from __future__ import division
     
 # Register gdal and ogr drivers
 #if hasattr(gdal,"AllRegister"): # Can register drivers

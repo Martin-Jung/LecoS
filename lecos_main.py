@@ -31,6 +31,9 @@ from qgis.gui import *
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 
+# Avoiding python 3 troubles
+from __future__ import division
+
 # Initialize Qt resources from file resources_rc.py
 from ui import resources_rc
 # Import the code for the dialogs
