@@ -232,8 +232,8 @@ class MatchLandscapes(QgsProcessingAlgorithm):
     def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
         # Retrieve the values of the parameters entered by the user
-        inputSource = self.parameterAsRasterLayer(parameters, self.LAND1, context)
-        inputTarget = self.parameterAsRasterLayer(parameters, self.LAND2, context)
+        inputSource = self.parameterAsRasterLayer(parameters, self.LAND1, context).source()
+        inputTarget = self.parameterAsRasterLayer(parameters, self.LAND2, context).source()
         interp = self.i[self.parameterAsEnum(parameters, self.INTERP, context)]
         output = self.parameterAsOutputLayer(parameters, self.OUTPUT_RASTER, context)
                 
@@ -321,14 +321,12 @@ class RasterWithRasterClip(QgsProcessingAlgorithm):
         inputTarget = self.parameterAsRasterLayer(parameters, self.LAND2, context)
         output = self.parameterAsOutputLayer(parameters, self.OUTPUT_RASTER, context)
         
-        # Check for equal crs
-        r1 = Processing.getObject(inputSource)
-        r2 = Processing.getObject(inputTarget)
-        if r1.crs() != r2.crs():
+
+        if inputSource.crs() != inputTarget.crs():
             raise QgsProcessingException("Make sure both raster layer have the same projection")
                     
         # Processing
-        src = gdal.Open(str(inputSource), gdalconst.GA_ReadOnly)
+        src = gdal.Open(str(inputSource.source()), gdalconst.GA_ReadOnly)
         src_proj = src.GetProjection()
         src_geotrans = src.GetGeoTransform()
         nodata = src.GetRasterBand(1).GetNoDataValue() # keep the nodata value
@@ -339,7 +337,7 @@ class RasterWithRasterClip(QgsProcessingAlgorithm):
         r1 = [src_geotrans[0], src_geotrans[3], src_geotrans[0] + (src_geotrans[1] * wide), src_geotrans[3] + (src_geotrans[5] * high)]
 
         # We want a section of source that matches this:
-        match_ds = gdal.Open(str(inputTarget), gdalconst.GA_ReadOnly)
+        match_ds = gdal.Open(str(inputTarget.source()), gdalconst.GA_ReadOnly)
         match_proj = match_ds.GetProjection()
         match_geotrans = match_ds.GetGeoTransform()
         wide = match_ds.RasterXSize
@@ -363,7 +361,7 @@ class RasterWithRasterClip(QgsProcessingAlgorithm):
             result = band.ReadAsArray(p1[0], p1[1], p2[0] - p1[0], p2[1] - p1[1], p2[0] - p1[0], p2[1] - p1[1])
             
             # Write to new raster
-            func.exportRaster(result,inputTarget,output,nodata)
+            func.exportRaster(result,inputTarget.source(),output,nodata)
             return {self.OUTPUT_RASTER: output}
 
     def help(self):
@@ -424,10 +422,10 @@ class LandscapeStatistics(QgsProcessingAlgorithm):
         '''Here is where the processing itself takes place'''
         
         # Retrieve the values of the parameters entered by the user
-        inputFilename = self.parameterAsFile(parameters, self.LAND_GRID, context)
+        rasterlayer = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context)
+        inputFilename = rasterlayer.source()
         what = self.m[self.parameterAsEnum(parameters, self.METRIC, context)]
         output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
-        rasterlayer = Processing.getObject(inputFilename)
 
         # Processing
         nodata = lcs.f_returnNoDataValue(inputFilename) # Get Nodata-value
@@ -438,7 +436,7 @@ class LandscapeStatistics(QgsProcessingAlgorithm):
             ln = str(path.basename(inputFilename))
             raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
         
-        if QGis.QGIS_VERSION_INT < 10900:
+        if Qgis.QGIS_VERSION_INT < 10900:
             pixelSize = rasterlayer.rasterUnitsPerPixel()
         else:
             pixelSize = rasterlayer.rasterUnitsPerPixelX() # Extract The X-Value
@@ -574,11 +572,11 @@ class PatchStatistics(QgsProcessingAlgorithm):
         '''Here is where the processing itself takes place'''
         
         # Retrieve the values of the parameters entered by the user
-        inputFilename = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context).source()
+        rasterlayer = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context)
+        inputFilename = rasterlayer.source()
         cl = self.parameterAsInt(parameters, self.LC_CLASS, context)
         what = self.METRICsel[self.parameterAsEnum(parameters, self.METRIC, context)]
         output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
-        rasterlayer = Processing.getObject(inputFilename)
 
         # Processing
         nodata = lcs.f_returnNoDataValue(inputFilename) # Get Nodata-value
@@ -594,7 +592,7 @@ class PatchStatistics(QgsProcessingAlgorithm):
             ln = str(path.basename(inputFilename))
             raise QgsProcessingException("The landscape layer %s has no valid nodata value (no number)!" % (ln)) 
         
-        if QGis.QGIS_VERSION_INT < 10900:
+        if Qgis.QGIS_VERSION_INT < 10900:
             pixelSize = rasterlayer.rasterUnitsPerPixel()
         else:
             pixelSize = rasterlayer.rasterUnitsPerPixelX() # Extract The X-Value
@@ -666,16 +664,16 @@ class ZonalStatistics(QgsProcessingAlgorithm):
         '''Here is where the processing itself takes place'''
         
         # Retrieve the values of the parameters entered by the user
-        landFilename = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context).source()
-        zoneFilename = self.parameterAsRasterLayer(parameters, self.ZONE_GRID, context).source()
+        r1 = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context)
+        landFilename = r1.source()
+        r2 = self.parameterAsRasterLayer(parameters, self.ZONE_GRID, context)
+        zoneFilename = r2.source()
         what = self.m[self.parameterAsEnum(parameters, self.WHAT, context)]
         crR = self.parameterAsBool(parameters, self.CREATE_R, context) # should raster output be generated
         outputT = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
         outputR = self.parameterAsOutputLayer(parameters, self.OUTPUT_RASTER, context)
 
         # Check for equal crs
-        r1 = Processing.getObject(landFilename)
-        r2 = Processing.getObject(zoneFilename)
         if r1.crs() != r2.crs():
             raise QgsProcessingException("Make sure both layers have the same projection")
         
@@ -751,7 +749,7 @@ class ZonalStatistics(QgsProcessingAlgorithm):
             # Export the raster
             func.exportRaster(resr,zoneFilename,outputR)
 
-        return {self.OUTPUT_FILE: outputT, self.OUTPUT_RASTER: outputR}
+        return {self.OUTPUT_RASTER: outputR, self.OUTPUT_FILE: outputT}
         
     def help(self):
         helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
@@ -810,8 +808,10 @@ class RasterPolyOver(QgsProcessingAlgorithm):
         '''Here is where the processing itself takes place'''
         
         # Retrieve the values of the parameters entered by the user
-        inputFilename = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context).source()
-        vectorFilename = self.parameterAsVectorLayer(parameters, self.VECTOR_GRID, context).source()
+        rasterlayer = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context)
+        inputFilename = rasterlayer.source()
+        vectorlayer = self.parameterAsVectorLayer(parameters, self.VECTOR_GRID, context)
+        vectorFilename = vectorlayer.source()
         isCl = self.parameterAsBool(parameters, self.IS_CLASS, context) # Use classified metrics per default
         cl = self.parameterAsInt(parameters, self.LC_CLASS, context)
         whatC = self.CMETRICsel[self.parameterAsEnum(parameters, self.CMETRIC, context)]
@@ -819,9 +819,6 @@ class RasterPolyOver(QgsProcessingAlgorithm):
         
         add2table = self.parameterAsBool(parameters, self.ADDTABLE, context)
         output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
-            
-        rasterlayer = Processing.getObject(inputFilename)
-        vectorlayer = Processing.getObject(vectorFilename)
         
         # Make sure they have the same projection
         if rasterlayer.crs() != vectorlayer.crs():
@@ -834,7 +831,7 @@ class RasterPolyOver(QgsProcessingAlgorithm):
             raise QgsProcessingException("The landscape raster layer doesn't possess a valid nodata value")
         classes, array = lcs.f_landcover(inputFilename,nodata) # Get classes and data array
         
-        if QGis.QGIS_VERSION_INT < 10900:
+        if Qgis.QGIS_VERSION_INT < 10900:
             pixelSize = rasterlayer.rasterUnitsPerPixel()
         else:
             pixelSize = rasterlayer.rasterUnitsPerPixelX() # Extract The X-Value
@@ -918,13 +915,14 @@ class GetRasterValuesPoint(QgsProcessingAlgorithm):
         '''Here is where the processing itself takes place'''
         
         # Retrieve the values of the parameters entered by the user
-        inputFilename = self.parameterAsRasterLayer(parameters, self.RASTER, context).source()
+        r = self.parameterAsRasterLayer(parameters, self.RASTER, context)
+        inputFilename = r.source()
         band = self.parameterAsInt(parameters, self.BAND, context)
-        point = self.parameterAsVectorLayer(parameters, self.POINT, context)
+        v = self.parameterAsVectorLayer(parameters, self.POINT, context)
+        point = v.source()
         output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
         
-        r = Processing.getObject(inputFilename)
-        v = Processing.getObject(point)
+        
         cr1 = v.crs()
         cr2 = r.crs()
         if cr1!=cr2:
@@ -1197,12 +1195,12 @@ class NeighbourhoodAnalysis(QgsProcessingAlgorithm):
         '''Here is where the processing itself takes place'''
         
         # Retrieve the values of the parameters entered by the user
-        inputFilename = self.parameterAsRasterLayer(parameters, self.RASTER, context).source()
+        rasterlayer = self.parameterAsRasterLayer(parameters, self.RASTER, context)
+        inputFilename = rasterlayer.source()
         what = self.METHODsel[self.parameterAsEnum(parameters, self.METHOD, context)]
         mode = self.m[self.parameterAsEnum(parameters, self.MODE, context)]
         size = self.parameterAsInt(parameters, self.SIZE, context)
         output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
-        rasterlayer = Processing.getObject(inputFilename)
 
         # Processing
         # Use GDAL to open the raster
@@ -1239,7 +1237,7 @@ class NeighbourhoodAnalysis(QgsProcessingAlgorithm):
             
         # Create the output layer 
         func.exportRaster(result,inputFilename,output,self.nodata)
-        return {self.OUTPUT_RASTER: output}
+        return {self.OUTPUT_FILE: output}
 
     # Return number of unique classes
     def variety(self,array):
