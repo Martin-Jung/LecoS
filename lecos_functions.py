@@ -384,11 +384,11 @@ def DisplayError(iface,header,text,type="WARNING",time=4,both=False):
   if Qgis.QGIS_VERSION_INT >= 10900:
     # What time of message?
     if type=="INFO":
-      ob = QgsMessageBar.INFO
+      ob = Qgis.Info
     elif type=="WARNING":
-      ob = QgsMessageBar.WARNING
+      ob = Qgis.Warning
     elif type=="CRITICAL":
-      ob = QgsMessageBar.CRITICAL
+      ob = Qgis.Critical
 
     # Show the Message Bar
     iface.messageBar().pushMessage(header,text, ob, time)
