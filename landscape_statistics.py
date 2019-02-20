@@ -149,6 +149,7 @@ def f_landcover(raster,nodata=None):
 
 # Returns the nodata value. Assumes an raster with one band
 def f_returnNoDataValue(rasterPath):
+    QgsProcessingFeedback().pushInfo("The file is: " + rasterPath)
     raster = gdal.Open(str(rasterPath))
     band = raster.GetRasterBand(1)
     nodata = band.GetNoDataValue()

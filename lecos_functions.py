@@ -429,7 +429,7 @@ def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
     tDs.SetGeoTransform(gt)
 
     # Then set projection of current active layer
-    epsg = qgis.utils.iface.activeLayer().crs().authid() #mapCanvas().mapRenderer().destinationCrs().srsid()
+    epsg = QgsProject.instance().defaultCrsForNewLayers().authid() #mapCanvas().mapRenderer().destinationCrs().srsid()
     coord_system = osr.SpatialReference()    
     coord_system.ImportFromEPSG( int(re.findall('\d+', epsg)[0]) )
     tDs.SetProjection(coord_system.ExportToWkt())
