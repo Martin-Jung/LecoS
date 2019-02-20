@@ -87,9 +87,65 @@ except ImportError:
 #if hasattr(ogr,"RegisterAll"):
 #    ogr.RegisterAll() # register all ogr drivers
 
+
+# Generic class containing commom methods for all algorithms
+class GenericProcessing(QgsProcessingAlgorithm):
+    def createInstance(self):
+        return self.__class__()
+
+    def helpPath(self):
+        htmlPath = os.path.join(os.path.dirname(__file__), "sextante_info", self.name() + ".html")
+        if os.path.isfile(htmlPath):
+            return htmlPath
+        else:
+            return ""
+
+    def shortDescription(self):
+        helpPath = self.helpPath()
+        if (helpPath):
+            helpFile = open(helpPath, 'r')
+            htmlString = helpFile.read()
+            helpString = htmlString.split('<p>')[2].replace('</p>\n\n','')
+            return helpString
+        return None
+
+    def helpUrl(self):
+        helppath = self.helpPath()
+        if (helppath):
+            return helppath
+        else:
+            return None
+
+
+# Classes for grouping algorithms
+class LandscapePreparationAlgorithm(GenericProcessing):
+    def group(self):
+        return "Landscape preparation"
+    def groupId(self):
+        return 'Landscape preparation'
+
+class LandscapeModificationAlgorithm(GenericProcessing):
+    def group(self):
+        return "Landscape modifications"
+    def groupId(self):
+        return "Landscape modifications"
+
+class LandscapeStatisticsAlgorithm(GenericProcessing):
+    def group(self):
+        return "Landscape statistics"
+    def groupId(self):
+        return "Landscape statistics"
+
+class LandscapeVectorOverlayAlgorithm(GenericProcessing):
+    def group(self):
+        return "Landscape vector overlay"
+    def groupId(self):
+        return "Landscape vector overlay"
+    
+
 ## Landscape preperation
 # Creates a random landscape from a given distribution
-class CreateRandomLandscape(QgsProcessingAlgorithm):
+class CreateRandomLandscape(LandscapePreparationAlgorithm):
     # Define constants
     WHAT = "WHAT"
     w = ['Constant value','Random integer','Uniform','Normal','Exponential','Poisson','Gamma','Binomial','Geometric','Negative binomial','lognormal','Weibull']
@@ -104,28 +160,24 @@ class CreateRandomLandscape(QgsProcessingAlgorithm):
     def __init__(self):
         super().__init__()
         self.controller = None
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_randomdistribution.png")
        
     def displayName(self):
         return "Create random Landscape (Distribution)"
+
     def name(self):
         return "createrandomraster"
-    def group(self):
-        return "Landscape preparation"
-    def groupId(self):
-        return 'Landscape preparation'
-    def createInstance(self):
-        return CreateRandomLandscape()
  
     def initAlgorithm(self, config):
         self.addParameter(ParameterSelection(self.WHAT, "Choose value distribution", self.w, 0))
         self.addParameter(ParameterExtent(self.EXTENT, "New extent"))
-        self.addParameter(ParameterNumber(self.MIN, "Minimum / Alpha", type=ParameterNumber.Type.Integer, defaultValue=1))
-        self.addParameter(ParameterNumber(self.MAX, "Maximum / Beta", type=ParameterNumber.Type.Integer, defaultValue=10))
-        self.addParameter(ParameterNumber(self.MEAN, "Mean / Number", type=ParameterNumber.Type.Integer, defaultValue=5))
-        self.addParameter(ParameterNumber(self.STD, "Standard Deviation / Probability", type=ParameterNumber.Type.Integer, defaultValue=2))
-        self.addParameter(ParameterNumber(self.CELL_SIZE, "New cell size", type=ParameterNumber.Type.Integer, defaultValue=25)) 
+        self.addParameter(ParameterNumber(self.MIN, "Minimum / Alpha", type=ParameterNumber.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.MAX, "Maximum / Beta", type=ParameterNumber.Integer, defaultValue=10))
+        self.addParameter(ParameterNumber(self.MEAN, "Mean / Number", type=ParameterNumber.Integer, defaultValue=5))
+        self.addParameter(ParameterNumber(self.STD, "Standard Deviation / Probability", type=ParameterNumber.Integer, defaultValue=2))
+        self.addParameter(ParameterNumber(self.CELL_SIZE, "New cell size", type=ParameterNumber.Integer, defaultValue=25)) 
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_FILE, "Result output"))   
         self.addOutput(OutputRaster(self.OUTPUT_FILE, "Result output"))
 
@@ -193,32 +245,21 @@ class CreateRandomLandscape(QgsProcessingAlgorithm):
 
         return {self.OUTPUT_FILE: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None        
+    
 # Inspired from here: http://stackoverflow.com/questions/10454316/how-to-project-and-resample-a-grid-to-match-another-grid-with-gdal-python
-class MatchLandscapes(QgsProcessingAlgorithm):
+class MatchLandscapes(LandscapePreparationAlgorithm):
     # Define constants
     LAND1 = "LAND1"
     LAND2 = "LAND2"
     INTERP = "INTERP"
     i = ['Bilinear','Cubic','Cubicspline','Lanczos','NearestNeighbour']
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    def createInstance(self):
-        return MatchLandscapes()
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_matchlandscapes.png")
     def displayName(self):
         return "Match two landscapes"
     def name(self):
         return "preplandscape"
-    def group(self):
-        return "Landscape preparation"
-    def groupId(self):
-        return "Landscape preparation"
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
@@ -277,22 +318,13 @@ class MatchLandscapes(QgsProcessingAlgorithm):
         return {self.OUTPUT_RASTER: output}
         
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None      
-
-
-class RasterWithRasterClip(QgsProcessingAlgorithm):
+class RasterWithRasterClip(LandscapePreparationAlgorithm):
     # Define constants
     LAND1 = "LAND1"
     LAND2 = "LAND2"
     OUTPUT_RASTER = "OUTPUT_RASTER"
     
-    def createInstance(self):
-        return RasterWithRasterClip()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_clipRaster.png")
 
@@ -300,10 +332,6 @@ class RasterWithRasterClip(QgsProcessingAlgorithm):
         return "Intersect Landscapes"
     def name(self):
         return "landintersect"
-    def group(self):
-        return "Landscape preparation"
-    def groupId(self):
-        return "Landscape preparation"
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
@@ -364,12 +392,6 @@ class RasterWithRasterClip(QgsProcessingAlgorithm):
             func.exportRaster(result,inputTarget.source(),output,nodata)
             return {self.OUTPUT_RASTER: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
     def world2Pixel(self,geoMatrix, x, y):
         """
@@ -389,15 +411,14 @@ class RasterWithRasterClip(QgsProcessingAlgorithm):
 
 ## Landscape Statistics
 from . import landscape_statistics as lcs
-class LandscapeStatistics(QgsProcessingAlgorithm):
+class LandscapeStatistics(LandscapeStatisticsAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     METRIC = "METRIC"
     METRICsel = ["Mean", "Sum","Minimum","Maximum","Standard deviation","Lower quantile","Median","Upper quantile","Shannon Diversity Index","Eveness","Simpson Diversity Index"]
     m = ["LC_Mean","LC_Sum","LC_Min","LC_Max","LC_SD","LC_LQua","LC_Med","LC_UQua","DIV_SH","DIV_EV","DIV_SI"]
     OUTPUT_FILE = "OUTPUT_FILE"
-    def createInstance(self):
-        return LandscapeStatistics()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"icon.png")
 
@@ -405,10 +426,7 @@ class LandscapeStatistics(QgsProcessingAlgorithm):
         return "Landscape wide statistics"
     def name(self):
         return "landscapestat"
-    def group(self):
-        return "Landscape statistics"
-    def groupId(self):
-        return "Landscape statistics"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
@@ -453,39 +471,29 @@ class LandscapeStatistics(QgsProcessingAlgorithm):
         func.saveToCSV(res,["Metric","Value"],output)
         return {self.OUTPUT_FILE: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
 # Lists all unique raster cells of a raster
 # Returns the total number per cell in a table
-class CountRasterCells(QgsProcessingAlgorithm):
+class CountRasterCells(LandscapeStatisticsAlgorithm):
     # Define constants
     RASTER = "RASTER"
     BAND = "BAND"
     OUTPUT_FILE = "OUTPUT_FILE"
      
-    def createInstance(self):
-        return CountRasterCells()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_countRastercells.png")
     def displayName(self):
         return "Count Raster Cells"
     def name(self):
         return "countrastercell"
-    def group(self):
-        return "Landscape statistics"
-    def groupId(self):
-        return "Landscape statistics"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.RASTER, "Raster layer", optional=False))
-        self.addParameter(ParameterNumber(self.BAND, "Which Raster band (1 default)", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.BAND, "Which Raster band (1 default)", type=ParameterNumber.Integer, defaultValue=1))
         self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Result output"))  
         self.addOutput(OutputTable(self.OUTPUT_FILE, "Result output"))
 
@@ -530,22 +538,15 @@ class CountRasterCells(QgsProcessingAlgorithm):
         func.saveToCSV(res,("Value","Number"),output)
         return {self.OUTPUT_FILE: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
-class PatchStatistics(QgsProcessingAlgorithm):
+class PatchStatistics(LandscapeStatisticsAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
     METRIC = "METRIC"
     METRICsel = lcs.listStatistics()
     OUTPUT_FILE = "OUTPUT_FILE"
-    def createInstance(self):
-        return PatchStatistics()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_patchstat.png")
 
@@ -553,16 +554,13 @@ class PatchStatistics(QgsProcessingAlgorithm):
         return "Patch statistics"
     def name(self):
         return "patchstat"
-    def group(self):
-        return "Landscape statistics"
-    def groupId(self):
-        return "Landscape statistics"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
 
         self.addParameter(ParameterSelection(self.METRIC, "What to calculate", self.METRICsel, 0))
         self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Output file"))  
@@ -613,17 +611,10 @@ class PatchStatistics(QgsProcessingAlgorithm):
         func.saveToCSV(res,["Metric","Value"],output)
         return {self.OUTPUT_FILE: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None      
             
-
 # Calculates zonal statistics using a source and zone grid
 # Output as table or raster
-class ZonalStatistics(QgsProcessingAlgorithm):
+class ZonalStatistics(LandscapeStatisticsAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     ZONE_GRID = "ZONE_GRID"
@@ -632,8 +623,7 @@ class ZonalStatistics(QgsProcessingAlgorithm):
     CREATE_R = "CREATE_R"
     OUTPUT_FILE = "OUTPUT_FILE"
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    def createInstance(self):
-        return ZonalStatistics()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_zonalstats.png")
 
@@ -641,10 +631,6 @@ class ZonalStatistics(QgsProcessingAlgorithm):
         return "Zonal statistics"
     def name(self):
         return "zonalstat"
-    def group(self):
-        return "Landscape statistics"
-    def groupId(self):
-        return "Landscape statistics"
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
@@ -751,17 +737,10 @@ class ZonalStatistics(QgsProcessingAlgorithm):
 
         return {self.OUTPUT_RASTER: outputR, self.OUTPUT_FILE: outputT}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
-
 
 ## Polygon Batch Overlay
 from . import landscape_polygonoverlay as pov 
-class RasterPolyOver(QgsProcessingAlgorithm):
+class RasterPolyOver(LandscapeVectorOverlayAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     VECTOR_GRID = "VECTOR_GRID"
@@ -774,8 +753,7 @@ class RasterPolyOver(QgsProcessingAlgorithm):
     m = ["LC_Mean","LC_Sum","LC_Min","LC_Max","LC_SD","LC_LQua","LC_Med","LC_UQua","DIV_SH","DIV_EV","DIV_SI"]
     OUTPUT_FILE = "OUTPUT_FILE"
     ADDTABLE = "ADDTABLE"
-    def createInstance(self):
-        return RasterPolyOver()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"icon_batchCover.png")
 
@@ -783,10 +761,7 @@ class RasterPolyOver(QgsProcessingAlgorithm):
         return "Overlay raster metrics (Polygons)"
     def name(self):
         return "poloverlayraster"
-    def group(self):
-        return "Landscape vector overlay"
-    def groupId(self):
-        return "Landscape vector overlay"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
@@ -795,7 +770,7 @@ class RasterPolyOver(QgsProcessingAlgorithm):
         self.addParameter(ParameterVector(self.VECTOR_GRID, "Overlay Vector Grid", [QgsProcessing.TypeVectorPolygon], optional=False))
         
         self.addParameter(ParameterBoolean(self.IS_CLASS, "Raster classified?", True))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
        
         self.addParameter(ParameterSelection(self.CMETRIC, "Metrics (single class):", self.CMETRICsel, 0))
         self.addParameter(ParameterSelection(self.LMETRIC, "Metrics (landscape):", self.LMETRICsel, 0))
@@ -873,23 +848,16 @@ class RasterPolyOver(QgsProcessingAlgorithm):
         f.close()        
         return {self.OUTPUT_FILE: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
 # Returns the raster values below a point layer, Output Results as table
-class GetRasterValuesPoint(QgsProcessingAlgorithm):
+class GetRasterValuesPoint(LandscapeVectorOverlayAlgorithm):
     # Define constants
     RASTER = "RASTER"
     BAND = "BAND"
     POINT = "POINT"
     OUTPUT_FILE = "OUTPUT_FILE"
      
-    def createInstance(self):
-        return GetRasterValuesPoint()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_rastervalPoints.png")
 
@@ -897,16 +865,12 @@ class GetRasterValuesPoint(QgsProcessingAlgorithm):
         return "Query raster values (Points)"
     def name(self):
         return "queryraster"
-    def group(self):
-        return "Landscape vector overlay"
-    def groupId(self):
-        return "Landscape vector overlay"
         
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.RASTER, "Raster layer", optional=False))
-        self.addParameter(ParameterNumber(self.BAND, "Which Raster band (1 default)", type=ParameterNumber.Type.Integer, defaultValue=1))    
+        self.addParameter(ParameterNumber(self.BAND, "Which Raster band (1 default)", type=ParameterNumber.Integer, defaultValue=1))    
         self.addParameter(ParameterVector(self.POINT, "Point layer", [QgsProcessing.TypeVectorPoint], optional=False))
         self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Result output"))  
         self.addOutput(OutputTable(self.OUTPUT_FILE, "Result output"))
@@ -973,16 +937,9 @@ class GetRasterValuesPoint(QgsProcessingAlgorithm):
         line = int((ulY - y) / xDist)
         return (pixel, line)     
     
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
-
 
 # Overlay vector landscape layer with another polygon
-class VectorPolyOver(QgsProcessingAlgorithm):
+class VectorPolyOver(LandscapeVectorOverlayAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     # FIXME: Maybe in the future a vector overlay will come. Don't see personal need.
@@ -997,8 +954,7 @@ class VectorPolyOver(QgsProcessingAlgorithm):
     m = ["LC_Mean","LC_Sum","LC_Min","LC_Max","LC_SD","LC_LQua","LC_Med","LC_UQua"]
     OUTPUT_FILE = "OUTPUT_FILE"
     ADDTABLE = "ADDTABLE"
-    def createInstance(self):
-        return VectorPolyOver()
+
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_vectorOverlay.png")
@@ -1007,10 +963,7 @@ class VectorPolyOver(QgsProcessingAlgorithm):
         return "Overlay vector metrics (Polygons)"
     def name(self):
         return "overlayvector"
-    def group(self):
-        return "Landscape vector overlay"
-    def groupId(self):
-        return "Landscape vector overlay"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
@@ -1019,7 +972,7 @@ class VectorPolyOver(QgsProcessingAlgorithm):
         #self.addParameter(ParameterVector(self.VECTOR_GRID, "Overlay Vector Grid", ParameterVector.VECTOR_TYPE_POLYGON, False))
         self.addParameter(ParameterTableField(VectorPolyOver.GROUPING_ID, "Grouping ID ", VectorPolyOver.LAND_GRID))
         self.addParameter(ParameterBoolean(self.IS_CLASS, "Single class or landscape metrics", default=True))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
         self.addParameter(ParameterSelection(self.CMETRIC, "Metrics (single class):", self.CMETRICsel, 0))
         self.addParameter(ParameterSelection(self.LMETRIC, "Metrics (landscape):", self.LMETRICsel, 0))
         self.addParameter(ParameterBoolean(self.ADDTABLE, "Also add to attribute table (yes)", default=False))
@@ -1076,26 +1029,18 @@ class VectorPolyOver(QgsProcessingAlgorithm):
         f.close()        
         return {self.OUTPUT_FILE: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
-
 
 ## Landscape Modifier algorithms
 from . import landscape_modifier as lmod
 # Conducts a connected component labeling and 
 # assigns a new number to every landscape patch of a given class
-class LabelLandscapePatches(QgsProcessingAlgorithm):
+class LabelLandscapePatches(LandscapeModificationAlgorithm):
     # Define constants
     LAND = "LAND"
     LC_CLASS = "LC_CLASS"
     OUTPUT_RASTER = "OUTPUT_RASTER"
     
-    def createInstance(self):
-        return LabelLandscapePatches()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_label.png")
 
@@ -1103,16 +1048,13 @@ class LabelLandscapePatches(QgsProcessingAlgorithm):
         return "Label Landscape patches"
     def name(self):
         return "labellandscape"
-    def group(self):
-        return "Landscape modifications"
-    def groupId(self):
-        return "Landscape modifications"
+    
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.LAND, "Classified raster layer", optional=False))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_RASTER, "Result output"))  
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
 
@@ -1149,15 +1091,9 @@ class LabelLandscapePatches(QgsProcessingAlgorithm):
         func.exportRaster(results,inputFilename,output)
         return {self.OUTPUT_RASTER: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
 # Conducts neighbourhood analysis based on a moving window approach
-class NeighbourhoodAnalysis(QgsProcessingAlgorithm):
+class NeighbourhoodAnalysis(LandscapeModificationAlgorithm):
     # Define constants
     RASTER = "RASTER"
     METHOD = "METHOD"
@@ -1167,8 +1103,7 @@ class NeighbourhoodAnalysis(QgsProcessingAlgorithm):
     m = ["reflect", "constant", "nearest", "mirror", "wrap"]
     OUTPUT_FILE = "OUTPUT_FILE"
      
-    def createInstance(self):
-        return NeighbourhoodAnalysis()
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_neighboranalysis.png")
 
@@ -1176,17 +1111,14 @@ class NeighbourhoodAnalysis(QgsProcessingAlgorithm):
         return "Neighbourhood Analysis (Moving Window)"
     def name(self):
         return "nanalysis"
-    def group(self):
-        return "Landscape modifications"
-    def groupId(self):
-        return "Landscape modifications"
+
         
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.RASTER, "Raster layer", optional=False))
         self.addParameter(ParameterSelection(self.METHOD, "What to calculate", self.METHODsel, 0))
-        self.addParameter(ParameterNumber(self.SIZE, "Neighbourhood Size", type=ParameterNumber.Type.Integer, defaultValue=3))
+        self.addParameter(ParameterNumber(self.SIZE, "Neighbourhood Size", type=ParameterNumber.Integer, defaultValue=3))
         self.addParameter(ParameterSelection(self.MODE, "Behaviour at Edges", self.m, 0))
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_FILE, "Result output"))  
         self.addOutput(OutputRaster(self.OUTPUT_FILE, "Result output"))
@@ -1268,14 +1200,8 @@ class NeighbourhoodAnalysis(QgsProcessingAlgorithm):
             sh.append(r)
         return sum(sh)*-1
     
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
-class IncreaseLandPatch(QgsProcessingAlgorithm):
+class IncreaseLandPatch(LandscapeModificationAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
@@ -1283,8 +1209,7 @@ class IncreaseLandPatch(QgsProcessingAlgorithm):
     INCorDEC = "INCorDEC"
     INCDECsel = ["Increase", "Decrease"]
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    def createInstance(self):
-        return IncreaseLandPatch()    
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_IncDec.png")
 
@@ -1292,19 +1217,16 @@ class IncreaseLandPatch(QgsProcessingAlgorithm):
         return "Increase/Decrease Patches"
     def name(self):
         return "incdecpatch"
-    def group(self):
-        return "Landscape modifications"
-    def groupId(self):
-        return "Landscape modifications"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
         
         self.addParameter(ParameterSelection(self.INCorDEC, "What", self.INCDECsel, 0))
-        self.addParameter(ParameterNumber(self.TAXICAB, "Taxicab size", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.TAXICAB, "Taxicab size", type=ParameterNumber.Integer, defaultValue=1))
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_RASTER, "Raster output"))  
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Raster output"))
 
@@ -1338,21 +1260,14 @@ class IncreaseLandPatch(QgsProcessingAlgorithm):
         func.exportRaster(results,inputFilename,output)
         return {self.OUTPUT_RASTER: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
-class ExtractEdges(QgsProcessingAlgorithm):
+class ExtractEdges(LandscapeModificationAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
     TAXICAB = "TAXICAB"
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    def createInstance(self):
-        return ExtractEdges()    
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_EdgeExtract.png")
 
@@ -1360,17 +1275,14 @@ class ExtractEdges(QgsProcessingAlgorithm):
         return "Extract Patch edges"
     def name(self):
         return "patchedges"
-    def group(self):
-        return "Landscape modifications"
-    def groupId(self):
-        return "Landscape modifications"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
-        self.addParameter(ParameterNumber(self.TAXICAB, "Taxicab size", type=ParameterNumber.Type.Integer, defaultValue=1))        
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.TAXICAB, "Taxicab size", type=ParameterNumber.Integer, defaultValue=1))        
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_RASTER, "Raster output"))  
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Raster output"))
 
@@ -1402,23 +1314,15 @@ class ExtractEdges(QgsProcessingAlgorithm):
         func.exportRaster(results,inputFilename,output)
         return {self.OUTPUT_RASTER: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
-        
-class IsolateExtremePatch(QgsProcessingAlgorithm):
+class IsolateExtremePatch(LandscapeModificationAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
     WHAT = "WHAT"
     WHATsel = ["Minimum", "Maximum"]
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    def createInstance(self):
-        return IsolateExtremePatch()    
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_MaxMin.png")
 
@@ -1426,16 +1330,13 @@ class IsolateExtremePatch(QgsProcessingAlgorithm):
         return "Isolate smallest/greatest Patches"
     def name(self):
         return "minmaxpatch"
-    def group(self):
-        return "Landscape modifications"
-    def groupId(self):
-        return "Landscape modifications"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
         
         self.addParameter(ParameterSelection(self.WHAT, "What", self.WHATsel, 0))
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_RASTER, "Raster output"))  
@@ -1474,20 +1375,13 @@ class IsolateExtremePatch(QgsProcessingAlgorithm):
         func.exportRaster(results,inputFilename,output)
         return {self.OUTPUT_RASTER: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
         
-class CloseHoles(QgsProcessingAlgorithm):
+class CloseHoles(LandscapeModificationAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    def createInstance(self):
-        return CloseHoles()    
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_closeHole.png")
 
@@ -1495,16 +1389,13 @@ class CloseHoles(QgsProcessingAlgorithm):
         return "Close holes in patches"
     def name(self):
         return "closeholes"
-    def group(self):
-        return "Landscape modifications"
-    def groupId(self):
-        return "Landscape modifications"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_RASTER, "Raster output"))  
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Raster output"))
 
@@ -1536,22 +1427,14 @@ class CloseHoles(QgsProcessingAlgorithm):
         func.exportRaster(results,inputFilename,output)
         return {self.OUTPUT_RASTER: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
-
-class CleanSmallPixels(QgsProcessingAlgorithm):
+class CleanSmallPixels(LandscapeModificationAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
     TAXICAB = "TAXICAB"
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    def createInstance(self):
-        return CleanSmallPixels()    
+
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_CleanRas.png")
 
@@ -1559,17 +1442,14 @@ class CleanSmallPixels(QgsProcessingAlgorithm):
         return "Clean small pixels in patches"
     def name(self):
         return "cleanlandscape"
-    def group(self):
-        return "Landscape modifications"
-    def groupId(self):
-        return "Landscape modifications"
+
 
     def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
         self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
-        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Type.Integer, defaultValue=1))
-        self.addParameter(ParameterNumber(self.TAXICAB, "Taxicab size", type=ParameterNumber.Type.Integer, defaultValue=1))        
+        self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
+        self.addParameter(ParameterNumber(self.TAXICAB, "Taxicab size", type=ParameterNumber.Integer, defaultValue=1))        
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_RASTER, "Raster output"))  
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Raster output"))
 
@@ -1602,10 +1482,4 @@ class CleanSmallPixels(QgsProcessingAlgorithm):
         func.exportRaster(results,inputFilename,output)
         return {self.OUTPUT_RASTER: output}
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
         
