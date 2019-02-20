@@ -41,7 +41,7 @@ try:
     # import ndimage module seperately for easy access
     from scipy import ndimage
 except ImportError:
-    QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
+    QMessageBox().critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
     sys.exit(0)
  
 # Try to import functions from osgeo

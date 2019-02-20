@@ -38,7 +38,12 @@ from qgis.core import QgsProcessingException
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 import re # regular matching
 import numpy
-import scipy
+try:
+    import scipy
+except ImportError:
+    QMessageBox().critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
+    sys.exit(0)
+
 
 # Try to import functions from osgeo
 try:
@@ -59,7 +64,7 @@ if hasattr(ogr,"RegisterAll"):
 ## CODE START ##
 # Save results to CSV
 def saveToCSV( results, titles, filePath ):
-  f = open(filePath, "w" )
+  f = open(filePath, "w", newline='')
   writer = csv.writer(f,delimiter=';',quotechar="",quoting=csv.QUOTE_NONE)
   writer.writerow(titles)
   for item in results:
