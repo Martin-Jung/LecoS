@@ -19,65 +19,29 @@
  *                                                                         *
  ***************************************************************************/
 """
+from __future__ import absolute_import
 # Import Processing bindings
-from processing.core.GeoAlgorithm import GeoAlgorithm
-from processing.core.Processing import Processing
-try:
-    from processing.core.ProcessingUtils import ProcessingUtils
-except ImportError: # for qgis dev
-    # new processing update
-    from processing.tools.system import *
+from builtins import str
+from builtins import range
+from qgis.core import (QgsProcessing,
+                       QgsProcessingAlgorithm,
+                       QgsProcessingParameterBoolean as ParameterBoolean,
+                       QgsProcessingParameterEnum as ParameterSelection,
+                       QgsProcessingParameterExtent as ParameterExtent,
+                       QgsProcessingParameterNumber as ParameterNumber,
+                       QgsProcessingOutputRasterLayer as OutputRaster,
+                       QgsProcessingParameterRasterLayer as ParameterRaster,
+                       QgsProcessingParameterVectorLayer as ParameterVector,
+                       QgsProcessingParameterMatrix as ParameterTable,
+                       QgsProcessingOutputFile as OutputTable)
 
-from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
-try:
-    from processing.core.QGisLayers import QGisLayers
-except: # for qgis dev
-    # new processing update
-    from processing.tools import dataobjects, vector
+
+from qgis.core import QgsProcessingException
 
 # For Processing update
-try:
-    from processing.outputs.OutputVector import OutputVector
-    from processing.outputs.OutputRaster import OutputRaster
-    from processing.outputs.OutputTable import OutputTable
-except ImportError:
-    from processing.core.outputs import OutputVector
-    from processing.core.outputs import OutputRaster
-    from processing.core.outputs import OutputTable    
-
-try:
-    from processing.parameters.ParameterBoolean import ParameterBoolean
-    from processing.parameters.ParameterMultipleInput import ParameterMultipleInput
-    from processing.parameters.ParameterNumber import ParameterNumber
-    from processing.parameters.ParameterRaster import ParameterRaster
-    from processing.parameters.ParameterString import ParameterString
-    from processing.parameters.ParameterTable import ParameterTable
-    from processing.parameters.ParameterVector import ParameterVector
-    from processing.parameters.ParameterTableField import ParameterTableField
-    from processing.parameters.ParameterSelection import ParameterSelection
-    from processing.parameters.ParameterRange import ParameterRange
-    from processing.parameters.ParameterFixedTable import ParameterFixedTable
-    from processing.parameters.ParameterExtent import ParameterExtent
-    from processing.parameters.ParameterFile import ParameterFile
-    from processing.parameters.ParameterCrs import ParameterCrs
-except ImportError:
-    from processing.core.parameters import ParameterBoolean
-    from processing.core.parameters import ParameterMultipleInput
-    from processing.core.parameters import ParameterNumber
-    from processing.core.parameters import ParameterRaster
-    from processing.core.parameters import ParameterString
-    from processing.core.parameters import ParameterTable
-    from processing.core.parameters import ParameterVector
-    from processing.core.parameters import ParameterTableField
-    from processing.core.parameters import ParameterSelection
-    from processing.core.parameters import ParameterRange
-    from processing.core.parameters import ParameterFixedTable
-    from processing.core.parameters import ParameterExtent
-    from processing.core.parameters import ParameterFile
-    from processing.core.parameters import ParameterCrs
 # Import PyQT bindings
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
 
 # Import QGIS analysis tools
 from qgis.core import *
@@ -90,7 +54,7 @@ import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 from os import path
 
 # Import functions and metrics
-import lecos_functions as func
+from . import lecos_functions as func
 
 # Import numpy and scipy
 import numpy
@@ -115,9 +79,6 @@ try:
 except ImportError:
     import ogr
 
-# Avoiding python 3 troubles
-from __future__ import division
-
 # Register gdal and ogr drivers
 #if hasattr(gdal,"AllRegister"): # Can register drivers
 #    gdal.AllRegister() # register all gdal drivers
@@ -126,7 +87,7 @@ from __future__ import division
 
 ## Landscape preperation
 # Creates a random landscape from a given distribution
-class CreateRandomLandscape(GeoAlgorithm):
+class CreateRandomLandscape(QgsProcessingAlgorithm):
     # Define constants
     WHAT = "WHAT"
     w = ['Constant value','Random integer','Uniform','Normal','Exponential','Poisson','Gamma','Binomial','Geometric','Negative binomial','lognormal','Weibull']
@@ -137,20 +98,27 @@ class CreateRandomLandscape(GeoAlgorithm):
     MEAN = "MEAN"
     STD = "STD"
     OUTPUT_FILE = "OUTPUT_FILE"
-
-    def getIcon(self):
+    
+    def __init__(self):
+        super().__init__()
+        self.controller = None
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_randomdistribution.png")
-
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
        
-        self.name = "Create random Landscape (Distribution)"
-        self.cmdName = "createrandomraster"
-        self.group = "Landscape preparation"
-        
+    def displayName(self):
+        return "Create random Landscape (Distribution)"
+    def name(self):
+        return "createrandomraster"
+    def group(self):
+        return "Landscape preparation"
+    def groupId(self):
+        return 'Landscape preparation'
+    def createInstance(self):
+        return CreateRandomLandscape()
+ 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterSelection(self.WHAT, "Choose value distribution", self.w, 0))
-        self.addParameter(ParameterExtent(self.EXTENT, "New extent",False))
+        self.addParameter(ParameterExtent(self.EXTENT, "New extent"))
         self.addParameter(ParameterNumber(self.MIN, "Minimum / Alpha", 1, None, 1))
         self.addParameter(ParameterNumber(self.MAX, "Maximum / Beta", 1, None, 10))
         self.addParameter(ParameterNumber(self.MEAN, "Mean / Number", 1, None, 5))
@@ -160,21 +128,19 @@ class CreateRandomLandscape(GeoAlgorithm):
 
     def processAlgorithm(self, progress):
         '''Here is where the processing itself takes place'''
-        
         # Retrieve the values of the parameters entered by the user
         what = self.w[self.getParameterValue(self.WHAT)]
         ext = self.getParameterValue(self.EXTENT)
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")
+            raise QgsProcessingException("Please set an extent for the generated raster")
         mini = self.getParameterValue(self.MIN)
         maxi = self.getParameterValue(self.MAX)
         avg = self.getParameterValue(self.MEAN)
         std = self.getParameterValue(self.STD)
         cs  =  self.getParameterValue(self.CELL_SIZE)
         output = self.getOutputValue(self.OUTPUT_FILE)
-        
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -207,17 +173,17 @@ class CreateRandomLandscape(GeoAlgorithm):
             try:
                 array = numpy.random.binomial(avg,std,(rows,cols))
             except ValueError:
-                raise GeoAlgorithmExecutionException("The Probability can not be greater than 1")
+                raise QgsProcessingException("The Probability can not be greater than 1")
         elif what == "Geometric":
             try:            
                 array = numpy.random.geometric(std,(rows,cols))
             except ValueError:
-                raise GeoAlgorithmExecutionException("The Probability can not be greater than 1")
+                raise QgsProcessingException("The Probability can not be greater than 1")
         elif what == "Negative binomial":
             try:
                 array = numpy.random.negative_binomial(avg,std,(rows,cols))
             except ValueError:
-                raise GeoAlgorithmExecutionException("The Probability can not be greater than 1")                
+                raise QgsProcessingException("The Probability can not be greater than 1")                
         elif what == "lognormal":
             array = numpy.random.lognormal(avg,std,(rows,cols))
         elif what == "Weibull":
@@ -225,43 +191,43 @@ class CreateRandomLandscape(GeoAlgorithm):
                 
         # Create output raster
         func.createRaster(output,cols,rows,array,nodata,gt)
-
     def help(self):
         helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
         if os.path.isfile(helppath):
             return False, helppath
         else:
             return False, None        
-
 # Inspired from here: http://stackoverflow.com/questions/10454316/how-to-project-and-resample-a-grid-to-match-another-grid-with-gdal-python
-class MatchLandscapes(GeoAlgorithm):
+class MatchLandscapes(QgsProcessingAlgorithm):
     # Define constants
     LAND1 = "LAND1"
     LAND2 = "LAND2"
     INTERP = "INTERP"
     i = ['Bilinear','Cubic','Cubicspline','Lanczos','NearestNeighbour']
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return MatchLandscapes()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_matchlandscapes.png")
+    def displayName(self):
+        return "Match two landscapes"
+    def name(self):
+        return "preplandscape"
+    def group(self):
+        return "Landscape preparation"
+    def groupId(self):
+        return "Landscape preparation"
 
-    def defineCharacteristics(self):
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Match two landscapes"
-        self.cmdName = "preplandscape"
-        self.group = "Landscape preparation"
-
-        self.addParameter(ParameterRaster(self.LAND1, "Source landscape", False))
-        self.addParameter(ParameterRaster(self.LAND2, "Target landscape", False))
+        self.addParameter(ParameterRaster(self.LAND1, "Source landscape", optional=False))
+        self.addParameter(ParameterRaster(self.LAND2, "Target landscape", optional=False))
         self.addParameter(ParameterSelection(self.INTERP, "Interpolation mode", self.i, 0))
-
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
 
     def processAlgorithm(self, progress):
         '''Here is where the processing itself takes place'''
-        
         # Retrieve the values of the parameters entered by the user
         inputSource = self.getParameterValue(self.LAND1)
         inputTarget = self.getParameterValue(self.LAND2)
@@ -286,7 +252,7 @@ class MatchLandscapes(GeoAlgorithm):
             # try create File driver based in path
             dst = gdal.GetDriverByName('GTiff').Create(output, wide, high, 1, gdalconst.GDT_Float32)
         except RuntimeError:
-            raise GeoAlgorithmExecutionException("Could not generate output file")
+            raise QgsProcessingException("Could not generate output file")
             
         dst.SetGeoTransform( match_geotrans )
         dst.SetProjection( match_proj)
@@ -315,25 +281,31 @@ class MatchLandscapes(GeoAlgorithm):
             return False, None      
 
 
-class RasterWithRasterClip(GeoAlgorithm):
+class RasterWithRasterClip(QgsProcessingAlgorithm):
     # Define constants
     LAND1 = "LAND1"
     LAND2 = "LAND2"
     OUTPUT_RASTER = "OUTPUT_RASTER"
     
-    def getIcon(self):
+    def createInstance(self):
+        return RasterWithRasterClip()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_clipRaster.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Intersect Landscapes"
+    def name(self):
+        return "landintersect"
+    def group(self):
+        return "Landscape preparation"
+    def groupId(self):
+        return "Landscape preparation"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Intersect Landscapes"
-        self.cmdName = "landintersect"
-        self.group = "Landscape preparation"
-
-        self.addParameter(ParameterRaster(self.LAND1, "Source landscape", False))
-        self.addParameter(ParameterRaster(self.LAND2, "Target landscape", False))
+        self.addParameter(ParameterRaster(self.LAND1, "Source landscape", optional=False))
+        self.addParameter(ParameterRaster(self.LAND2, "Target landscape", optional=False))
 
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
 
@@ -349,7 +321,7 @@ class RasterWithRasterClip(GeoAlgorithm):
         r1 = Processing.getObject(inputSource)
         r2 = Processing.getObject(inputTarget)
         if r1.crs() != r2.crs():
-            raise GeoAlgorithmExecutionException("Make sure both raster layer have the same projection")
+            raise QgsProcessingException("Make sure both raster layer have the same projection")
                     
         # Processing
         src = gdal.Open(str(inputSource), gdalconst.GA_ReadOnly)
@@ -377,7 +349,7 @@ class RasterWithRasterClip(GeoAlgorithm):
         
         # Test if they are intersecting
         if (intersection[2] < intersection[0]) or (intersection[1] < intersection[3]):
-            raise GeoAlgorithmExecutionException("Landscape layers are not intersecting.")
+            raise QgsProcessingException("Landscape layers are not intersecting.")
 
         else:
             # Convert to pixels
@@ -413,32 +385,33 @@ class RasterWithRasterClip(GeoAlgorithm):
 
 
 ## Landscape Statistics
-import landscape_statistics as lcs
-class LandscapeStatistics(GeoAlgorithm):
+from . import landscape_statistics as lcs
+class LandscapeStatistics(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
-
     METRIC = "METRIC"
     METRICsel = ["Mean", "Sum","Minimum","Maximum","Standard deviation","Lower quantile","Median","Upper quantile","Shannon Diversity Index","Eveness","Simpson Diversity Index"]
     m = ["LC_Mean","LC_Sum","LC_Min","LC_Max","LC_SD","LC_LQua","LC_Med","LC_UQua","DIV_SH","DIV_EV","DIV_SI"]
-    
     OUTPUT_FILE = "OUTPUT_FILE"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return LandscapeStatistics()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"icon.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Landscape wide statistics"
+    def name(self):
+        return "landscapestat"
+    def group(self):
+        return "Landscape statistics"
+    def groupId(self):
+        return "Landscape statistics"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Landscape wide statistics"
-        self.cmdName = "landscapestat"
-        self.group = "Landscape statistics"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
-        
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
         self.addParameter(ParameterSelection(self.METRIC, "What to calculate", self.METRICsel, 0))
-        
         self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file"))
 
     def processAlgorithm(self, progress):
@@ -457,7 +430,7 @@ class LandscapeStatistics(GeoAlgorithm):
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
         
         if QGis.QGIS_VERSION_INT < 10900:
             pixelSize = rasterlayer.rasterUnitsPerPixel()
@@ -466,7 +439,7 @@ class LandscapeStatistics(GeoAlgorithm):
             pixelSizeY = rasterlayer.rasterUnitsPerPixelY() # Extract The Y-Value
             # Check for rounded equal square cellsize
             if round(pixelSize,0) != round(pixelSizeY,0):
-                raise GeoAlgorithmExecutionException("The cells in the landscape layer are not square. Calculated values will be incorrect")
+                raise QgsProcessingException("The cells in the landscape layer are not square. Calculated values will be incorrect")
         
         cl_analys = lcs.LandCoverAnalysis(array,pixelSize,classes)
         res = []
@@ -484,23 +457,29 @@ class LandscapeStatistics(GeoAlgorithm):
 
 # Lists all unique raster cells of a raster
 # Returns the total number per cell in a table
-class CountRasterCells(GeoAlgorithm):
+class CountRasterCells(QgsProcessingAlgorithm):
     # Define constants
     RASTER = "RASTER"
     BAND = "BAND"
     OUTPUT_FILE = "OUTPUT_FILE"
      
-    def getIcon(self):
+    def createInstance(self):
+        return CountRasterCells()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_countRastercells.png")
+    def displayName(self):
+        return "Count Raster Cells"
+    def name(self):
+        return "countrastercell"
+    def group(self):
+        return "Landscape statistics"
+    def groupId(self):
+        return "Landscape statistics"
 
-    def defineCharacteristics(self):
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-        self.name = "Count Raster Cells"
-        self.cmdName = "countrastercell"
-        self.group = "Landscape statistics"
-
-        self.addParameter(ParameterRaster(self.RASTER, "Raster layer", False))
+        self.addParameter(ParameterRaster(self.RASTER, "Raster layer", optional=False))
         self.addParameter(ParameterNumber(self.BAND, "Which Raster band (1 default)", 1, None, 1))      
         self.addOutput(OutputTable(self.OUTPUT_FILE, "Result output"))
 
@@ -518,14 +497,14 @@ class CountRasterCells(GeoAlgorithm):
         try:
             array =  band.ReadAsArray() 
         except ValueError:
-            raise GeoAlgorithmExecutionException("Input Raster to big. Try to slize it up.")
+            raise QgsProcessingException("Input Raster to big. Try to slize it up.")
         nodata = band.GetNoDataValue() # Get Nodata-value
         raster = None # close gdal
 
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
                 
         # Get unique values
         classes = sorted(numpy.unique(array)) # get classes
@@ -551,27 +530,31 @@ class CountRasterCells(GeoAlgorithm):
         else:
             return False, None
 
-class PatchStatistics(GeoAlgorithm):
+class PatchStatistics(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
     METRIC = "METRIC"
     METRICsel = lcs.listStatistics()
-    
     OUTPUT_FILE = "OUTPUT_FILE"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return PatchStatistics()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_patchstat.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Patch statistics"
+    def name(self):
+        return "patchstat"
+    def group(self):
+        return "Landscape statistics"
+    def groupId(self):
+        return "Landscape statistics"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Patch statistics"
-        self.cmdName = "patchstat"
-        self.group = "Landscape statistics"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
 
         self.addParameter(ParameterSelection(self.METRIC, "What to calculate", self.METRICsel, 0))
@@ -595,12 +578,12 @@ class PatchStatistics(GeoAlgorithm):
         # Needed to see if class in inside raster
         if cl not in classes:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
+            raise QgsProcessingException("The layer %s has no cells with value %s !" % (ln,cl))
 
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The landscape layer %s has no valid nodata value (no number)!" % (ln)) 
+            raise QgsProcessingException("The landscape layer %s has no valid nodata value (no number)!" % (ln)) 
         
         if QGis.QGIS_VERSION_INT < 10900:
             pixelSize = rasterlayer.rasterUnitsPerPixel()
@@ -609,7 +592,7 @@ class PatchStatistics(GeoAlgorithm):
             pixelSizeY = rasterlayer.rasterUnitsPerPixelY() # Extract The Y-Value
             # Check for rounded equal square cellsize
             if round(pixelSize,0) != round(pixelSizeY,0):
-                raise GeoAlgorithmExecutionException("The cells in the landscape layer are not square. Calculated values will be incorrect")
+                raise QgsProcessingException("The cells in the landscape layer are not square. Calculated values will be incorrect")
         
         cl_analys = lcs.LandCoverAnalysis(array,pixelSize,classes)
         # Conduct the con. comp. labeling
@@ -632,7 +615,7 @@ class PatchStatistics(GeoAlgorithm):
 
 # Calculates zonal statistics using a source and zone grid
 # Output as table or raster
-class ZonalStatistics(GeoAlgorithm):
+class ZonalStatistics(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     ZONE_GRID = "ZONE_GRID"
@@ -641,25 +624,30 @@ class ZonalStatistics(GeoAlgorithm):
     CREATE_R = "CREATE_R"
     OUTPUT_FILE = "OUTPUT_FILE"
     OUTPUT_RASTER = "OUTPUT_RASTER"
-
-    def getIcon(self):
+    def createInstance(self):
+        return ZonalStatistics()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_zonalstats.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Zonal statistics"
+    def name(self):
+        return "zonalstat"
+    def group(self):
+        return "Landscape statistics"
+    def groupId(self):
+        return "Landscape statistics"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Zonal statistics"
-        self.cmdName = "zonalstat"
-        self.group = "Landscape statistics"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
-        self.addParameter(ParameterRaster(self.ZONE_GRID, "Zonal Grid", False))
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
+        self.addParameter(ParameterRaster(self.ZONE_GRID, "Zonal Grid", optional=False))
         self.addParameter(ParameterSelection(self.WHAT, "What to calculate", self.m, 0))
         
         self.addParameter(ParameterBoolean(self.CREATE_R, "Should a raster result be created?", False))
         
-        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file",False))
+        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file"))
         # Optionally 
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Raster output"))
 
@@ -678,11 +666,11 @@ class ZonalStatistics(GeoAlgorithm):
         r1 = Processing.getObject(landFilename)
         r2 = Processing.getObject(zoneFilename)
         if r1.crs() != r2.crs():
-            raise GeoAlgorithmExecutionException("Make sure both layers have the same projection")
+            raise QgsProcessingException("Make sure both layers have the same projection")
         
         # Check for equal extent
         if r1.extent() != r2.extent():
-            raise GeoAlgorithmExecutionException("Make sure both layers have the same extent. Use the 'Intersect Landscapes' tool beforehand!")
+            raise QgsProcessingException("Make sure both layers have the same extent. Use the 'Intersect Landscapes' tool beforehand!")
         
         # Start Processing
         nodata = lcs.f_returnNoDataValue(landFilename) # Get Nodata-value
@@ -692,11 +680,11 @@ class ZonalStatistics(GeoAlgorithm):
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(landFilename))
-            raise GeoAlgorithmExecutionException("The landscape layer %s has no valid nodata value (no number)!" % (ln))        
+            raise QgsProcessingException("The landscape layer %s has no valid nodata value (no number)!" % (ln))        
         
         # Check for equal shape
         if l_array.shape != z_array.shape:
-            raise GeoAlgorithmExecutionException("Make sure both layers have the same number of rows and columns. Use the 'Match two landscapes' tool beforehand!")
+            raise QgsProcessingException("Make sure both layers have the same number of rows and columns. Use the 'Match two landscapes' tool beforehand!")
         
         # Construct new array by removing null-data indices from both array        
         index = numpy.where(l_array == nodata)
@@ -761,37 +749,39 @@ class ZonalStatistics(GeoAlgorithm):
 
 
 ## Polygon Batch Overlay
-import landscape_polygonoverlay as pov 
-class RasterPolyOver(GeoAlgorithm):
+from . import landscape_polygonoverlay as pov 
+class RasterPolyOver(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     VECTOR_GRID = "VECTOR_GRID"
     IS_CLASS = "IS_CLASS"
     LC_CLASS = "LC_CLASS"
-
     CMETRIC = "CMETRIC"
     CMETRICsel = lcs.listStatistics()
-    
     LMETRIC = "LMETRIC"
     LMETRICsel = ["Mean", "Sum","Minimum","Maximum","Standard deviation","Lower quantile","Median","Upper quantile","Shannon Diversity Index","Eveness","Simpson Diversity Index"]
     m = ["LC_Mean","LC_Sum","LC_Min","LC_Max","LC_SD","LC_LQua","LC_Med","LC_UQua","DIV_SH","DIV_EV","DIV_SI"]
-
-    
     OUTPUT_FILE = "OUTPUT_FILE"
     ADDTABLE = "ADDTABLE"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return RasterPolyOver()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"icon_batchCover.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Overlay raster metrics (Polygons)"
+    def name(self):
+        return "poloverlayraster"
+    def group(self):
+        return "Landscape vector overlay"
+    def groupId(self):
+        return "Landscape vector overlay"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-        self.name = "Overlay raster metrics (Polygons)"
-        self.cmdName = "poloverlayraster"
-        self.group = "Landscape vector overlay"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
-        self.addParameter(ParameterVector(self.VECTOR_GRID, "Overlay Vector Grid", ParameterVector.VECTOR_TYPE_POLYGON, False))
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
+        self.addParameter(ParameterVector(self.VECTOR_GRID, "Overlay Vector Grid", [QgsProcessing.TypeVectorPolygon], optional=False))
         
         self.addParameter(ParameterBoolean(self.IS_CLASS, "Raster classified?", True))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
@@ -821,13 +811,13 @@ class RasterPolyOver(GeoAlgorithm):
         
         # Make sure they have the same projection
         if rasterlayer.crs() != vectorlayer.crs():
-            raise GeoAlgorithmExecutionException("Make sure both raster and vector layer have the same projection")
+            raise QgsProcessingException("Make sure both raster and vector layer have the same projection")
 
         # Processing
         bat = pov.BatchConverter(inputFilename,vectorFilename,None)
         nodata = lcs.f_returnNoDataValue(inputFilename) # Get Nodata-value
         if nodata == None:
-            raise GeoAlgorithmExecutionException("The landscape raster layer doesn't possess a valid nodata value")
+            raise QgsProcessingException("The landscape raster layer doesn't possess a valid nodata value")
         classes, array = lcs.f_landcover(inputFilename,nodata) # Get classes and data array
         
         if QGis.QGIS_VERSION_INT < 10900:
@@ -837,14 +827,14 @@ class RasterPolyOver(GeoAlgorithm):
             pixelSizeY = rasterlayer.rasterUnitsPerPixelY() # Extract The Y-Value
             # Check for rounded equal square cellsize
             if round(pixelSize,0) != round(pixelSizeY,0):
-                raise GeoAlgorithmExecutionException("The cells in the landscape layer are not square. Calculated values will be incorrect")
+                raise QgsProcessingException("The cells in the landscape layer are not square. Calculated values will be incorrect")
         
         results = []
         if isCl == True: # class metrics        
             # Needed to see if class in inside raster
             if cl not in classes:
                 ln = str(path.basename(inputFilename))
-                raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
+                raise QgsProcessingException("The layer %s has no cells with value %s !" % (ln,cl))
             err, r = bat.go(whatC,cl,pixelSize)
         else: # landscape metric
             err, r = bat.go(whatL,None,pixelSize)
@@ -863,7 +853,7 @@ class RasterPolyOver(GeoAlgorithm):
         writer = csv.writer(f,delimiter=';',quotechar="'",quoting=csv.QUOTE_ALL)
         writer.writerow(title)
         # Get number of polygon features
-        feat = range(0,len(results[0]))
+        feat = list(range(0,len(results[0])))
         for feature in feat: # Write feature to new line
             r = [feature]
             for item in results:
@@ -879,27 +869,33 @@ class RasterPolyOver(GeoAlgorithm):
             return False, None
 
 # Returns the raster values below a point layer, Output Results as table
-class GetRasterValuesPoint(GeoAlgorithm):
+class GetRasterValuesPoint(QgsProcessingAlgorithm):
     # Define constants
     RASTER = "RASTER"
     BAND = "BAND"
     POINT = "POINT"
     OUTPUT_FILE = "OUTPUT_FILE"
      
-    def getIcon(self):
+    def createInstance(self):
+        return GetRasterValuesPoint()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_rastervalPoints.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Query raster values (Points)"
+    def name(self):
+        return "queryraster"
+    def group(self):
+        return "Landscape vector overlay"
+    def groupId(self):
+        return "Landscape vector overlay"
+        
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-        
-        self.name = "Query raster values (Points)"
-        self.cmdName = "queryraster"
-        self.group = "Landscape vector overlay"
-        
-        self.addParameter(ParameterRaster(self.RASTER, "Raster layer", False))
+        self.addParameter(ParameterRaster(self.RASTER, "Raster layer", optional=False))
         self.addParameter(ParameterNumber(self.BAND, "Which Raster band (1 default)", 1, None, 1))    
-        self.addParameter(ParameterVector(self.POINT, "Point layer", ParameterVector.VECTOR_TYPE_POINT, False))
+        self.addParameter(ParameterVector(self.POINT, "Point layer", [QgsProcessing.TypeVectorPoint], optional=False))
         self.addOutput(OutputTable(self.OUTPUT_FILE, "Result output"))
 
     def processAlgorithm(self, progress):
@@ -916,7 +912,7 @@ class GetRasterValuesPoint(GeoAlgorithm):
         cr1 = v.crs()
         cr2 = r.crs()
         if cr1!=cr2:
-            raise GeoAlgorithmExecutionException("Make sure Point and Raster layer have the same projection")
+            raise QgsProcessingException("Make sure Point and Raster layer have the same projection")
 
         # Use GDAL to open the raster
         raster = gdal.Open(str(inputFilename))
@@ -940,7 +936,7 @@ class GetRasterValuesPoint(GeoAlgorithm):
             y = int(pp[1])
         
             if x < 0 or y < 0 or x >= array.shape[1] or y >= array.shape[0]:
-                raise GeoAlgorithmExecutionException("Point could not be queried or outside raster")
+                raise QgsProcessingException("Point could not be queried or outside raster")
 
             res.append((feat.GetFID(),array[y, x]))
         
@@ -971,7 +967,7 @@ class GetRasterValuesPoint(GeoAlgorithm):
 
 
 # Overlay vector landscape layer with another polygon
-class VectorPolyOver(GeoAlgorithm):
+class VectorPolyOver(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     # FIXME: Maybe in the future a vector overlay will come. Don't see personal need.
@@ -979,38 +975,39 @@ class VectorPolyOver(GeoAlgorithm):
     GROUPING_ID = "GROUPING_ID"
     IS_CLASS = "IS_CLASS"
     LC_CLASS = "LC_CLASS"
-
     CMETRIC = "CMETRIC"
     CMETRICsel = pov.listVectorStatistics()
-    
     LMETRIC = "LMETRIC"
     LMETRICsel = ["Mean", "Sum","Minimum","Maximum","Standard deviation","Lower quantile","Median","Upper quantile"]
     m = ["LC_Mean","LC_Sum","LC_Min","LC_Max","LC_SD","LC_LQua","LC_Med","LC_UQua"]
-
     OUTPUT_FILE = "OUTPUT_FILE"
     ADDTABLE = "ADDTABLE"
+    def createInstance(self):
+        return VectorPolyOver()
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_vectorOverlay.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Overlay vector metrics (Polygons)"
+    def name(self):
+        return "overlayvector"
+    def group(self):
+        return "Landscape vector overlay"
+    def groupId(self):
+        return "Landscape vector overlay"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Overlay vector metrics (Polygons)"
-        self.cmdName = "overlayvector"
-        self.group = "Landscape vector overlay"
-
-        self.addParameter(ParameterVector(self.LAND_GRID, "Landscape Grid",ParameterVector.VECTOR_TYPE_POLYGON, False))
+        self.addParameter(ParameterVector(self.LAND_GRID, "Landscape Grid",[QgsProcessing.TypeVectorPolygon], optional=False))
         #self.addParameter(ParameterVector(self.VECTOR_GRID, "Overlay Vector Grid", ParameterVector.VECTOR_TYPE_POLYGON, False))
         self.addParameter(ParameterTableField(VectorPolyOver.GROUPING_ID, "Grouping ID ", VectorPolyOver.LAND_GRID))
-        self.addParameter(ParameterBoolean(self.IS_CLASS, "Single class or landscape metrics", True))
+        self.addParameter(ParameterBoolean(self.IS_CLASS, "Single class or landscape metrics", default=True))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
-                
         self.addParameter(ParameterSelection(self.CMETRIC, "Metrics (single class):", self.CMETRICsel, 0))
         self.addParameter(ParameterSelection(self.LMETRIC, "Metrics (landscape):", self.LMETRICsel, 0))
-                
-        self.addParameter(ParameterBoolean(self.ADDTABLE, "Also add to attribute table (yes)", False))
+        self.addParameter(ParameterBoolean(self.ADDTABLE, "Also add to attribute table (yes)", default=False))
         self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file"))
 
     def processAlgorithm(self, progress):
@@ -1054,7 +1051,7 @@ class VectorPolyOver(GeoAlgorithm):
         writer = csv.writer(f,delimiter=';',quotechar="'",quoting=csv.QUOTE_ALL)
         writer.writerow(title)
         # Get number of polygon features
-        feat = range(0,len(results[0]))
+        feat = list(range(0,len(results[0])))
         for feature in feat: # Write feature to new line
             r = [feature]
             for item in results:
@@ -1071,27 +1068,33 @@ class VectorPolyOver(GeoAlgorithm):
 
 
 ## Landscape Modifier algorithms
-import landscape_modifier as lmod
+from . import landscape_modifier as lmod
 # Conducts a connected component labeling and 
 # assigns a new number to every landscape patch of a given class
-class LabelLandscapePatches(GeoAlgorithm):
+class LabelLandscapePatches(QgsProcessingAlgorithm):
     # Define constants
     LAND = "LAND"
     LC_CLASS = "LC_CLASS"
     OUTPUT_RASTER = "OUTPUT_RASTER"
     
-    def getIcon(self):
+    def createInstance(self):
+        return LabelLandscapePatches()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_label.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Label Landscape patches"
+    def name(self):
+        return "labellandscape"
+    def group(self):
+        return "Landscape modifications"
+    def groupId(self):
+        return "Landscape modifications"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Label Landscape patches"
-        self.cmdName = "labellandscape"
-        self.group = "Landscape modifications"
-
-        self.addParameter(ParameterRaster(self.LAND, "Classified raster layer", False))
+        self.addParameter(ParameterRaster(self.LAND, "Classified raster layer", optional=False))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
 
@@ -1110,12 +1113,12 @@ class LabelLandscapePatches(GeoAlgorithm):
         # Check for nodata value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
 
         # Needed to see if class in inside raster
         if cl not in classes:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
+            raise QgsProcessingException("The layer %s has no cells with value %s !" % (ln,cl))
             
         # Build 
         cl_array = numpy.copy(array)
@@ -1135,7 +1138,7 @@ class LabelLandscapePatches(GeoAlgorithm):
             return False, None
 
 # Conducts neighbourhood analysis based on a moving window approach
-class NeighbourhoodAnalysis(GeoAlgorithm):
+class NeighbourhoodAnalysis(QgsProcessingAlgorithm):
     # Define constants
     RASTER = "RASTER"
     METHOD = "METHOD"
@@ -1145,18 +1148,24 @@ class NeighbourhoodAnalysis(GeoAlgorithm):
     m = ["reflect", "constant", "nearest", "mirror", "wrap"]
     OUTPUT_FILE = "OUTPUT_FILE"
      
-    def getIcon(self):
+    def createInstance(self):
+        return NeighbourhoodAnalysis()
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_neighboranalysis.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Neighbourhood Analysis (Moving Window)"
+    def name(self):
+        return "nanalysis"
+    def group(self):
+        return "Landscape modifications"
+    def groupId(self):
+        return "Landscape modifications"
+        
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-       
-        self.name = "Neighbourhood Analysis (Moving Window)"
-        self.cmdName = "nanalysis"
-        self.group = "Landscape modifications"
-        
-        self.addParameter(ParameterRaster(self.RASTER, "Raster layer", False))
+        self.addParameter(ParameterRaster(self.RASTER, "Raster layer", optional=False))
         self.addParameter(ParameterSelection(self.METHOD, "What to calculate", self.METHODsel, 0))
         self.addParameter(ParameterNumber(self.SIZE, "Neighbourhood Size", 1, None, 3))
         self.addParameter(ParameterSelection(self.MODE, "Behaviour at Edges", self.m, 0))
@@ -1183,7 +1192,7 @@ class NeighbourhoodAnalysis(GeoAlgorithm):
         # Check for nodata value
         if self.nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
         # Format nodata to numpy.nan
         array[array==self.nodata] = numpy.nan
 
@@ -1245,29 +1254,32 @@ class NeighbourhoodAnalysis(GeoAlgorithm):
         else:
             return False, None
 
-class IncreaseLandPatch(GeoAlgorithm):
+class IncreaseLandPatch(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
-
     TAXICAB = "TAXICAB"
     INCorDEC = "INCorDEC"
     INCDECsel = ["Increase", "Decrease"]
-    
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return IncreaseLandPatch()    
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_IncDec.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Increase/Decrease Patches"
+    def name(self):
+        return "incdecpatch"
+    def group(self):
+        return "Landscape modifications"
+    def groupId(self):
+        return "Landscape modifications"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Increase/Decrease Patches"
-        self.cmdName = "incdecpatch"
-        self.group = "Landscape modifications"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
         
         self.addParameter(ParameterSelection(self.INCorDEC, "What", self.INCDECsel, 0))
@@ -1289,13 +1301,13 @@ class IncreaseLandPatch(GeoAlgorithm):
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
 
         # Needed to see if class in inside raster
         classes, array = lcs.f_landcover(inputFilename)
         if cl not in classes:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))        
+            raise QgsProcessingException("The layer %s has no cells with value %s !" % (ln,cl))        
 
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
@@ -1311,27 +1323,30 @@ class IncreaseLandPatch(GeoAlgorithm):
         else:
             return False, None
 
-class ExtractEdges(GeoAlgorithm):
+class ExtractEdges(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
-
     TAXICAB = "TAXICAB"
-    
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return ExtractEdges()    
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_EdgeExtract.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Extract Patch edges"
+    def name(self):
+        return "patchedges"
+    def group(self):
+        return "Landscape modifications"
+    def groupId(self):
+        return "Landscape modifications"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Extract Patch edges"
-        self.cmdName = "patchedges"
-        self.group = "Landscape modifications"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
         self.addParameter(ParameterNumber(self.TAXICAB, "Taxicab size", 1, None, 1))        
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Raster output"))
@@ -1349,13 +1364,13 @@ class ExtractEdges(GeoAlgorithm):
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
 
         # Needed to see if class in inside raster
         classes, array = lcs.f_landcover(inputFilename)
         if cl not in classes:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
+            raise QgsProcessingException("The layer %s has no cells with value %s !" % (ln,cl))
 
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
@@ -1371,28 +1386,31 @@ class ExtractEdges(GeoAlgorithm):
             return False, None
 
         
-class IsolateExtremePatch(GeoAlgorithm):
+class IsolateExtremePatch(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
-
     WHAT = "WHAT"
     WHATsel = ["Minimum", "Maximum"]
-    
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return IsolateExtremePatch()    
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_MaxMin.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Isolate smallest/greatest Patches"
+    def name(self):
+        return "minmaxpatch"
+    def group(self):
+        return "Landscape modifications"
+    def groupId(self):
+        return "Landscape modifications"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Isolate smallest/greatest Patches"
-        self.cmdName = "minmaxpatch"
-        self.group = "Landscape modifications"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
         
         self.addParameter(ParameterSelection(self.WHAT, "What", self.WHATsel, 0))
@@ -1412,13 +1430,13 @@ class IsolateExtremePatch(GeoAlgorithm):
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
 
         # Needed to see if class in inside raster
         classes, array = lcs.f_landcover(inputFilename)
         if cl not in classes:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
+            raise QgsProcessingException("The layer %s has no cells with value %s !" % (ln,cl))
         
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
@@ -1438,25 +1456,29 @@ class IsolateExtremePatch(GeoAlgorithm):
         else:
             return False, None
         
-class CloseHoles(GeoAlgorithm):
+class CloseHoles(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
-    
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return CloseHoles()    
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_closeHole.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Close holes in patches"
+    def name(self):
+        return "closeholes"
+    def group(self):
+        return "Landscape modifications"
+    def groupId(self):
+        return "Landscape modifications"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Close holes in patches"
-        self.cmdName = "closeholes"
-        self.group = "Landscape modifications"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Raster output"))
 
@@ -1472,13 +1494,13 @@ class CloseHoles(GeoAlgorithm):
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
 
         # Needed to see if class in inside raster
         classes, array = lcs.f_landcover(inputFilename)
         if cl not in classes:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
+            raise QgsProcessingException("The layer %s has no cells with value %s !" % (ln,cl))
         
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)
@@ -1495,27 +1517,30 @@ class CloseHoles(GeoAlgorithm):
             return False, None
 
 
-class CleanSmallPixels(GeoAlgorithm):
+class CleanSmallPixels(QgsProcessingAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
     LC_CLASS = "LC_CLASS"
-    
     TAXICAB = "TAXICAB"
-
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    
-    def getIcon(self):
+    def createInstance(self):
+        return CleanSmallPixels()    
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_CleanRas.png")
 
-    def defineCharacteristics(self):
+    def displayName(self):
+        return "Clean small pixels in patches"
+    def name(self):
+        return "cleanlandscape"
+    def group(self):
+        return "Landscape modifications"
+    def groupId(self):
+        return "Landscape modifications"
+
+    def initAlgorithm(self, config):
         '''Here we define the inputs and output of the algorithm, along
         with some other properties'''
-
-        self.name = "Clean small pixels in patches"
-        self.cmdName = "cleanlandscape"
-        self.group = "Landscape modifications"
-
-        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", False))
+        self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", 1, None, 1))
         self.addParameter(ParameterNumber(self.TAXICAB, "Taxicab size", 1, None, 1))        
 
@@ -1534,13 +1559,13 @@ class CleanSmallPixels(GeoAlgorithm):
         nodata = lcs.f_returnNoDataValue(str(inputFilename)) # Get Nodata-value
         if nodata == None:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no valid nodata value (no number)!" % (ln))
+            raise QgsProcessingException("The layer %s has no valid nodata value (no number)!" % (ln))
         
         # Needed to see if class in inside raster
         classes, array = lcs.f_landcover(inputFilename)
         if cl not in classes:
             ln = str(path.basename(inputFilename))
-            raise GeoAlgorithmExecutionException("The layer %s has no cells with value %s !" % (ln,cl))
+            raise QgsProcessingException("The layer %s has no cells with value %s !" % (ln,cl))
         
         # Processing
         mod = lmod.LandscapeMod(inputFilename,cl)

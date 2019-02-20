@@ -20,6 +20,7 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
+from __future__ import absolute_import
 def name():
     return "LecoS - Landscape Ecology statistics"
 def description():
@@ -32,5 +33,5 @@ def qgisMinimumVersion():
     return "2.0"
 def classFactory(iface):
     # load LecoS class from file LecoS
-    from lecos_main import LecoS
+    from .lecos_main import LecoS
     return LecoS(iface)

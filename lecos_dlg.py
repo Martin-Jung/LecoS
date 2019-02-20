@@ -11,6 +11,7 @@
  ***************************************************************************/
 
 /***************************************************************************
+from qgis.PyQt.QtCore import *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,9 +20,16 @@
  *                                                                         *
  ***************************************************************************/
 """
+
+from __future__ import absolute_import
+
 # Import PyQT bindings
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from builtins import str
+from builtins import range
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
+from qgis.PyQt.QtWidgets import *
+from qgis.core import *
 
 # Import QGIS analysis tools
 from qgis.core import *
@@ -33,10 +41,11 @@ import os,sys,csv,string,math,operator,subprocess,tempfile,inspect, time
 from os import path
 
 # Import functions and metrics
-import lecos_functions as func
-import landscape_statistics as lcs
-import landscape_polygonoverlay as pov
-import landscape_modifier as lmod
+from . import lecos_functions as func
+from . import landscape_statistics as lcs
+from . import landscape_polygonoverlay as pov
+from . import landscape_modifier as lmod
+
 
 # Import numpy and scipy
 import numpy
@@ -45,33 +54,30 @@ try:
 except ImportError:
     QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
     sys.exit(0)
+
 from scipy import ndimage # import ndimage module seperately for easy access
+
 
 # Import GDAL and ogr
 try:
     from osgeo import gdal
 except ImportError:
     import gdal
+
 try:
     from osgeo import ogr
 except ImportError:
     import ogr
 
-# Avoiding python 3 troubles
-from __future__ import division
-
-# Register gdal and ogr drivers
-#if hasattr(gdal,"AllRegister"): # Can register drivers
-#    gdal.AllRegister() # register all gdal drivers
-#if hasattr(ogr,"RegisterAll"):
-#    ogr.RegisterAll() # register all ogr drivers
 
 # import Ui
-from ui.dlg_landscapestatistics import Ui_Lecos
-from ui.dlg_PolygonPerLandCover import Ui_BatchDialog
-from ui.dlg_LandscapeModifier import Ui_LandMod
+from .ui.dlg_landscapestatistics import Ui_Lecos
+from .ui.dlg_PolygonPerLandCover import Ui_BatchDialog
+from .ui.dlg_LandscapeModifier import Ui_LandMod
+
 
 tmpdir = tempfile.gettempdir()
+
 
 ## CODE START ##
 # create the dialog controls and set up the user interface from Designer.
@@ -94,40 +100,41 @@ class LecosDialog(QDialog, Ui_Lecos):
             self.setNoData( self.cbRaster.currentText() )
 
         #Change on Rasterfile
-        QObject.connect( self.cbRaster, SIGNAL( "currentIndexChanged( QString )" ), self.cellSizer)
-        QObject.connect( self.cbRaster, SIGNAL( "currentIndexChanged( QString )" ), self.setNoData)
+        self.cbRaster.currentTextChanged.connect(self.cellSizer)
+        self.cbRaster.currentIndexChanged.connect(self.setNoData)
 
         # Save File
-        QObject.connect( self.where2Save, SIGNAL( "clicked()" ), self.selectSaveFile )
-        QObject.connect( self.rbDirect, SIGNAL( "clicked()" ), self.savetoggle )
-        QObject.connect( self.rbSAVE, SIGNAL( "clicked()" ), self.savetoggle )
-
+        self.where2Save.clicked.connect(self.selectSaveFile)
+        self.rbDirect.clicked.connect(self.savetoggle)
+        self.rbSAVE.clicked.connect(self.savetoggle)
 
         # Change on Metric-Tabs
-        QObject.connect( self.SingleMetric, SIGNAL( "currentIndexChanged( QString )" ), self.showFunctionHelp)
-        QObject.connect( self.btn_right, SIGNAL( "clicked()" ), self.switchR )
-        QObject.connect( self.btn_left, SIGNAL( "clicked()" ), self.switchL )
-        QObject.connect( self.SelectAll, SIGNAL( "stateChanged( int )" ), self.SelectAllInListL )
-        QObject.connect( self.SelectAll_2, SIGNAL( "stateChanged( int )" ), self.SelectAllInListR )
+        self.SingleMetric.currentIndexChanged.connect(self.showFunctionHelp)
+        self.btn_right.clicked.connect(self.switchR)
+        self.btn_left.clicked.connect(self.switchL)
+        self.SelectAll.stateChanged.connect(self.SelectAllInListL)
+        self.SelectAll_2.stateChanged.connect(self.SelectAllInListR)
 
         # Button box
-        QObject.connect( self.btn_About, SIGNAL( "clicked()" ), self.showAbout )
+        self.btn_About.clicked.connect(self.showAbout)
         self.AcceptButton = self.bt_Accept.button( QDialogButtonBox.Ok )
         self.closeButton = self.bt_Accept.button( QDialogButtonBox.Cancel )
 
         # Manage current Raster-Layers
         self.Startup()
 
+
     # Shows the help for a single function
     def showFunctionHelp( self, name ):
         text = lcs.returnHelp(name,self.SingleMetricHelp)
+
 
     # Sets the nodata value inside the field
     def setNoData( self, rasterName ):
         if rasterName != -1:
             raster = func.getRasterLayerByName( self.cbRaster.currentText() )
             rasterPath = raster.source()
-            raster = gdal.Open(unicode(rasterPath))
+            raster = gdal.Open(str(rasterPath))
             band = raster.GetRasterBand(1)
             nodata = band.GetNoDataValue()
             self.NoDataVal.setEnabled( True )
@@ -139,22 +146,25 @@ class LecosDialog(QDialog, Ui_Lecos):
                     pass
                     #QMessageBox.warning( self, self.tr( "LecoS: Warning" ),self.tr( "Please format your rasters no-data value to integer (-99999 <-> 99999)" ) )
 
-            self.NoDataVal.setText( unicode(nodata) )
+            self.NoDataVal.setText( str(nodata) )
+
 
     # Update Cellsize if a valid raster-file is selected
     def cellSizer( self, rasterName ):
         if rasterName != -1:
-            if QGis.QGIS_VERSION_INT < 10900:
+            if Qgis.QGIS_VERSION_INT < 10900:
                 pixelSize = func.getRasterLayerByName( rasterName ).rasterUnitsPerPixel()
             else:
                 pixelSize = func.getRasterLayerByName( rasterName ).rasterUnitsPerPixelX() # Extract The X-Value
                 pixelSizeY = func.getRasterLayerByName( rasterName ).rasterUnitsPerPixelY() # Extract The Y-Value
+
                 # Check for rounded equal square cellsize
                 if round(pixelSize,0) != round(pixelSizeY,0):
-                    func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (rasterName),"WARNING")
+                    DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (rasterName),"WARNING")
 
             self.sp_cellsize.setEnabled( True )
             self.sp_cellsize.setValue( pixelSize )
+
 
     # Save radio button
     def savetoggle( self ):
@@ -165,19 +175,22 @@ class LecosDialog(QDialog, Ui_Lecos):
             self.SaveCsv.setEnabled( True )
             self.where2Save.setEnabled( True )
 
+
     # Where to save the csv
     def selectSaveFile( self ):
-        lastUsedDir = func.lastUsedDir()
-        fileName = QFileDialog.getSaveFileName( self, self.tr( "Save data as" ),\
+        lastUsedDir = lastUsedDir()
+        fileName, __ = QFileDialog.getSaveFileName( self, self.tr( "Save data as" ),\
         lastUsedDir, "CSV files (*.csv *.CSV)" )
         if len(fileName) == 0:
             return
-        func.setLastUsedDir( fileName )
+        setLastUsedDir( fileName )
+
         # ensure the user never ommited the extension from the file name
         if not fileName.lower().endswith( ".csv" ):
             fileName += ".csv"
         self.SaveCsv.setText( fileName )
         self.SaveCsv.setEnabled( True )
+
 
     # Manage Layout and startup parameters
     def Startup( self ):
@@ -195,7 +208,6 @@ class LecosDialog(QDialog, Ui_Lecos):
         self.list_left.addItems( lcs.listStatistics() )
         self.rlistCounter.setText( str(self.list_left.count()) )
         self.rlistCounter_2.setText( str(self.list_right.count()) )
-
         self.MetricTab.setCurrentIndex( 0 ) # Startup on single metric tab
 
     # Switch Items on the several Metric Tab to the Right
@@ -210,6 +222,7 @@ class LecosDialog(QDialog, Ui_Lecos):
         self.rlistCounter.setText( str(self.list_left.count()) )
         self.rlistCounter_2.setText( str(self.list_right.count()) )
 
+
     # Switch Items on the several Metric Tab to the Left
     def switchL( self ):
         items = self.list_right.selectedItems()
@@ -222,6 +235,7 @@ class LecosDialog(QDialog, Ui_Lecos):
         self.rlistCounter.setText( str(self.list_left.count()) )
         self.rlistCounter_2.setText( str(self.list_right.count()) )
 
+
     # Select all Items in left List
     def SelectAllInListL ( self, state ):
         if state == Qt.Checked:
@@ -230,6 +244,7 @@ class LecosDialog(QDialog, Ui_Lecos):
                 item.setSelected( True )
         elif state == Qt.Unchecked:
             self.list_left.clearSelection()
+
 
     # Select all Items in right List
     def SelectAllInListR ( self, state ):
@@ -240,25 +255,29 @@ class LecosDialog(QDialog, Ui_Lecos):
         elif state == Qt.Unchecked:
             self.list_right.clearSelection()
 
+
+
     # Show About Dialog
     def showAbout( self ):
-        func.AboutDlg()
+        AboutDlg()
+
 
     # Accept current selection and metric
     def accept( self ):
         # check minimal input parameters
         if self.cbRaster.currentIndex() == -1:
-            func.DisplayError(self.iface,"LecoS: Warning" ,"Please load a classified landcover layer into QGis first","WARNING")
+            DisplayError(self.iface,"LecoS: Warning" ,"Please load a classified landcover layer into Qgis first","WARNING")
             return
         if self.rbSAVE.isChecked():
             if len(self.SaveCsv.text()) == 0:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"Please select where to save the results","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"Please select where to save the results","WARNING")
                 return
             if path.exists(self.SaveCsv.text()):
-                func.DisplayError(self.iface,"LecoS: Warning" ,"File already exisits. Please select another path or delete file","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"File already exisits. Please select another path or delete file","WARNING")
                 return
+
         if self.sp_cellsize.value() == 0:
-            func.DisplayError(self.iface,"LecoS: Warning" ,"Please entry a correct cellsize (greater zero)","WARNING")
+            DisplayError(self.iface,"LecoS: Warning" ,"Please entry a correct cellsize (greater zero)","WARNING")
             return
 
         # Values and Preset
@@ -272,7 +291,7 @@ class LecosDialog(QDialog, Ui_Lecos):
         try:
             nodata = float(self.NoDataVal.text())
         except ValueError:
-            func.DisplayError(self.iface,"LecoS: Warning" ,"Please set a correct nodata-value","WARNING")
+            DisplayError(self.iface,"LecoS: Warning" ,"Please set a correct nodata-value","WARNING")
             return
 
         ## Calculate Single Metric
@@ -309,17 +328,17 @@ class LecosDialog(QDialog, Ui_Lecos):
                     if res_tit.count(name) == 0:
                         res_tit.append(name)
             else:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"Please select a valid single metric","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"Please select a valid single metric","WARNING")
 
         ## Several Metrics
         elif(what == 1):
             metrics = []
             allitems = self.list_right.findItems("*", Qt.MatchWrap | Qt.MatchWildcard)
             if len(allitems)==0:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"Please select at least one item from the left list","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"Please select at least one item from the left list","WARNING")
                 return
             for item in allitems:
-                metrics.append(unicode(item.text()))
+                metrics.append(str(item.text()))
             classes, array = lcs.f_landcover(rasterPath,nodata)
             self.progressBar.setValue( self.progressBar.value() + 1 )
             # Looping through all classes
@@ -378,13 +397,13 @@ class LecosDialog(QDialog, Ui_Lecos):
             if self.ch_div3.isChecked():
                 metrics.append("DIV_SI")
             if len(metrics)==0:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"Please select at least one item","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"Please select at least one item","WARNING")
                 return
             # Processing
             try:
                 int(nodata)
-            except ValueError, TypeError:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"Please classify your raster with a correct integer nodata value","WARNING")
+            except ValueError as TypeError:
+                DisplayError(self.iface,"LecoS: Warning" ,"Please classify your raster with a correct integer nodata value","WARNING")
                 return
             classes, array = lcs.f_landcover(rasterPath,nodata) # Get classes and value
             self.progressBar.setValue( self.progressBar.value() + 1 )
@@ -402,11 +421,11 @@ class LecosDialog(QDialog, Ui_Lecos):
         self.progressBar.setValue( self.progressBar.value() + 1 )
         # Write results
         if self.rbSAVE.isChecked():
-            func.DisplayError(self.iface,"LecoS: Info" ,"Results were successfully saved to file!","INFO")
-            func.saveToCSV(res,res_tit,dataPath)
+            DisplayError(self.iface,"LecoS: Info" ,"Results were successfully saved to file!","INFO")
+            saveToCSV(res,res_tit,dataPath)
         else:
-            func.DisplayError(self.iface,"LecoS: Info" ,"Calculations finished!","INFO")
-            func.ShowResultTableDialog(res_tit, res)
+            DisplayError(self.iface,"LecoS: Info" ,"Calculations finished!","INFO")
+            ShowResultTableDialog(res_tit, res)
         self.progressBar.setValue( self.progressBar.value() + 1 )
         self.close()
 
@@ -421,19 +440,19 @@ class BatchDialog(QDialog, Ui_BatchDialog):
         self.iface = iface
 
         # Connects
-        QObject.connect( self.ch_selectAll, SIGNAL( "stateChanged( int )" ), self.SelectAllInList )
-        QObject.connect( self.locateDir, SIGNAL( "clicked()" ), self.selectSaveFile )
-        QObject.connect( self.cb_Raster, SIGNAL( "stateChanged()" ), self.EnableStuff ) # Enable Stuff
-        QObject.connect( self.cb_Raster, SIGNAL( "stateChanged()" ), self.loadIDFields ) # Load IDFields
-        QObject.connect( self.cb_Raster, SIGNAL( "currentIndexChanged( QString )" ), self.ListMetrics ) # Change Class metrics
-        QObject.connect( self.cb_LClass, SIGNAL( "currentIndexChanged( QString )" ), self.vectorClass ) # Get Vector layers class values
+        self.ch_selectAll.stateChanged.connect(self.SelectAllInList)
+        self.locateDir.clicked.connect(self.selectSaveFile)
+        self.cb_Raster.currentIndexChanged.connect(self.EnableStuff) # Enable Stuff
+        self.cb_Raster.currentIndexChanged.connect(self.loadIDFields) # Load IDFields
+        self.cb_Raster.currentIndexChanged.connect(self.ListMetrics) # Change Class metrics
+        self.cb_LClass.currentIndexChanged.connect(self.vectorClass) # Get Vector layers class values
 
         # Enable Stuff
-        QObject.connect( self.cb_Raster, SIGNAL( "currentIndexChanged( QString )" ), self.EnableStuff) # Landscape
-        QObject.connect( self.cb_Vector, SIGNAL( "currentIndexChanged( QString )" ), self.EnableStuff) # Poly overlay
-        QObject.connect( self.rb_Landscape, SIGNAL( "clicked()" ), self.EnableStuff) # Change available stuff
-        QObject.connect( self.rb_Class, SIGNAL( "clicked()" ), self.EnableStuff) # Change available stuff
-        QObject.connect( self.ch_saveResult, SIGNAL( "stateChanged( int )" ), self.EnableStuff) # Change output
+        self.cb_Raster.currentIndexChanged.connect(self.EnableStuff) # Landscape
+        self.cb_Vector.currentIndexChanged.connect(self.EnableStuff) # Poly overlay
+        self.rb_Landscape.clicked.connect(self.EnableStuff) # Change available stuff
+        self.rb_Class.clicked.connect(self.EnableStuff) # Change available stuff
+        self.ch_saveResult.stateChanged.connect(self.EnableStuff) # Change output
 
         # Button box
         #self.AcceptButton = self.startButtons.button( QDialogButtonBox.Ok )
@@ -441,7 +460,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
         self.closeButton = self.startButtons.button( QDialogButtonBox.Cancel )
         #QObject.connect( self.AcceptButton, SIGNAL( "clicked()" ), self.go )
         #self.closeButton = self.startButtons.button( QDialogButtonBox.Cancel )
-        QObject.connect( self.btn_About, SIGNAL( "clicked()" ), self.showAbout )
+        self.btn_About.clicked.connect(self.showAbout)
 
         #Startup
         self.startup()
@@ -570,18 +589,19 @@ class BatchDialog(QDialog, Ui_BatchDialog):
     # Load ID fields
     def loadIDFields(self):
         vectorName = func.getLayerByName( self.cb_Raster.currentText() )
-        test = func.getVectorLayerByName( self.cb_Vector.currentText() )
-        if test != "" and type(vectorName) == QgsVectorLayer:
+        vectorLayer = func.getVectorLayerByName( self.cb_Vector.currentText() )
+        if (vectorLayer is None): return
+        if vectorLayer != "" and type(vectorName) == QgsVectorLayer:
             self.cb_SelD.setEnabled( True )
             self.cb_SelD.clear()
             fields = func.getFieldList( vectorName )
-            if QGis.QGIS_VERSION_INT >= 10900:
+            if Qgis.QGIS_VERSION_INT >= 10900:
                 for field in fields:
                     if field.type() in [ QVariant.Int, QVariant.String ]:
                         self.cb_SelD.addItem( field.name() )
             else:
                 prov = vectorName.dataProvider()
-                for k,  field in prov.items():
+                for k,  field in list(prov.items()):
                     if field.type() in [ QVariant.Int, QVariant.String ]:
                         self.cb_SelD.addItem( field.name() )
 
@@ -589,7 +609,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             self.cb_SelD.setEnabled( True )
             self.cb_SelD.clear()
             # Load Grouping ID for vector field and table output
-            fields = func.getFieldList( test )
+            fields = func.getFieldList( vectorLayer )
             for field in fields:
                 self.cb_SelD.addItem( field.name() )
 
@@ -599,7 +619,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             rasterName = func.getRasterLayerByName( self.cb_Raster.currentText() )
             if rasterName != "":
                 rasterPath = rasterName.source()
-                raster = gdal.Open(unicode(rasterPath))
+                raster = gdal.Open(str(rasterPath))
                 band = raster.GetRasterBand(1)
                 nodata = band.GetNoDataValue()
                 array = band.ReadAsArray()
@@ -623,14 +643,14 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 self.cb_LClass.clear()
                 fields = func.getFieldList( vectorName )
                 self.classes = []
-                if QGis.QGIS_VERSION_INT >= 10900:
+                if Qgis.QGIS_VERSION_INT >= 10900:
                     for field in fields:
                         if field.type() in [ QVariant.Int, QVariant.Double, QVariant.String ]:
                             self.cb_LClass.addItem( field.name() )
                             self.classes.append(field.name())
                 else:
                     prov = vectorName.dataProvider()
-                    for k,  field in prov.items():
+                    for k,  field in list(prov.items()):
                         if field.type() in [ QVariant.Int, QVariant.Double, QVariant.String ]:
                             self.cb_LClass.addItem( field.name() )
                             self.classes.append(field.name())
@@ -641,7 +661,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
     def vectorClass(self,cl):
         vectorName = func.getLayerByName( self.cb_Raster.currentText() )
         if type(vectorName) == QgsVectorLayer:
-            cur = unicode(self.cb_LClass.currentText())
+            cur = str(self.cb_LClass.currentText())
             if cur != "":
                 self.VCl.clear()
                 self.VCl.setEnabled( True )
@@ -664,12 +684,12 @@ class BatchDialog(QDialog, Ui_BatchDialog):
 
     # Where to save the csv
     def selectSaveFile( self ):
-        lastUsedDir = func.lastUsedDir()
-        fileName = QFileDialog.getSaveFileName( self, self.tr( "Save data as" ),\
+        lastUsedDir = lastUsedDir()
+        fileName, __ = QFileDialog.getSaveFileName( self, self.tr( "Save data as" ),\
         lastUsedDir, "CSV files (*.csv *.CSV)" )
         if len(fileName) < 1:
             return
-        func.setLastUsedDir( fileName )
+        setLastUsedDir( fileName )
         # ensure the user never ommited the extension from the file name
         if not fileName.lower().endswith( ".csv" ):
             fileName += ".csv"
@@ -689,7 +709,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
 
     # Show About Dialog
     def showAbout( self ):
-        func.AboutDlg()
+        AboutDlg()
 
     # Returns the selected metrics
     def getSelMetric(self):
@@ -726,14 +746,14 @@ class BatchDialog(QDialog, Ui_BatchDialog):
     def accept(self):
         # Error catching and variable returning
         if self.cb_Raster.currentIndex() == -1:
-            func.DisplayError(self.iface,"LecoS: Warning" ,"Please load and select a classified landscape layer first","WARNING")
+            DisplayError(self.iface,"LecoS: Warning" ,"Please load and select a classified landscape layer first","WARNING")
             return
         self.landscape = func.getLayerByName( self.cb_Raster.currentText() )
         self.landPath = self.landscape.source()
 
         if type(self.landscape) == QgsVectorLayer: # Check if landscape vector layer is a polygon
-            if self.landscape.geometryType() != QGis.Polygon:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"The landscape layer have to be of geometry type: Polygons","WARNING")
+            if self.landscape.geometryType() != qgis.core.QgsWkbTypes.PolygonGeometry:
+                DisplayError(self.iface,"LecoS: Warning" ,"The landscape layer have to be of geometry type: Polygons","WARNING")
                 return
         # Default values
         self.vector = None
@@ -743,25 +763,25 @@ class BatchDialog(QDialog, Ui_BatchDialog):
             self.vector = func.getVectorLayerByName( self.cb_Vector.currentText() )
             self.vectorPath = self.vector.source()
             if type(self.landscape) == QgsVectorLayer:
-                if self.landscape.geometryType() != QGis.Polygon:
-                    func.DisplayError(self.iface,"LecoS: Warning" ,"This tool need the vector grid to have the geometry type: Polygon","WARNING")
+                if self.landscape.geometryType() != qgis.core.QgsWkbTypes.PolygonGeometry:
+                    DisplayError(self.iface,"LecoS: Warning" ,"This tool need the vector grid to have the geometry type: Polygon","WARNING")
                     return
             # Check if both layers have the same projection
             cr1 = self.vector.crs()
             cr2 = self.landscape.crs()
             if cr1!=cr2:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"Please make sure that both layers have the same spatial projection","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"Please make sure that both layers have the same spatial projection","WARNING")
                 return
             # Check if a layer has been chosen twice
             if self.landPath == self.vectorPath:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"It is not possible to overlay layers from the same source. Specify a Grouping ID","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"It is not possible to overlay layers from the same source. Specify a Grouping ID","WARNING")
                 return
         elif type(self.landscape) == QgsRasterLayer:
-            func.DisplayError(self.iface,"LecoS: Warning" ,"Please load and select an overlaying vector grid","WARNING")
+            DisplayError(self.iface,"LecoS: Warning" ,"Please load and select an overlaying vector grid","WARNING")
             return
         elif type(self.landscape) == QgsVectorLayer:
             if self.cb_SelD.currentText() == "":
-                func.DisplayError(self.iface,"LecoS: Warning" ,"You didn't choose an overlaying vector grid and therefore need to specify a grouping ID","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"You didn't choose an overlaying vector grid and therefore need to specify a grouping ID","WARNING")
                 return
 
         if self.rb_Landscape.isChecked(): # Landscape or Class metrics
@@ -775,7 +795,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
 
         self.metrics = self.getSelMetric() # Get list of all Metrics
         if len(self.metrics) == 0:
-            func.DisplayError(self.iface,"LecoS: Warning" ,"Please select at least one metric to compute!","WARNING")
+            DisplayError(self.iface,"LecoS: Warning" ,"Please select at least one metric to compute!","WARNING")
             return
         if self.ch_saveResult.isChecked():
             self.FileSave = True
@@ -799,7 +819,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 if self.cl_metric:
                     # Analysis with a given vector class field
                     if(self.classIND == ""):
-                        func.DisplayError(self.iface,"LecoS: Warning" ,"Please select a valid landcover class!","WARNING")
+                        DisplayError(self.iface,"LecoS: Warning" ,"Please select a valid landcover class!","WARNING")
                         return
                     else:
                         clf = self.classes[self.cb_LClass.currentIndex()] # Get selected classField
@@ -815,7 +835,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                     bat = pov.VectorBatchConverter(self.landscape,self.LandID)
                     results = []
                     for el in ('LC','DIV'):
-                        met = filter(lambda x:el in x,self.metrics)
+                        met = [x for x in self.metrics if el in x]
                         for cmd in met:
                             results.append(bat.go(cmd))
                             self.iface.mainWindow().statusBar().showMessage("Metric %s calculated" % (cmd))
@@ -829,44 +849,44 @@ class BatchDialog(QDialog, Ui_BatchDialog):
         if type(self.landscape) == QgsRasterLayer:
             # Get None Nulldata Error
             try:
-                image = gdal.Open(unicode(self.landPath))
+                image = gdal.Open(str(self.landPath))
                 band = image.GetRasterBand(1)
                 nd = band.GetNoDataValue()
                 int(nd)
-            except TypeError, ValueError:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"Please classify your raster with a correct nodata value","WARNING")
+            except TypeError as ValueError:
+                DisplayError(self.iface,"LecoS: Warning" ,"Please classify your raster with a correct nodata value","WARNING")
                 return
             # Check if polygon is correctly set
             try:
-                v = ogr.Open(unicode( self.vectorPath ))
+                v = ogr.Open(str( self.vectorPath ))
                 l = v.GetLayer()
                 l.GetFeature(0).GetGeometryRef()
             except AttributeError:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"There is something wrong with your polygon layer. Try to save it to a new file.","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"There is something wrong with your polygon layer. Try to save it to a new file.","WARNING")
                 return
             # Look for smaller rasters than polygons
             rasE = self.landscape.extent()
 #            vecE = self.vector.extent()
 #            if vecE > rasE:
-#                func.DisplayError(self.iface,"LecoS: Warning" ,"Please cut the overlaying vector to the rasters extent","WARNING")
+#                DisplayError(self.iface,"LecoS: Warning" ,"Please cut the overlaying vector to the rasters extent","WARNING")
 #                return
             bat = pov.BatchConverter(self.landPath,self.vectorPath,self.iface)
             # Landscape or classified
             if self.cl_metric:
                 if(self.classIND == ""):
-                    func.DisplayError(self.iface,"LecoS: Warning" ,"Please select a valid landcover class!","WARNING")
+                    DisplayError(self.iface,"LecoS: Warning" ,"Please select a valid landcover class!","WARNING")
                     return
                 else:
                     cl = int(self.classes[self.cb_LClass.currentIndex()]) # Get selected class
 
-                if QGis.QGIS_VERSION_INT < 10900:
+                if Qgis.QGIS_VERSION_INT < 10900:
                     cellsize = self.landscape.rasterUnitsPerPixel()
                 else:
                     cellsize = self.landscape.rasterUnitsPerPixelX() # Extract The X-Value
                     cellsizeY = self.landscape.rasterUnitsPerPixelY() # Extract The Y-Value
                     # Check for rounded equal square cellsize
                     if round(cellsize,0) != round(cellsizeY,0):
-                        func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (self.cb_Raster.currentText()),"WARNING")
+                        DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (self.cb_Raster.currentText()),"WARNING")
 
                 #Calculate selected statistics for classified raster
                 results = []
@@ -878,19 +898,19 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 self.DLmessagebar(error,err)
                 self.Output(results)
             else:
-                if QGis.QGIS_VERSION_INT < 10900:
+                if Qgis.QGIS_VERSION_INT < 10900:
                     cellsize = self.landscape.rasterUnitsPerPixel()
                 else:
                     cellsize = self.landscape.rasterUnitsPerPixelX() # Extract The X-Value
                     cellsizeY = self.landscape.rasterUnitsPerPixelY() # Extract The Y-Value
                     # Check for rounded equal square cellsize
                     if round(cellsize,0) != round(cellsizeY,0):
-                        func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (self.cb_Raster.currentText()),"WARNING")
+                        DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (self.cb_Raster.currentText()),"WARNING")
                 #Calculate statistics for unclassified raster
                 results = []
                 error = 0
                 for el in ('LC','DIV'):
-                    met = filter(lambda x:el in x,self.metrics)
+                    met = [x for x in self.metrics if el in x]
                     for cmd in met:
                         err, r = bat.go(cmd,None,cellsize,None,rasE)
                         results.append(r)
@@ -900,7 +920,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
 
     # Dialog for to messagebar
     def DLmessagebar(self,n,err):
-        if n > 0 and QGis.QGIS_VERSION_INT >= 10900:
+        if n > 0 and Qgis.QGIS_VERSION_INT >= 10900:
             error = str(n / len(self.metrics))
 
             text = "There were no overlay values for "+error+" vector features. All features unable to compute are selected now for inspectation."
@@ -925,11 +945,11 @@ class BatchDialog(QDialog, Ui_BatchDialog):
     def Output(self,results):
         if self.Add2Table:
             # Add to overlaying vector grid
-            add = func.addAttributesToLayer(self.vector,results)
+            add = addAttributesToLayer(self.vector,results)
             if add == False:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"Values couldn't be added to the attribute table","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"Values couldn't be added to the attribute table","WARNING")
             else:
-                func.DisplayError(self.iface,"LecoS: Info" ,"Values were added to the vector layers attribute table","INFO")
+                DisplayError(self.iface,"LecoS: Info" ,"Values were added to the vector layers attribute table","INFO")
         if self.FileSave:
             # Write to file
             if type(self.landscape) == QgsVectorLayer:
@@ -943,7 +963,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 try: # Catch in case there are no results
                     title.append( str(x[0][1]) )
                 except IndexError:
-                    func.DisplayError(self.iface,"LecoS: Warning" ,"Results couldn't be calculated. Please make sure all shapes are within the rasters extent!","WARNING")
+                    DisplayError(self.iface,"LecoS: Warning" ,"Results couldn't be calculated. Please make sure all shapes are within the rasters extent!","WARNING")
                     return
             f = open(self.FileSavePath, "wb" )
             writer = csv.writer(f,delimiter=';',quotechar="",quoting=csv.QUOTE_NONE)
@@ -953,7 +973,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 if self.LandID != "" or None:
                     attr = func.getAttributeList(self.vector,self.LandID)
             # Get number of polygon features
-            feat = range(0,len(results[0]))
+            feat = list(range(0,len(results[0])))
             for feature in feat: # Write feature to new line
                 if type(self.landscape) == QgsVectorLayer:
                     r = [results[0][feature][0]]
@@ -966,7 +986,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                     r.append(item[feature][2])
                 writer.writerow(r)
             f.close()
-            func.DisplayError(self.iface,"LecoS: Info" ,"Landcover statistics were successfully written to file","INFO")
+            DisplayError(self.iface,"LecoS: Info" ,"Landcover statistics were successfully written to file","INFO")
 
         if (self.Add2Table == False) and (self.FileSave == False):
             # Direct Output?
@@ -976,15 +996,15 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 title = ["PolygonFeatureID"]
             for x in results:
                 title.append( str(x[0][1]) )
-            w = func.ShowResultTableDialog2(title,results)
+            w = ShowResultTableDialog2(title,results)
             if w:
-                func.DisplayError(self.iface,"LecoS: Info" ,"Landcover statistics were successfully calculated","INFO")
+                DisplayError(self.iface,"LecoS: Info" ,"Landcover statistics were successfully calculated","INFO")
             else:
-                func.DisplayError(self.iface,"LecoS: Warning" ,"An error occured while attempting to display the results table","WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"An error occured while attempting to display the results table","WARNING")
 
         # Add result to QGIS
         if self.ch_AddQGIS.isChecked() and self.ch_saveResult.isChecked():
-            func.tableInQgis( self.FileSavePath )
+            tableInQgis( self.FileSavePath )
 
 # Gui for generating a LandMod out of a rasterized map
 class LandMod(QDialog, Ui_LandMod):
@@ -997,10 +1017,10 @@ class LandMod(QDialog, Ui_LandMod):
         # Configure Connectors
         self.AcceptButton = self.buttonBox.button( QDialogButtonBox.Ok )
         self.closeButton = self.buttonBox.button( QDialogButtonBox.Cancel )
-        QObject.connect( self.AcceptButton, SIGNAL( "clicked()" ), self.go )
-        QObject.connect( self.btn_Save, SIGNAL( "clicked()" ), self.selectSaveFile )# Save File
-        QObject.connect( self.cb_Raster, SIGNAL( "currentIndexChanged( QString )" ), self.cellSizer)
-        QObject.connect( self.cb_Raster, SIGNAL( "currentIndexChanged( QString )" ), self.loadClasses)
+        self.AcceptButton.clicked.connect(self.go)
+        self.btn_Save.clicked.connect(self.selectSaveFile)# Save File
+        self.cb_Raster.currentTextChanged.connect(self.cellSizer)
+        self.cb_Raster.currentIndexChanged.connect(self.loadClasses)
 
         self.startup()
 
@@ -1015,26 +1035,26 @@ class LandMod(QDialog, Ui_LandMod):
     # Set the cellsizer value
     def cellSizer(self,rasterName):
         ras = func.getRasterLayerByName( rasterName )
-        if QGis.QGIS_VERSION_INT < 10900:
+        if Qgis.QGIS_VERSION_INT < 10900:
             pixelSize = ras.rasterUnitsPerPixel()
         else:
             pixelSize = ras.rasterUnitsPerPixelX() # Extract The X-Value
             pixelSizeY = ras.rasterUnitsPerPixelY() # Extract The Y-Value
             # Check for rounded equal square cellsize
             if round(pixelSize,0) != round(pixelSizeY,0):
-                func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (rasterName),"WARNING")
+                DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (rasterName),"WARNING")
 
         self.CellsizeLine.setEnabled( True )
         self.CellsizeLine.setText( str(pixelSize) )
 
     # Where to save the raster output
     def selectSaveFile( self ):
-        lastUsedDir = func.lastUsedDir()
-        fileName = QFileDialog.getSaveFileName( self, self.tr( "Save raster as" ),\
+        lastUsedDir = lastUsedDir()
+        fileName, __ = QFileDialog.getSaveFileName( self, self.tr( "Save raster as" ),\
         lastUsedDir, "GeoTIFF files (*.tif *.TIF)" )
         if fileName.isEmpty():
             return
-        func.setLastUsedDir( fileName )
+        setLastUsedDir( fileName )
         # ensure the user never ommited the extension from the file name
         if not fileName.toLower().endsWith( ".tif" ):
             fileName += ".tif"
@@ -1046,11 +1066,11 @@ class LandMod(QDialog, Ui_LandMod):
         rasterName = func.getRasterLayerByName( self.cb_Raster.currentText() )
         if rasterName != "":
             rasterPath = rasterName.source()
-            raster = gdal.Open(unicode(rasterPath))
+            raster = gdal.Open(str(rasterPath))
             band = raster.GetRasterBand(1)
             nodata = band.GetNoDataValue()
             if nodata == None: # raise error
-                func.DisplayError(self.iface,"LecoS: Warning" ,"The layer %s has no valid no-data value (no number)!" % (self.cb_Raster.currentText()),"CRITICAL")
+                DisplayError(self.iface,"LecoS: Warning" ,"The layer %s has no valid no-data value (no number)!" % (self.cb_Raster.currentText()),"CRITICAL")
 
             array = band.ReadAsArray()
             self.classes = sorted(numpy.unique(array)) # get array of classes
@@ -1071,7 +1091,7 @@ class LandMod(QDialog, Ui_LandMod):
     # Calculate new raster
     def go(self):
         if self.cb_Raster.currentIndex() == -1:
-            func.DisplayError(self.iface,"LecoS: Warning" ,"Please load and select a classified raster first","WARNING")
+            DisplayError(self.iface,"LecoS: Warning" ,"Please load and select a classified raster first","WARNING")
             return
         savePath = str(self.where2Save.text())
         if savePath == "": # If no output has been defined -> create a temporary file
@@ -1106,11 +1126,9 @@ class LandMod(QDialog, Ui_LandMod):
             results = mod.cleanRaster(iter)
 
         # Save the results
-        func.exportRaster(results,rasterPath,savePath)
-        func.DisplayError(self.iface,"LecoS: Info" ,"Successfully generated modified raster layer","INFO")
+        exportRaster(results,rasterPath,savePath)
+        DisplayError(self.iface,"LecoS: Info" ,"Successfully generated modified raster layer","INFO")
 
-        # Add to QGis if specified
+        # Add to Qgis if specified
         if self.addToToc.isChecked():
-            func.rasterInQgis( savePath )
-
-
+            rasterInQgis( savePath )
