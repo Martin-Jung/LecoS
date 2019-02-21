@@ -11,7 +11,7 @@
  ***************************************************************************/
 
 /***************************************************************************
- *                                                                         *
+from qgis.PyQt.QtCore import *                                                 *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 2 of the License, or     *
@@ -21,8 +21,11 @@
 """
 ## IMPORT ##
 # Import PyQT bindings
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from builtins import str
+from builtins import range
+from builtins import object
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
 
 # Import QGIS analysis tools
 from qgis.core import *
@@ -65,9 +68,6 @@ try:
 except ImportError:
     import gdalconst
     
-# Avoiding python 3 troubles
-from __future__ import division
-
 # Register gdal and ogr drivers
 #if hasattr(gdal,"AllRegister"): # Can register drivers
 #    gdal.AllRegister() # register all gdal drivers
@@ -81,7 +81,7 @@ from __future__ import division
 # if hasattr(ogr,"UseExceptions"):
 #     ogr.UseExceptions()
 
-helpdir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/LecoS/metric_info/"
+helpdir = QFileInfo(QgsApplication.qgisUserDatabaseFilePath()).path() + "/python/plugins/LecoS/metric_info/"
 tmpdir = tempfile.gettempdir()
 
 ## CODE START ##
@@ -90,34 +90,34 @@ tmpdir = tempfile.gettempdir()
 def listStatistics():
     functionList = []
     
-    functionList.append(unicode("Land cover")) # Calculate Area
-    functionList.append(unicode("Landscape Proportion")) # Landscape Proportion
-    functionList.append(unicode("Edge length")) # Calculate edge length
-    functionList.append(unicode("Edge density")) # Calculate Edge Density
-    functionList.append(unicode("Number of Patches")) # Return Number of Patches
-    functionList.append(unicode("Patch density")) # Return Patch density
-    functionList.append(unicode("Greatest patch area")) # Return Greatest Patch area
-    functionList.append(unicode("Smallest patch area")) # Return Smallest Patch area
-    functionList.append(unicode("Mean patch area")) # Return Mean Patch area
-    functionList.append(unicode("Median patch area")) # Return Median Patch area
-    functionList.append(unicode("Largest Patch Index")) # Return Largest patch Index
-    functionList.append(unicode("Euclidean Nearest-Neighbor Distance")) # "Euclidean Nearest-Neighbor Distance"
+    functionList.append(str("Land cover")) # Calculate Area
+    functionList.append(str("Landscape Proportion")) # Landscape Proportion
+    functionList.append(str("Edge length")) # Calculate edge length
+    functionList.append(str("Edge density")) # Calculate Edge Density
+    functionList.append(str("Number of Patches")) # Return Number of Patches
+    functionList.append(str("Patch density")) # Return Patch density
+    functionList.append(str("Greatest patch area")) # Return Greatest Patch area
+    functionList.append(str("Smallest patch area")) # Return Smallest Patch area
+    functionList.append(str("Mean patch area")) # Return Mean Patch area
+    functionList.append(str("Median patch area")) # Return Median Patch area
+    functionList.append(str("Largest Patch Index")) # Return Largest patch Index
+    functionList.append(str("Euclidean Nearest-Neighbor Distance")) # "Euclidean Nearest-Neighbor Distance"
     #functionList.append(unicode("Mean patch perimeter")) # Return Mean Patch perimeter
-    functionList.append(unicode("Fractal Dimension Index")) # Return Fractal Dimension Index
-    functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
+    functionList.append(str("Fractal Dimension Index")) # Return Fractal Dimension Index
+    functionList.append(str("Mean patch shape ratio")) # Return Mean Patch shape
     #functionList.append(unicode("Mean Shape Index")) # Return Mean Patch shape    
-    functionList.append(unicode("Overall Core area")) # Return Core area    
-    functionList.append(unicode("Like adjacencies")) # Like adjacencies
-    functionList.append(unicode("Patch cohesion index")) # Patch cohesion index
-    functionList.append(unicode("Landscape division")) # Return Landscape Division Index
-    functionList.append(unicode("Effective Meshsize")) # Return Effectiv Mesh Size      
-    functionList.append(unicode("Splitting Index")) # Return Splitting Index
+    functionList.append(str("Overall Core area")) # Return Core area    
+    functionList.append(str("Like adjacencies")) # Like adjacencies
+    functionList.append(str("Patch cohesion index")) # Patch cohesion index
+    functionList.append(str("Landscape division")) # Return Landscape Division Index
+    functionList.append(str("Effective Meshsize")) # Return Effectiv Mesh Size      
+    functionList.append(str("Splitting Index")) # Return Splitting Index
     
     return functionList
 
 # Returns definition and reference for given function
 def returnHelp(name, textfield):
-    s = string.replace(name," ","_")
+    s = str(name).replace(" ","_")
     h = (helpdir+s+".html")
     #textfield.setHtml(open(h).read())
     f = QFile(h)
@@ -149,13 +149,14 @@ def f_landcover(raster,nodata=None):
 
 # Returns the nodata value. Assumes an raster with one band
 def f_returnNoDataValue(rasterPath):
+    QgsProcessingFeedback().pushInfo("The file is: " + rasterPath)
     raster = gdal.Open(str(rasterPath))
     band = raster.GetRasterBand(1)
     nodata = band.GetNoDataValue()
     return nodata    
 
 
-class LandCoverAnalysis():
+class LandCoverAnalysis(object):
     def __init__(self,array,cellsize,classes):
         self.array = array
         self.cellsize = cellsize
@@ -174,50 +175,50 @@ class LandCoverAnalysis():
     # Executes the Metric functions
     def execSingleMetric(self,name,cl):        
         self.cl = cl
-        if(name == unicode("Land cover")):
-            return unicode(name), self.f_returnArea(self.labeled_array)
-        if(name == unicode("Landscape Proportion")):
-            return unicode(name), self.f_returnProportion(self.array,cl)
-        elif(name == unicode("Edge length")):
-            return unicode(name), self.f_returnEdgeLength(self.labeled_array)
-        elif(name == unicode("Edge density")):
-            return unicode(name), self.f_returnEdgeDensity(self.labeled_array)
-        elif(name == unicode("Number of Patches")):
-            return unicode(name), self.numpatches
-        elif(name == unicode("Patch density")):
-            return unicode(name), self.f_patchDensity(self.numpatches)
-        elif(name == unicode("Greatest patch area")):
-            return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"max")
-        elif(name == unicode("Smallest patch area")):
-            return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"min")
-        elif(name == unicode("Mean patch area")):
-            return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"mean")
-        elif(name == unicode("Median patch area")):
-            return unicode(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"median")
-        elif(name == unicode("Largest Patch Index")):
-            return unicode(name), self.f_returnLargestPatchIndex(self.cl_array,self.labeled_array,self.numpatches)
-        elif(name == unicode("Mean patch perimeter")):
-            return unicode(name), self.f_returnAvgPatchPerimeter(self.labeled_array)
-        elif(name == unicode("Fractal Dimension Index")):
-            return unicode(name), self.f_getFractalDimensionIndex(self.cl_array,self.labeled_array,self.numpatches)
-        elif(name == unicode("Mean patch shape ratio")):
-            return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches)
-        elif(name == unicode("Mean Shape Index")):
-            return unicode(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches,correction=True)
-        elif(name == unicode("Overall Core area")):
-            return unicode(name), self.f_getCoreArea(self.labeled_array)
-        elif(name == unicode("Like adjacencies")):
-            return unicode(name), self.f_getPropLikeAdj(self.labeled_array,self.numpatches)            
-        elif(name == unicode("Euclidean Nearest-Neighbor Distance")):
-            return unicode(name), self.f_returnAvgPatchDist(self.labeled_array,self.numpatches,metric = "euclidean")
-        elif(name == unicode("Patch cohesion index")):
-            return unicode(name), self.f_getCohesionIndex(self.cl_array,self.labeled_array,self.numpatches)
-        elif(name == unicode("Landscape division")):
-            return unicode(name), self.f_returnLandscapeDivisionIndex(self.array,self.labeled_array,self.numpatches,cl)
-        elif(name == unicode("Splitting Index")):
-            return unicode(name), self.f_returnSplittingIndex(self.array,self.numpatches,self.labeled_array,cl)
-        elif(name == unicode("Effective Meshsize")):
-            return unicode(name), self.f_returnEffectiveMeshSize(self.array,self.labeled_array,self.numpatches,cl)
+        if(name == str("Land cover")):
+            return str(name), self.f_returnArea(self.labeled_array)
+        if(name == str("Landscape Proportion")):
+            return str(name), self.f_returnProportion(self.array,cl)
+        elif(name == str("Edge length")):
+            return str(name), self.f_returnEdgeLength(self.labeled_array)
+        elif(name == str("Edge density")):
+            return str(name), self.f_returnEdgeDensity(self.labeled_array)
+        elif(name == str("Number of Patches")):
+            return str(name), self.numpatches
+        elif(name == str("Patch density")):
+            return str(name), self.f_patchDensity(self.numpatches)
+        elif(name == str("Greatest patch area")):
+            return str(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"max")
+        elif(name == str("Smallest patch area")):
+            return str(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"min")
+        elif(name == str("Mean patch area")):
+            return str(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"mean")
+        elif(name == str("Median patch area")):
+            return str(name), self.f_returnPatchArea(self.cl_array,self.labeled_array,self.numpatches,"median")
+        elif(name == str("Largest Patch Index")):
+            return str(name), self.f_returnLargestPatchIndex(self.cl_array,self.labeled_array,self.numpatches)
+        elif(name == str("Mean patch perimeter")):
+            return str(name), self.f_returnAvgPatchPerimeter(self.labeled_array)
+        elif(name == str("Fractal Dimension Index")):
+            return str(name), self.f_getFractalDimensionIndex(self.cl_array,self.labeled_array,self.numpatches)
+        elif(name == str("Mean patch shape ratio")):
+            return str(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches)
+        elif(name == str("Mean Shape Index")):
+            return str(name), self.f_returnAvgShape(self.labeled_array,self.cl_array,self.numpatches,correction=True)
+        elif(name == str("Overall Core area")):
+            return str(name), self.f_getCoreArea(self.labeled_array)
+        elif(name == str("Like adjacencies")):
+            return str(name), self.f_getPropLikeAdj(self.labeled_array,self.numpatches)            
+        elif(name == str("Euclidean Nearest-Neighbor Distance")):
+            return str(name), self.f_returnAvgPatchDist(self.labeled_array,self.numpatches,metric = "euclidean")
+        elif(name == str("Patch cohesion index")):
+            return str(name), self.f_getCohesionIndex(self.cl_array,self.labeled_array,self.numpatches)
+        elif(name == str("Landscape division")):
+            return str(name), self.f_returnLandscapeDivisionIndex(self.array,self.labeled_array,self.numpatches,cl)
+        elif(name == str("Splitting Index")):
+            return str(name), self.f_returnSplittingIndex(self.array,self.numpatches,self.labeled_array,cl)
+        elif(name == str("Effective Meshsize")):
+            return str(name), self.f_returnEffectiveMeshSize(self.array,self.labeled_array,self.numpatches,cl)
         else:
             return None, None
         
@@ -231,39 +232,39 @@ class LandCoverAnalysis():
     ## Landscape Metrics
     def execLandMetric(self,name,nodata):        
         if name == "LC_Mean":            
-            return unicode(name), numpy.mean(self.array[self.array!=nodata],dtype=numpy.float64)       
+            return str(name), numpy.mean(self.array[self.array!=nodata],dtype=numpy.float64)       
         if name == "LC_Sum":
-            return unicode(name), numpy.sum(self.array[self.array!=nodata],dtype=numpy.float64)
+            return str(name), numpy.sum(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_Min":
-            return unicode(name), numpy.min(self.array[self.array!=nodata])
+            return str(name), numpy.min(self.array[self.array!=nodata])
         if name == "LC_Max":
-            return unicode(name), numpy.max(self.array[self.array!=nodata])
+            return str(name), numpy.max(self.array[self.array!=nodata])
         if name == "LC_SD":
-            return unicode(name), numpy.std(self.array[self.array!=nodata],dtype=numpy.float64)
+            return str(name), numpy.std(self.array[self.array!=nodata],dtype=numpy.float64)
         if name == "LC_LQua":
-            return unicode(name), scipy.percentile(self.array[self.array!=nodata],25)
+            return str(name), scipy.percentile(self.array[self.array!=nodata],25)
         if name == "LC_Med":
-            return unicode(name), numpy.median(self.array[self.array!=nodata])
+            return str(name), numpy.median(self.array[self.array!=nodata])
         if name == "LC_UQua":
-            return unicode(name), scipy.percentile(self.array[self.array!=nodata],75)
+            return str(name), scipy.percentile(self.array[self.array!=nodata],75)
         if name == "DIV_SH":
             if len(self.classes) == 1:
                 func.DisplayError(self.iface,"LecoS: Warning" ,"This tool needs at least two landcover classes to calculate landscape diversity!","WARNING")
-                return unicode(name), "NaN"
+                return str(name), "NaN"
             else:
-                return unicode(name), self.f_returnDiversity("shannon",nodata)
+                return str(name), self.f_returnDiversity("shannon",nodata)
         if name == "DIV_EV":
             if len(self.classes) == 1:
                 func.DisplayError(self.iface,"LecoS: Warning" ,"This tool needs at least two landcover classes to calculate landscape diversity!","WARNING")
-                return unicode(name), "NaN"
+                return str(name), "NaN"
             else:
-                return unicode(name), self.f_returnDiversity("eveness",nodata)
+                return str(name), self.f_returnDiversity("eveness",nodata)
         if name == "DIV_SI":
             if len(self.classes) == 1:
                 func.DisplayError(self.iface,"LecoS: Warning" ,"This tool needs at least two landcover classes to calculate landscape diversity!","WARNING")
-                return unicode(name), "NaN"
+                return str(name), "NaN"
             else:
-                return unicode(name), self.f_returnDiversity("simpson",nodata)
+                return str(name), self.f_returnDiversity("simpson",nodata)
     
     # Calculates a Diversity Index    
     def f_returnDiversity(self,index,nodata):
@@ -449,7 +450,7 @@ class LandCoverAnalysis():
     
     # Return greatest, smallest or mean patch area
     def f_returnPatchArea(self,cl_array,labeled_array,numpatches,what):
-        sizes = ndimage.sum(cl_array,labeled_array,range(1,numpatches+1))
+        sizes = ndimage.sum(cl_array,labeled_array,list(range(1,numpatches+1)))
         sizes = sizes[sizes!=0] # remove zeros
         if len(sizes) != 0:            
             if what=="max":
@@ -529,7 +530,7 @@ class LandCoverAnalysis():
                 feature = self.f_returnPatch(labeled_array,i)
                 p = numpy.sum(feature[:,1:] != feature[:,:-1]) + numpy.sum(feature[1:,:] != feature[:-1,:])
                 perim = numpy.append(perim,p)        
-        area = ndimage.sum(cl_array, labeled_array, range(numpatches + 1)).astype(float)
+        area = ndimage.sum(cl_array, labeled_array, list(range(numpatches + 1))).astype(float)
         area = area[area !=0]
         if correction:
             a = 0.25 * perim
@@ -548,7 +549,7 @@ class LandCoverAnalysis():
             res.append(self.count_nonzero(arr))
         Lcell = float(sum(res))
         res = []
-        sizes = ndimage.sum(array,labeled_array,range(1,numpatches+1))
+        sizes = ndimage.sum(array,labeled_array,list(range(1,numpatches+1)))
         sizes = sizes[sizes!=0] # remove zeros
         for i in sizes:
             area = (i) / int(cl)
@@ -560,7 +561,7 @@ class LandCoverAnalysis():
     def f_returnSplittingIndex(self,array,numpatches,labeled_array,cl):
         self.f_LandscapeArea() # Calculate LArea
         res = []
-        sizes = ndimage.sum(array,labeled_array,range(1,numpatches+1))
+        sizes = ndimage.sum(array,labeled_array,list(range(1,numpatches+1)))
         sizes = sizes[sizes!=0] # remove zeros
         for i in sizes:
             area = (i*self.cellsize_2) / int(cl)
@@ -578,7 +579,7 @@ class LandCoverAnalysis():
     def f_returnEffectiveMeshSize(self,array,labeled_array,numpatches,cl):
         self.f_LandscapeArea() # Calculate LArea
         res = []
-        sizes = ndimage.sum(array,labeled_array,range(1,numpatches+1))
+        sizes = ndimage.sum(array,labeled_array,list(range(1,numpatches+1)))
         sizes = sizes[sizes!=0] # remove zeros
         for i in sizes:
             area = (i*self.cellsize_2) / int(cl)

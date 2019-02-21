@@ -10,7 +10,7 @@
         email                : martinjung at zoho.com
  ***************************************************************************/
 
-/***************************************************************************
+from qgis.PyQt.QtCore import ***************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -20,8 +20,11 @@
  ***************************************************************************/
 """
 # Import PyQT bindings
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from builtins import str
+from builtins import range
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtWidgets import *
+from qgis.PyQt.QtGui import *
 
 # Import QGIS analysis tools
 from qgis.core import *
@@ -29,13 +32,18 @@ from qgis.gui import *
 from qgis.utils import *
 import qgis.utils
 #from qgis.analysis import *
-from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
+from qgis.core import QgsProcessingException
 
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 import re # regular matching
 import numpy
-import scipy
+try:
+    import scipy
+except ImportError:
+    QMessageBox().critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
+    sys.exit(0)
+
 
 # Try to import functions from osgeo
 try:
@@ -47,9 +55,6 @@ try:
 except ImportError:
     import ogr
 
-# Avoiding python 3 troubles
-from __future__ import division
-
 # Register gdal and ogr drivers
 if hasattr(gdal,"AllRegister"): # Can register drivers
     gdal.AllRegister() # register all gdal drivers
@@ -59,7 +64,7 @@ if hasattr(ogr,"RegisterAll"):
 ## CODE START ##
 # Save results to CSV
 def saveToCSV( results, titles, filePath ):
-  f = open(filePath, "wb" )
+  f = open(filePath, "w", newline='')
   writer = csv.writer(f,delimiter=';',quotechar="",quoting=csv.QUOTE_NONE)
   writer.writerow(titles)
   for item in results:
@@ -91,7 +96,7 @@ def ShowResultTableDialog( metric_names, results ):
 
   for id, item in enumerate(results):
     for place, value in enumerate(item):
-      newItem = QTableWidgetItem(unicode(value))
+      newItem = QTableWidgetItem(str(value))
       tableWidget.setItem(id,place,newItem)
 
   lines.addWidget(tableWidget)
@@ -126,9 +131,9 @@ def ShowResultTableDialog2( metric_names, results ):
 
   for id, item in enumerate(results):
     for place, value in enumerate(item):
-      idItem = QTableWidgetItem(unicode(value[0]))
+      idItem = QTableWidgetItem(str(value[0]))
       tableWidget.setItem(place,0,idItem)
-      newItem = QTableWidgetItem(unicode(value[2]))
+      newItem = QTableWidgetItem(str(value[2]))
       tableWidget.setItem(place,id+1,newItem)
 
   lines.addWidget(tableWidget)
@@ -193,8 +198,8 @@ def setLastUsedDir( lastDir ):
 
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def getRasterLayerByName( layerName ):
-  layerMap = QgsMapLayerRegistry.instance().mapLayers()
-  for name, layer in layerMap.iteritems():
+  layerMap = QgsProject.instance().mapLayers()
+  for name, layer in layerMap.items():
     if layer.type() == QgsMapLayer.RasterLayer and ( layer.providerType() == 'gdal' ) and layer.name() == layerName:
         if layer.isValid():
           return layer
@@ -204,16 +209,16 @@ def getRasterLayerByName( layerName ):
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def getRasterLayersNames():
   layerList = []
-  layerMap = QgsMapLayerRegistry.instance().mapLayers()
-  for name, layer in layerMap.iteritems():
+  layerMap = QgsProject.instance().mapLayers()
+  for name, layer in layerMap.items():
     if layer.type() == QgsMapLayer.RasterLayer and ( layer.providerType() == 'gdal' ):
-        layerList.append( unicode( layer.name() ) )
+        layerList.append( str( layer.name() ) )
   return layerList
 
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def getVectorLayerByName( layerName ):
-  layerMap = QgsMapLayerRegistry.instance().mapLayers()
-  for name, layer in layerMap.iteritems():
+  layerMap = QgsProject.instance().mapLayers()
+  for name, layer in layerMap.items():
     if layer.type() == QgsMapLayer.VectorLayer and layer.name() == layerName:
       if layer.isValid():
         return layer
@@ -223,10 +228,10 @@ def getVectorLayerByName( layerName ):
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
 def getVectorLayersNames():
   layerList = []
-  layerMap = QgsMapLayerRegistry.instance().mapLayers()
-  for name, layer in layerMap.iteritems():
-    if layer.type() == QgsMapLayer.VectorLayer and layer.geometryType() == QGis.Polygon:
-      layerList.append( unicode( layer.name() ) )
+  layerMap = QgsProject.instance().mapLayers()
+  for name, layer in layerMap.items():
+    if layer.type() == QgsMapLayer.VectorLayer and layer.geometryType() == qgis.core.QgsWkbTypes.PolygonGeometry:
+      layerList.append( str( layer.name() ) )
   return layerList
 
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
@@ -245,7 +250,7 @@ def getAttributeList( vlayer, field):
   sql = ("SELECT %s FROM %s" % (field, layerName)).encode('utf-8')
   try:
     d = datasource.ExecuteSQL(sql , dialect='SQLITE')
-  except TypeError, RuntimeError:
+  except TypeError as RuntimeError:
     QMessageBox.warning(QDialog(),"LecoS: Warning","Failed to query the vector layers attribute table")
     return
   for i in range(0,d.GetFeatureCount()):
@@ -255,8 +260,8 @@ def getAttributeList( vlayer, field):
 
 # General function to retrieve layers
 def getLayerByName( layerName ):
-  layerMap = QgsMapLayerRegistry.instance().mapLayers()
-  for name, layer in layerMap.iteritems():
+  layerMap = QgsProject.instance().mapLayers()
+  for name, layer in layerMap.items():
     if layer.name() == layerName:
         if layer.isValid():
           return layer
@@ -269,7 +274,6 @@ def addAttributesToLayer(layer,results):
   # Open a Shapefile, and get field names
   provider = layer.dataProvider()
   caps = provider.capabilities()
-
   for metric in range(0,len(results)):
     # Create Attribute Column
     # Name Formating
@@ -353,18 +357,18 @@ def exportRaster(array,rasterSource,path,nodata=True):
 
   band = outDs = None # Close writing
 
-# Adds a generated Raster to the QGis table of contents
+# Adds a generated Raster to the Qgis table of contents
 def rasterInQgis(rasterPath):
   fileName = str(rasterPath)
   fileInfo = QFileInfo(fileName)
   baseName = fileInfo.baseName()
   rlayer = QgsRasterLayer(fileName, baseName)
   if not rlayer.isValid():
-    QMessageBox.warning(QDialog(),"Failed to add the generated Layer to QGis")
+    QMessageBox.warning(QDialog(),"Failed to add the generated Layer to Qgis")
 
-  QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+  QgsProject.instance().addMapLayer(rlayer)
 
-# Adds a vector layer to the QGis table of contents
+# Adds a vector layer to the Qgis table of contents
 def tableInQgis(vectorPath):
   fileName = str(vectorPath)
   fileInfo = QFileInfo(fileName)
@@ -372,19 +376,19 @@ def tableInQgis(vectorPath):
   uri = "file:/"+fileName+"?delimiter=%s" % (";")
   vlayer = QgsVectorLayer(uri, baseName, "delimitedtext")
   if not vlayer.isValid():
-    QMessageBox.warning(QDialog(),"LecoS: Warning","Failed to add the Layer to QGis")
-  QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+    QMessageBox.warning(QDialog(),"LecoS: Warning","Failed to add the Layer to Qgis")
+  QgsProject.instance().addMapLayer(vlayer)
 
 # Error messages wrapper
 def DisplayError(iface,header,text,type="WARNING",time=4,both=False):
-  if QGis.QGIS_VERSION_INT >= 10900:
+  if Qgis.QGIS_VERSION_INT >= 10900:
     # What time of message?
     if type=="INFO":
-      ob = QgsMessageBar.INFO
+      ob = Qgis.Info
     elif type=="WARNING":
-      ob = QgsMessageBar.WARNING
+      ob = Qgis.Warning
     elif type=="CRITICAL":
-      ob = QgsMessageBar.CRITICAL
+      ob = Qgis.Critical
 
     # Show the Message Bar
     iface.messageBar().pushMessage(header,text, ob, time)
@@ -411,12 +415,12 @@ def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
     try:
         tDs = driver.Create(output, cols, rows, 1, gdal.GDT_Float32)
     except RuntimeError:
-        raise GeoAlgorithmExecutionException("Could not generate output file.")
+        raise QgsProcessingException("Could not generate output file.")
 
     try:
         band = tDs.GetRasterBand(1)
     except AttributeError:
-        raise GeoAlgorithmExecutionException("Please load a projected file first!")
+        raise QgsProcessingException("Please load a projected file first!")
     band.WriteArray(array)
 
     # flush data to disk, set the NoData value
@@ -430,7 +434,7 @@ def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
     tDs.SetGeoTransform(gt)
 
     # Then set projection of current active layer
-    epsg = qgis.utils.iface.activeLayer().crs().authid() #mapCanvas().mapRenderer().destinationCrs().srsid()
+    epsg = QgsProject.instance().defaultCrsForNewLayers().authid() #mapCanvas().mapRenderer().destinationCrs().srsid()
     coord_system = osr.SpatialReference()    
     coord_system.ImportFromEPSG( int(re.findall('\d+', epsg)[0]) )
     tDs.SetProjection(coord_system.ExportToWkt())

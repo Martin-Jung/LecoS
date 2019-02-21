@@ -10,7 +10,7 @@
         email                : martinjung at zoho.com
  ***************************************************************************/
 
-/***************************************************************************
+from qgis.PyQt.QtCore import ***************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,32 +19,29 @@
  *                                                                         *
  ***************************************************************************/
 """
+from __future__ import absolute_import
 # Import PyQT bindings
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from builtins import object
+from PyQt5.QtWidgets import QAction
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
 
 # Import QGIS analysis tools
-from qgis.core import *
-from qgis.gui import *
+from qgis.core import QgsApplication
+from .lecos_sextanteprov import LecoSAlgorithmsProv
 #from qgis.analysis import *
-
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
-
-# Avoiding python 3 troubles
-from __future__ import division
-
 # Initialize Qt resources from file resources_rc.py
-from ui import resources_rc
+from .ui import resources_rc
 # Import the code for the dialogs
-from lecos_dlg import LecosDialog
+from .lecos_dlg import LecosDialog
 # Import Batch Dialog
-from lecos_dlg import BatchDialog
+from .lecos_dlg import BatchDialog
 # Import RasterModifier Dialog
-from lecos_dlg import LandMod
-
+from .lecos_dlg import LandMod
 # Import functions for about Dialog
-import lecos_functions as func
+from . import lecos_functions as func
 
 ## CODE START ##
 class LecoS( object ):
@@ -53,27 +50,25 @@ class LecoS( object ):
         self.iface = iface
         
         # initialize plugin directory
-        self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/LecoS"
-        
-        # initialize SEXTANTE support if available
-        self.sex_load = True
-        self.initSextante()
+        self.plugin_dir = QFileInfo(QgsApplication.qgisUserDatabaseFilePath()).path() + "/python/plugins/LecoS"
+        self.provider = LecoSAlgorithmsProv()
 
     def initGui(self):
         # Create action that will start the LecoS Plugin
         self.actionLecoS = QAction(QIcon(self.plugin_dir+"/icons/icon.png"),\
             u"Landscape statistics", self.iface.mainWindow())
-        QObject.connect(self.actionLecoS, SIGNAL("triggered()"), self.run)
+        self.actionLecoS.triggered.connect(self.run)
+        QgsApplication.processingRegistry().addProvider(self.provider)
         
         # Create action for small batch dialog
         self.actionBatch = QAction(QIcon(self.plugin_dir+"/icons/icon_batchCover.png"),\
             u"Landscape vector overlay", self.iface.mainWindow())
-        QObject.connect(self.actionBatch, SIGNAL("triggered()"), self.runBatch)
+        self.actionBatch.triggered.connect(self.runBatch)
         
         # Create action for small RasterModifier dialog
         self.actionLMod = QAction(QIcon(self.plugin_dir+"/icons/icon_LandMod.png"),\
             u"Landscape modifications", self.iface.mainWindow())
-        QObject.connect(self.actionLMod, SIGNAL("triggered()"), self.runLMod)
+        self.actionLMod.triggered.connect(self.runLMod)
 
         # check if Raster menu available
         if hasattr(self.iface, "addPluginToRasterMenu"):
@@ -85,7 +80,7 @@ class LecoS( object ):
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionLecoS)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionBatch)
             self.iface.addPluginToMenu(u"&Landscape Ecology", self.actionLMod)
-            
+        
     def unload(self):
         # check if Raster menu available and remove our buttons from appropriate
         if hasattr(self.iface, "addPluginToRasterMenu"):
@@ -96,26 +91,8 @@ class LecoS( object ):
             # Remove the plugin menu item and icon
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLecoS)
             self.iface.removePluginMenu(u"&Landscape Ecology",self.actionBatch)
-            self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLMod)            
-                
-    # Try to enable SEXTANTE support if installed
-    def initSextante(self):
-        # Try to import Sextante
-        try:
-            from processing.core.Processing import Processing
-        except ImportError:
-            self.sex_load = False
-        if self.sex_load:
-            # Add folder to sys.path
-            cmd_folder = os.path.split(inspect.getfile( inspect.currentframe() ))[0]
-            if cmd_folder not in sys.path:
-                sys.path.insert(0, cmd_folder)
-            
-            # Load Lecos Sextante Provider
-            from lecos_sextanteprov import LecoSAlgorithmsProv
-            
-            self.provider = LecoSAlgorithmsProv() # Load LecoS Algorithm Provider
-            Processing.addProvider(self.provider,updateList=True)
+            self.iface.removePluginMenu(u"&Landscape Ecology",self.actionLMod)    
+        QgsApplication.processingRegistry().removeProvider(self.provider)
         
     # run method that performs all the real work
     def run(self):

@@ -12,6 +12,7 @@
 
 /***************************************************************************
  *                                                                         *
+from qgis.PyQt.QtCore import *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 2 of the License, or     *
@@ -19,9 +20,16 @@
  *                                                                         *
  ***************************************************************************/
 """
+from __future__ import print_function
+from __future__ import absolute_import
 # Import PyQT bindings
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from builtins import str
+from builtins import range
+from builtins import object
+from qgis.PyQt.QtCore import *
+from PyQt5.QtWidgets import QMessageBox, QDialog
+
+from qgis.PyQt.QtGui import *
 
 # Import QGIS analysis tools
 from qgis.core import *
@@ -33,7 +41,7 @@ import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 from os import path
 
 # Import landscape functions
-import landscape_statistics as lcs
+from . import landscape_statistics as lcs
 
 # Import numpy and scipy
 import numpy
@@ -76,9 +84,6 @@ try:
 except ImportError:
     import gdalconst
 
-# Avoiding python 3 troubles
-from __future__ import division
-
 # Register gdal and ogr drivers
 #if hasattr(gdal,"AllRegister"): # Can register drivers
 #    gdal.AllRegister() # register all gdal drivers
@@ -95,7 +100,7 @@ from __future__ import division
 ## CODE START ##
 # Many functions stolen from here :-)
 # http://geospatialpython.com/2011/02/clip-raster-using-shapefile.html
-class BatchConverter():
+class BatchConverter(object):
     def __init__(self,rasterPath,vectorPath,iface=None):
         # load as a gdal image to get geotransform and full array
         self.srcImage = gdal.Open(str(rasterPath))
@@ -250,7 +255,7 @@ class BatchConverter():
         """
         try:
             a = numpy.fromstring(i.tostring(),'b')
-        except Exception, AttributeError:
+        except Exception as AttributeError:
             try:
                 a = numpy.fromstring(i.tobytes(),'b')   
             except SystemError:
@@ -564,22 +569,22 @@ class BatchConverter():
 def listVectorStatistics():
     functionList = []
 
-    functionList.append(unicode("Class area")) # Calculate area of class
-    functionList.append(unicode("Landscape Proportion")) # Landscape Proportion of class
-    functionList.append(unicode("Number of Patches")) # Return Number of Patches
-    functionList.append(unicode("Patch density")) # Return Patch density
-    functionList.append(unicode("Mean patch area")) # Return Mean Patch area
-    functionList.append(unicode("StDev patch area")) # Return Standard Deviation of Patch areas
-    functionList.append(unicode("Median patch area")) # Return Median Patch area
-    functionList.append(unicode("Greatest patch area")) # Return Greatest patch area
-    functionList.append(unicode("Smallest patch area")) # Return Smallest patch area
+    functionList.append(str("Class area")) # Calculate area of class
+    functionList.append(str("Landscape Proportion")) # Landscape Proportion of class
+    functionList.append(str("Number of Patches")) # Return Number of Patches
+    functionList.append(str("Patch density")) # Return Patch density
+    functionList.append(str("Mean patch area")) # Return Mean Patch area
+    functionList.append(str("StDev patch area")) # Return Standard Deviation of Patch areas
+    functionList.append(str("Median patch area")) # Return Median Patch area
+    functionList.append(str("Greatest patch area")) # Return Greatest patch area
+    functionList.append(str("Smallest patch area")) # Return Smallest patch area
     #functionList.append(unicode("Mean patch distance")) # Return Mean Patch distance
     # Edge Metrics
-    functionList.append(unicode("Edge length")) # Calculate edge length
-    functionList.append(unicode("Edge density")) # Calculate Edge Density
-    functionList.append(unicode("Mean patch edge length")) # Calculate mean edge length of all patches
+    functionList.append(str("Edge length")) # Calculate edge length
+    functionList.append(str("Edge density")) # Calculate Edge Density
+    functionList.append(str("Mean patch edge length")) # Calculate mean edge length of all patches
     # Shape Metric
-    functionList.append(unicode("Mean patch shape ratio")) # Return Mean Patch shape
+    functionList.append(str("Mean patch shape ratio")) # Return Mean Patch shape
     #functionList.append(unicode("Overall Core area")) # Return Core area
 
     return functionList
@@ -587,7 +592,7 @@ def listVectorStatistics():
 
 # Landscape vector processing. Ether use a grouping field or an overlaying grid
 # The calculation works by using SQL-queries
-class VectorBatchConverter():
+class VectorBatchConverter(object):
     def __init__(self,landscape,ID=None,classField=None,vectorPath=None,iface=None):
 #         landPath = "/home/martin/Downloads/qgis_testing/land_use_clipped.shp"
 #         ID = "Ponto"
@@ -620,57 +625,57 @@ class VectorBatchConverter():
     # Runs a defined metric
     def go(self,name,cl=None):
         cl = str(cl)
-        if(name == unicode("Class area")):# Calculate area of class
+        if(name == str("Class area")):# Calculate area of class
             return self.f_ClassArea(cl)
-        if(name == unicode("Landscape Proportion")):# Landscape Proportion of class
+        if(name == str("Landscape Proportion")):# Landscape Proportion of class
             return self.f_LandscapeProportion(cl)
-        if(name == unicode("Number of Patches")):# Return Number of Patches
+        if(name == str("Number of Patches")):# Return Number of Patches
             return self.f_NumberPatches(cl)
-        if(name == unicode("Patch density")):# Return Patch density
+        if(name == str("Patch density")):# Return Patch density
             return self.f_PatchDensity(cl)
-        if(name == unicode("Mean patch area")): # Return Mean Patch area
+        if(name == str("Mean patch area")): # Return Mean Patch area
             return self.f_MeanPatchArea(cl)
-        if(name == unicode("StDev patch area")): # Return Standard Deviation of Patch area
+        if(name == str("StDev patch area")): # Return Standard Deviation of Patch area
             return self.f_SDPatchArea(cl)
-        if(name == unicode("Median patch area")): # Return Median Patch area
+        if(name == str("Median patch area")): # Return Median Patch area
             return self.f_MedianPatchArea(cl)
-        if(name == unicode("Greatest patch area")): # Return Greatest Patch area
+        if(name == str("Greatest patch area")): # Return Greatest Patch area
             return self.f_MaxPatchArea(cl)
-        if(name == unicode("Smallest patch area")): # Return Smallest Patch area
+        if(name == str("Smallest patch area")): # Return Smallest Patch area
             return self.f_MinPatchArea(cl)
         # Edge Metrics
-        if(name == unicode("Edge length")): # Calculates total edge length
+        if(name == str("Edge length")): # Calculates total edge length
             return self.f_EdgeLength(cl)
-        if(name == unicode("Edge density")): # Calculate Edge Density
+        if(name == str("Edge density")): # Calculate Edge Density
             return self.f_EdgeDensity(cl)
-        if(name == unicode("Mean patch edge length")): # Calculate mean edge length of all patches
+        if(name == str("Mean patch edge length")): # Calculate mean edge length of all patches
             return self.f_MeanEdgeLength(cl)
         # Shape Metric
-        if(name == unicode("Mean patch shape ratio")): # Return Mean Patch shape
+        if(name == str("Mean patch shape ratio")): # Return Mean Patch shape
             return self.f_MeanShapeRatio(cl)
         # Zonal statistics and Diversity Indices
-        if(name == unicode("LC_Sum")):
+        if(name == str("LC_Sum")):
             return self.f_ClassArea(None,"LC_Sum")
-        if(name == unicode("LC_Mean")):
+        if(name == str("LC_Mean")):
             return self.f_MeanPatchArea(None,"LC_Mean")
-        if(name == unicode("LC_SD")):
+        if(name == str("LC_SD")):
             return self.f_SDPatchArea(None,"LC_SD")
-        if(name == unicode("LC_Med")):
+        if(name == str("LC_Med")):
             return self.f_MedianPatchArea(None,"LC_Med")
-        if(name == unicode("LC_Max")):
+        if(name == str("LC_Max")):
             return self.f_MaxPatchArea(None,"LC_Max")
-        if(name == unicode("LC_Min")):
+        if(name == str("LC_Min")):
             return self.f_MinPatchArea(None,"LC_Min")
-        if(name == unicode("LC_LQua")):
+        if(name == str("LC_LQua")):
             return self.f_MedianPatchArea(None,"LC_Med",25)
-        if(name == unicode("LC_UQua")):
+        if(name == str("LC_UQua")):
             return self.f_MedianPatchArea(None,"LC_Med",75)
-        if(name == unicode("DIV_SH")):
+        if(name == str("DIV_SH")):
             pass
             #return self.f_ShannonIndex()
-        if(name == unicode("DIV_SI")):
+        if(name == str("DIV_SI")):
             pass
-        if(name == unicode("DIV_EV")):
+        if(name == str("DIV_EV")):
             pass
 
     ## Metrics functions

@@ -11,6 +11,7 @@
  ***************************************************************************/
 
 /***************************************************************************
+from qgis.PyQt.QtCore import *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,72 +20,22 @@
  *                                                                         *
  ***************************************************************************/
 """
+from __future__ import absolute_import
 # Import PyQT bindings
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from builtins import str
+from builtins import range
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
 
-# Sextante bindings
-from processing.core.AlgorithmProvider import AlgorithmProvider
-from processing.core.ProcessingConfig import Setting, ProcessingConfig
-from processing.core.ProcessingLog import ProcessingLog
 
 # Import Processing bindings
-from processing.core.GeoAlgorithm import GeoAlgorithm
-from processing.core.Processing import Processing
-try:
-    from processing.core.ProcessingUtils import ProcessingUtils
-except ImportError: # for qgis dev
-    # new processing update
-    from processing.tools.system import *
-
-from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
-try:
-    from processing.core.QGisLayers import QGisLayers
-except: # for qgis dev
-    # new processing update
-    from processing.tools import dataobjects, vector
-
-
-# For Processing update
-try:
-    from processing.outputs.OutputVector import OutputVector
-    from processing.outputs.OutputRaster import OutputRaster
-    from processing.outputs.OutputTable import OutputTable
-except ImportError:
-    from processing.core.outputs import OutputVector
-    from processing.core.outputs import OutputRaster
-    from processing.core.outputs import OutputTable    
-
-try:
-    from processing.parameters.ParameterBoolean import ParameterBoolean
-    from processing.parameters.ParameterMultipleInput import ParameterMultipleInput
-    from processing.parameters.ParameterNumber import ParameterNumber
-    from processing.parameters.ParameterRaster import ParameterRaster
-    from processing.parameters.ParameterString import ParameterString
-    from processing.parameters.ParameterTable import ParameterTable
-    from processing.parameters.ParameterVector import ParameterVector
-    from processing.parameters.ParameterTableField import ParameterTableField
-    from processing.parameters.ParameterSelection import ParameterSelection
-    from processing.parameters.ParameterRange import ParameterRange
-    from processing.parameters.ParameterFixedTable import ParameterFixedTable
-    from processing.parameters.ParameterExtent import ParameterExtent
-    from processing.parameters.ParameterFile import ParameterFile
-    from processing.parameters.ParameterCrs import ParameterCrs
-except ImportError:
-    from processing.core.parameters import ParameterBoolean
-    from processing.core.parameters import ParameterMultipleInput
-    from processing.core.parameters import ParameterNumber
-    from processing.core.parameters import ParameterRaster
-    from processing.core.parameters import ParameterString
-    from processing.core.parameters import ParameterTable
-    from processing.core.parameters import ParameterVector
-    from processing.core.parameters import ParameterTableField
-    from processing.core.parameters import ParameterSelection
-    from processing.core.parameters import ParameterRange
-    from processing.core.parameters import ParameterFixedTable
-    from processing.core.parameters import ParameterExtent
-    from processing.core.parameters import ParameterFile
-    from processing.core.parameters import ParameterCrs
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingException
+from qgis.core import (QgsProcessingParameterEnum as ParameterSelection,
+                       QgsProcessingParameterExtent as ParameterExtent,
+                       QgsProcessingParameterNumber as ParameterNumber,
+                       QgsProcessingOutputRasterLayer as OutputRaster,
+                       QgsProcessingParameterRasterLayer as ParameterRaster)
 
 # Import numpy and scipy
 import numpy
@@ -119,11 +70,9 @@ except ImportError:
 #    ogr.RegisterAll() # register all ogr drivers
 
 import os, sys
-# Avoiding python 3 troubles
-from __future__ import division
 
 # Import functions and metrics
-import lecos_functions as func
+from . import lecos_functions as func
 
 try:
     import nlmpy
@@ -131,7 +80,7 @@ except ImportError:
     nlmpy = False
      
 ## Algorithms ##
-class SpatialRandom(GeoAlgorithm):
+class SpatialRandom(QgsProcessingAlgorithm):
     # Define constants
     MASK = "MASK"
     # Output
@@ -139,17 +88,20 @@ class SpatialRandom(GeoAlgorithm):
     EXTENT = "EXTENT"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Spatial random"
-        self.cmdName = "nlmpy:spatialrandom"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Spatial random"
+    def name(self):
+        return "nlmpy:spatialrandom"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
         self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
@@ -168,7 +120,7 @@ class SpatialRandom(GeoAlgorithm):
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")  # Processing            
+            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -193,7 +145,7 @@ class SpatialRandom(GeoAlgorithm):
         else:
             return False, None
 
-class PlanarGradient(GeoAlgorithm):
+class PlanarGradient(QgsProcessingAlgorithm):
     # Define constants
     DIRECTION = "DIRECTION"    
     MASK = "MASK"
@@ -202,17 +154,20 @@ class PlanarGradient(GeoAlgorithm):
     EXTENT = "EXTENT"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Planar Gradient"
-        self.cmdName = "nlmpy:planargradient"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Planar Gradient"
+    def name(self):
+        return "nlmpy:planargradient"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
         self.addParameter(ParameterNumber(self.DIRECTION, "Direction of the gradient (optional)", 0, None, 0))
         self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
@@ -233,7 +188,7 @@ class PlanarGradient(GeoAlgorithm):
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")  # Processing            
+            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -258,7 +213,7 @@ class PlanarGradient(GeoAlgorithm):
         else:
             return False, None
 
-class EdgeGradient(GeoAlgorithm):
+class EdgeGradient(QgsProcessingAlgorithm):
     # Define constants
     DIRECTION = "DIRECTION"    
     MASK = "MASK"
@@ -267,17 +222,20 @@ class EdgeGradient(GeoAlgorithm):
     EXTENT = "EXTENT"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Edge Gradient"
-        self.cmdName = "nlmpy:edgegradient"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Edge Gradient"
+    def name(self):
+        return "nlmpy:edgegradient"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
         self.addParameter(ParameterNumber(self.DIRECTION, "Direction of the gradient (optional)", 0, None, 0))
         self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
@@ -298,7 +256,7 @@ class EdgeGradient(GeoAlgorithm):
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")  # Processing            
+            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -323,7 +281,7 @@ class EdgeGradient(GeoAlgorithm):
         else:
             return False, None
 
-class DistanceGradient(GeoAlgorithm):
+class DistanceGradient(QgsProcessingAlgorithm):
     # Define constants
     SOURCE = "SOURCE"
     MASK = "MASK"
@@ -331,17 +289,20 @@ class DistanceGradient(GeoAlgorithm):
     OUTPUT_RASTER = "OUTPUT_RASTER"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Distance Gradient"
-        self.cmdName = "nlmpy:distancegradient"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Distance Gradient"
+    def name(self):
+        return "nlmpy:distancegradient"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterRaster(self.SOURCE, "Source raster layer", True))
         self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
@@ -379,7 +340,7 @@ class DistanceGradient(GeoAlgorithm):
         else:
             return False, None
         
-class MidpointDisplacement(GeoAlgorithm):
+class MidpointDisplacement(QgsProcessingAlgorithm):
     
     # Define constants
     SCOR = "SCOR"    
@@ -389,17 +350,20 @@ class MidpointDisplacement(GeoAlgorithm):
     EXTENT = "EXTENT"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Midpoint displacement"
-        self.cmdName = "nlmpy:mpd"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Midpoint displacement"
+    def name(self):
+        return "nlmpy:mpd"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True)) 
         self.addParameter(ParameterNumber(self.SCOR, "Level of Spatial Autocorrelation (0 - 1)", False,  True,0.5))
         self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
@@ -420,7 +384,7 @@ class MidpointDisplacement(GeoAlgorithm):
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")  # Processing            
+            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -445,7 +409,7 @@ class MidpointDisplacement(GeoAlgorithm):
         else:
             return False, None
         
-class RandomRectangularCluster(GeoAlgorithm):
+class RandomRectangularCluster(QgsProcessingAlgorithm):
     # Define constants
     MINL = "MINL"  
     MAXL = "MAXL"
@@ -455,17 +419,20 @@ class RandomRectangularCluster(GeoAlgorithm):
     EXTENT = "EXTENT"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Random rectangular cluster"
-        self.cmdName = "nlmpy:randomreccluster"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Random rectangular cluster"
+    def name(self):
+        return "nlmpy:randomreccluster"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
         self.addParameter(ParameterNumber(self.MINL, "Minimum length of each cluster)", 0, None, 1))
         self.addParameter(ParameterNumber(self.MAXL, "Maximum length of each cluster", 0, None, 10))        
@@ -488,7 +455,7 @@ class RandomRectangularCluster(GeoAlgorithm):
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")  # Processing            
+            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -513,7 +480,7 @@ class RandomRectangularCluster(GeoAlgorithm):
         else:
             return False, None
 
-class RandomElementNN(GeoAlgorithm):
+class RandomElementNN(QgsProcessingAlgorithm):
     # Define constants
     NELE = "NELE"    
     MASK = "MASK"
@@ -522,20 +489,26 @@ class RandomElementNN(GeoAlgorithm):
     EXTENT = "EXTENT"
     CS = "CS"
     
-    def getIcon(self):
+    def createInstance(self):
+        return RandomElementNN()
+    
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Random element Nearest-neighbour"
-        self.cmdName = "nlmpy:randomelenn"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Random element Nearest-neighbour"
+    def name(self):
+        return "nlmpy:randomelenn"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
+    def initAlgorithm(self, config):
+        self.addParameter(ParameterExtent(self.EXTENT, "Output extent", optional=True))
         self.addParameter(ParameterNumber(self.NELE, "Number of elements randomly selected", 0, None, 3))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
+        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", optional=True))
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
         self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
 
@@ -553,7 +526,7 @@ class RandomElementNN(GeoAlgorithm):
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")  # Processing            
+            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -578,7 +551,7 @@ class RandomElementNN(GeoAlgorithm):
         else:
             return False, None
 
-class RandomClusterNN(GeoAlgorithm):
+class RandomClusterNN(QgsProcessingAlgorithm):
     # Define constants
     NCLU = "NCLU"
     NEIG = "NEIG"
@@ -589,17 +562,20 @@ class RandomClusterNN(GeoAlgorithm):
     EXTENT = "EXTENT"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Random cluster Nearest-neighbour"
-        self.cmdName = "nlmpy:randomclunn"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Random cluster Nearest-neighbour"
+    def name(self):
+        return "nlmpy:randomclunn"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
         self.addParameter(ParameterNumber(self.NCLU, "Proportions of elements to form cluster ( 0 - 1 )",False, True,0.5))
         self.addParameter(ParameterSelection(self.NEIG, "Neighbourhood structure", self.w, 0))
@@ -622,7 +598,7 @@ class RandomClusterNN(GeoAlgorithm):
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")  # Processing            
+            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -647,24 +623,27 @@ class RandomClusterNN(GeoAlgorithm):
         else:
             return False, None      
         
-class LinearRescale01(GeoAlgorithm):
+class LinearRescale01(QgsProcessingAlgorithm):
     # Define constants
     SOURCE = "SOURCE"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Linear rescale"
-        self.cmdName = "nlmpy:linearrescale"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Linear rescale"
+    def name(self):
+        return "nlmpy:linearrescale"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterRaster(self.SOURCE, "Source raster layer", True))
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
         self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
@@ -696,7 +675,7 @@ class LinearRescale01(GeoAlgorithm):
         else:
             return False, None      
 
-class RandomUniformed01(GeoAlgorithm):
+class RandomUniformed01(QgsProcessingAlgorithm):
     # Define constants
     MASK = "MASK"
     # Output
@@ -704,17 +683,20 @@ class RandomUniformed01(GeoAlgorithm):
     EXTENT = "EXTENT"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Random uniform"
-        self.cmdName = "nlmpy:randomuniform"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Random uniform"
+    def name(self):
+        return "nlmpy:randomuniform"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
         self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
@@ -733,7 +715,7 @@ class RandomUniformed01(GeoAlgorithm):
         try:
             ext = string.split(ext,",") # split 
         except AttributeError: # Extent was empty, raise error
-            raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")  # Processing            
+            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -759,7 +741,7 @@ class RandomUniformed01(GeoAlgorithm):
             return False, None              
         
         
-class MeanOfCluster(GeoAlgorithm):
+class MeanOfCluster(QgsProcessingAlgorithm):
     # Define constants
     CLUSTERARRAY = "CLUSTERARRAY"
     SOURCE = "SOURCE"
@@ -767,17 +749,20 @@ class MeanOfCluster(GeoAlgorithm):
     OUTPUT_RASTER = "OUTPUT_RASTER"
     CS = "CS"
     
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Mean within cluster"
-        self.cmdName = "nlmpy:meanofcluster"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Mean within cluster"
+    def name(self):
+        return "nlmpy:meanofcluster"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterRaster(self.CLUSTERARRAY, "Clustered raster layer", True))
         self.addParameter(ParameterRaster(self.SOURCE, "Data raster layer", True))
         
@@ -816,7 +801,7 @@ class MeanOfCluster(GeoAlgorithm):
         else:
             return False, None            
 
-class ClassifyArray(GeoAlgorithm):
+class ClassifyArray(QgsProcessingAlgorithm):
     # Define constants
     SOURCE = "SOURCE"
     CLASSES = "CLASSES"
@@ -825,20 +810,24 @@ class ClassifyArray(GeoAlgorithm):
     CS = "CS"
     MASK = "MASK"
 
-    def getIcon(self):
+    def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
-    def defineCharacteristics(self):
-        '''Here we define the inputs and output of the algorithm, along
-        with some other properties'''
 
-        self.name = "Classfiy proportional Raster"
-        self.cmdName = "nlmpy:classifyraster"
-        self.group = "Neutral landscape model (NLMpy)"
+    def displayName(self):
+        return "Classfiy proportional Raster"
+    def name(self):
+        return "nlmpy:classifyraster"
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterRaster(self.SOURCE, "Cluster raster layer", True))
         self.addParameter(ParameterNumber(self.CLASSES, "Classify proportional raster to number of classes",2, None,2))
 
+    def initAlgorithm(self, config):
         self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))        
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
         self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
@@ -864,7 +853,7 @@ class ClassifyArray(GeoAlgorithm):
         array = src.GetRasterBand(1).ReadAsArray()  
         
         # Classes
-        cl = range(1,ncla+1)
+        cl = list(range(1,ncla+1))
                 
         # Do the calc
         result = nlmpy.classifyArray(array,cl,mask)
