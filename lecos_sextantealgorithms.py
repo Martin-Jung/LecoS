@@ -247,7 +247,6 @@ class CreateRandomLandscape(LandscapePreparationAlgorithm):
                 
         # Create output raster
         func.createRaster(output,cols,rows,array,nodata,gt)
-
         return {self.OUTPUT_FILE: output}
 
     
