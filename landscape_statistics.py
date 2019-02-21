@@ -136,7 +136,7 @@ def f_landcover(raster,nodata=None):
         try:
             array =  band.ReadAsArray() 
         except ValueError:
-            QMessageBox.warning(QDialog(),"LecoS: Warning","Raster file is to big for processing. Please crop the file and try again.")
+            QMessageBox.warning(QDialog(),"LecoS: Warning","Raster file is too big for processing. Please crop the file and try again.")
             return
         classes = sorted(numpy.unique(array)) # get classes
         try:
