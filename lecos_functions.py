@@ -103,7 +103,7 @@ def ShowResultTableDialog( metric_names, results ):
 
   btnClose = QPushButton( QApplication.translate( "OK", "OK" ) )
   lines.addWidget( btnClose )
-  QObject.connect( btnClose, SIGNAL( "clicked()" ), dlg, SLOT( "close()" ) )
+  btnClose.clicked.connect( dlg.close)
   dlg.exec_()
 
 # Version number 2 for nested metrics and features
@@ -140,7 +140,7 @@ def ShowResultTableDialog2( metric_names, results ):
 
   btnClose = QPushButton( QApplication.translate( "OK", "OK" ) )
   lines.addWidget( btnClose )
-  QObject.connect( btnClose, SIGNAL( "clicked()" ), dlg, SLOT( "close()" ) )
+  btnClose.clicked.connect( dlg.close )
   dlg.exec_()
   return True
 
@@ -181,8 +181,7 @@ def AboutDlg( ):
 
   btnClose = QPushButton( QApplication.translate( "LecoS", "Close" ) )
   lines.addWidget( btnClose )
-  QObject.connect( btnClose, SIGNAL( "clicked()" ), dlgAbout, SLOT( "close()" ) )
-
+  btnClose.clicked.connect( dlgAbout.close )
   dlgAbout.exec_()
 
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
@@ -247,7 +246,7 @@ def getAttributeList( vlayer, field):
   layerName = ( layer.GetName() )
   field = str(field)
   attr = [] # Output list
-  sql = ("SELECT %s FROM %s" % (field, layerName)).encode('utf-8')
+  sql = ("SELECT %s FROM %s" % (field, layerName))
   try:
     d = datasource.ExecuteSQL(sql , dialect='SQLITE')
   except TypeError as RuntimeError:
