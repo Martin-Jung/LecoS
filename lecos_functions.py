@@ -447,5 +447,15 @@ def count_nonzero(array):
     elif hasattr(scipy,'count_nonzero'):
         return scipy.count_nonzero(array)
     else:
-        return (array != 0).sum()
+        return (array != 0).sum().item()
 
+def getSinkWithValues( algorithm, parameters, name, context, values, titles, types ):
+    fields = QgsFields()
+    for (i, qType) in zip(titles, types):
+        fields.append(QgsField(i, qType, "", 20, 8))
+    sink, output = algorithm.parameterAsSink(parameters, name, context, fields, QgsWkbTypes.NoGeometry, QgsCoordinateReferenceSystem())
+    for i in values:
+        f = QgsFeature()
+        f.setAttributes(i)
+        sink.addFeature(f, QgsFeatureSink.FastInsert)
+    return output
