@@ -103,7 +103,7 @@ def ShowResultTableDialog( metric_names, results ):
 
   btnClose = QPushButton( QApplication.translate( "OK", "OK" ) )
   lines.addWidget( btnClose )
-  QObject.connect( btnClose, SIGNAL( "clicked()" ), dlg, SLOT( "close()" ) )
+  btnClose.clicked.connect( dlg.close)
   dlg.exec_()
 
 # Version number 2 for nested metrics and features
@@ -140,7 +140,7 @@ def ShowResultTableDialog2( metric_names, results ):
 
   btnClose = QPushButton( QApplication.translate( "OK", "OK" ) )
   lines.addWidget( btnClose )
-  QObject.connect( btnClose, SIGNAL( "clicked()" ), dlg, SLOT( "close()" ) )
+  btnClose.clicked.connect( dlg.close )
   dlg.exec_()
   return True
 
@@ -181,8 +181,7 @@ def AboutDlg( ):
 
   btnClose = QPushButton( QApplication.translate( "LecoS", "Close" ) )
   lines.addWidget( btnClose )
-  QObject.connect( btnClose, SIGNAL( "clicked()" ), dlgAbout, SLOT( "close()" ) )
-
+  btnClose.clicked.connect( dlgAbout.close )
   dlgAbout.exec_()
 
 # Adapted from Plugin ZonalStats - Copyright (C) 2011 Alexander Bruy
@@ -247,7 +246,7 @@ def getAttributeList( vlayer, field):
   layerName = ( layer.GetName() )
   field = str(field)
   attr = [] # Output list
-  sql = ("SELECT %s FROM %s" % (field, layerName)).encode('utf-8')
+  sql = ("SELECT %s FROM %s" % (field, layerName))
   try:
     d = datasource.ExecuteSQL(sql , dialect='SQLITE')
   except TypeError as RuntimeError:
@@ -272,6 +271,7 @@ def getLayerByName( layerName ):
 # Input = [[[ID,METRIC,VAL],[ID,METRIC,VAL]],[[ID,METRIC,VAL2],[ID,METRIC,VAL2]]]
 def addAttributesToLayer(layer,results):
   # Open a Shapefile, and get field names
+  layer.startEditing()
   provider = layer.dataProvider()
   caps = provider.capabilities()
   for metric in range(0,len(results)):
@@ -279,7 +279,7 @@ def addAttributesToLayer(layer,results):
     # Name Formating
     cmd = str( results[metric][0][1] )
     cmd = string.capwords(cmd)
-    cmd = string.split(cmd)
+    cmd = str(cmd).split()
     name = ""
     for i in range(0,len(cmd)):
       if len(cmd) == 1:
@@ -291,18 +291,19 @@ def addAttributesToLayer(layer,results):
     try:
       if ind == -1: # Already existing?
         if caps & QgsVectorDataProvider.AddAttributes:
-          res = provider.addAttributes( [ QgsField(name,QVariant.Double) ] )
+          newField = QgsField(name, QVariant.Double, len=20, prec=6)
+          res = provider.addAttributes( [ newField ] )
           if res == False:
             return res
     except:
       return False
     ind = provider.fieldNameIndex(name) # Check again if attribute is existing
     if ind != -1:
-      # Write values to newly created coloumn or to existing one
+      # Write values to newly created column or to existing one
       for ar in results[metric]:
         if caps & QgsVectorDataProvider.ChangeAttributeValues:
           try:
-            attrs = { ind : (round(ar[2],6)) }
+            attrs = { ind : (round(float(ar[2]),6)) }
           except:
             attrs = { ind : (ar[2]) }
           provider.changeAttributeValues({ ar[0] : attrs })
@@ -448,5 +449,15 @@ def count_nonzero(array):
     elif hasattr(scipy,'count_nonzero'):
         return scipy.count_nonzero(array)
     else:
-        return (array != 0).sum()
+        return (array != 0).sum().item()
 
+def getSinkWithValues( algorithm, parameters, name, context, values, titles, types ):
+    fields = QgsFields()
+    for (i, qType) in zip(titles, types):
+        fields.append(QgsField(i, qType, "", 20, 8))
+    sink, output = algorithm.parameterAsSink(parameters, name, context, fields, QgsWkbTypes.NoGeometry, QgsCoordinateReferenceSystem())
+    for i in values:
+        f = QgsFeature()
+        f.setAttributes(i)
+        sink.addFeature(f, QgsFeatureSink.FastInsert)
+    return output

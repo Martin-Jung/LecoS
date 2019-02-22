@@ -965,7 +965,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 except IndexError:
                     func.DisplayError(self.iface,"LecoS: Warning" ,"Results couldn't be calculated. Please make sure all shapes are within the rasters extent!","WARNING")
                     return
-            f = open(self.FileSavePath, "wb" )
+            f = open(self.FileSavePath, "w", newline='' )
             writer = csv.writer(f,delimiter=';',quotechar="",quoting=csv.QUOTE_NONE)
             writer.writerow(title)
             # Get values of Overlay grouping ID

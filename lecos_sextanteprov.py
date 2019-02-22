@@ -104,10 +104,9 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
         
         # TODO: Won't work
         # NLMPY if available
-        """
+        
         if nlmpy:
             algs.append( RandomElementNN() )
-            
             algs.append( RandomClusterNN() )
             algs.append( LinearRescale01() )
             algs.append( RandomUniformed01() )
@@ -119,7 +118,6 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
             algs.append( RandomRectangularCluster() )
             algs.append( MeanOfCluster() )
             algs.append( ClassifyArray() )
-            """
         return algs
     
     def loadAlgorithms(self):

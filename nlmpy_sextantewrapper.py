@@ -29,13 +29,15 @@ from qgis.PyQt.QtGui import *
 
 
 # Import Processing bindings
-from qgis.core import QgsProcessingAlgorithm
+from qgis.core import Qgis
 from qgis.core import QgsProcessingException
-from qgis.core import (QgsProcessingParameterEnum as ParameterSelection,
+from qgis.core import (QgsProcessingAlgorithm,
+                       QgsProcessingParameterEnum as ParameterSelection,
                        QgsProcessingParameterExtent as ParameterExtent,
                        QgsProcessingParameterNumber as ParameterNumber,
                        QgsProcessingOutputRasterLayer as OutputRaster,
-                       QgsProcessingParameterRasterLayer as ParameterRaster)
+                       QgsProcessingParameterRasterLayer as ParameterRaster,
+                       QgsProcessingParameterRasterDestination)
 
 # Import numpy and scipy
 import numpy
@@ -74,85 +76,138 @@ import os, sys
 # Import functions and metrics
 from . import lecos_functions as func
 
+# Import generic classes
+from .lecos_sextantealgorithms import GenericProcessing
+class NeutralLandscapeAlgorithm(GenericProcessing):
+    OUTPUT_RASTER = "OUTPUT_RASTER"
+
+    def initParams(self):
+        self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_RASTER, "Result output"))
+        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
+
+    def getParams(self, parameters, context):
+        return self.parameterAsOutputLayer(parameters, self.OUTPUT_RASTER, context)
+
+    def group(self):
+        return "Neutral landscape model (NLMpy)"
+    def groupId(self):
+        return "Neutral landscape model (NLMpy)"
+    def helpUrl(self):
+        return None
+    def shortDescription(self):
+        return None
+
+#Generic parameter classes
+class ExtentCSParameter(QgsProcessingAlgorithm):
+    #Constant parameter names
+    EXTENT = "EXTENT"
+    CS = "CS"
+
+    def initParams(self):
+        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",optional=False))
+        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", minValue=1, defaultValue=10, type=ParameterNumber.Integer))
+
+    
+    def getParams(self, parameters, context):
+        ext = self.parameterAsExtent(parameters, self.EXTENT, context)
+        cs = self.parameterAsInt(parameters, self.CS, context)
+        xmin = ext.xMinimum()
+        xmax = ext.xMaximum()
+        ymin = ext.yMinimum()
+        ymax = ext.yMaximum()
+        gt = (xmin,cs,0,ymax,0,-cs)
+        cols = int( round( (xmax-xmin)/cs ) )
+        rows = int( round( (ymax-ymin)/cs ) )
+        return (gt, cols, rows)
+
+ENUM_QGIS_NUMPY = {
+    Qgis.Byte: numpy.uint8,
+    Qgis.UInt16: numpy.uint16,
+    Qgis.Int16: numpy.int16,
+    Qgis.UInt32: numpy.uint32,
+    Qgis.Int32: numpy.int32,
+    Qgis.Float32: numpy.float32,
+    Qgis.Float64: numpy.float64
+}
+
+class MaskParameter(QgsProcessingAlgorithm):
+    MASK = "MASK"
+
+    def initParams(self):
+        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", optional=True))
+
+    def getParams(self, parameters, context):
+        mask = self.parameterAsRasterLayer(parameters, self.MASK, context)
+        if mask != None:
+            mask = mask.source()
+            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
+            mask = src.GetRasterBand(1).ReadAsArray()      
+        return mask
+
+class SourceParameter(QgsProcessingAlgorithm):
+    SOURCE = "SOURCE"
+
+    def initParams(self):
+        self.addParameter(ParameterRaster(self.SOURCE, "Data raster layer", optional=False))
+
+    def getParams(self, parameters, context):
+        inputSource = self.parameterAsRasterLayer(parameters, self.SOURCE, context).source()
+        src = gdal.Open(str(inputSource), gdalconst.GA_ReadOnly)
+        src_geotrans = src.GetGeoTransform()
+        cols = src.RasterXSize
+        rows = src.RasterYSize
+        nodata = src.GetRasterBand(1).GetNoDataValue() # keep the nodata value
+        array = src.GetRasterBand(1).ReadAsArray()
+        return (cols, rows, nodata, src_geotrans, array)
+
 try:
-    import nlmpy
+    from nlmpy import nlmpy
 except ImportError:
     nlmpy = False
      
 ## Algorithms ##
-class SpatialRandom(QgsProcessingAlgorithm):
+class SpatialRandom(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):
     # Define constants
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    EXTENT = "EXTENT"
-    CS = "CS"
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
-
 
     def displayName(self):
         return "Spatial random"
     def name(self):
         return "nlmpy:spatialrandom"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        ExtentCSParameter.initParams(self)
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        mask = self.getParameterValue(self.MASK)        
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        ext = self.getParameterValue(self.EXTENT)
+        mask = MaskParameter.getParams(self, parameters, context)
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
+             
         
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
-        try:
-            ext = string.split(ext,",") # split 
-        except AttributeError: # Extent was empty, raise error
-            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
-        xmin = float(ext[0])
-        xmax = float(ext[1])
-        ymin = float(ext[2])
-        ymax = float(ext[3])
-        gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
-        
-        cols = int( round( (xmax-xmin)/cs ) )
-        rows = int( round( (ymax-ymin)/cs ) )
+        gt, cols, rows = ExtentCSParameter.getParams(self, parameters, context)
         
         # Do the calc
         result = nlmpy.random(rows, cols, mask=mask)
 
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+        
 
-class PlanarGradient(QgsProcessingAlgorithm):
+class PlanarGradient(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):
     # Define constants
     DIRECTION = "DIRECTION"    
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    EXTENT = "EXTENT"
-    CS = "CS"
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
@@ -162,65 +217,37 @@ class PlanarGradient(QgsProcessingAlgorithm):
         return "Planar Gradient"
     def name(self):
         return "nlmpy:planargradient"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
-        self.addParameter(ParameterNumber(self.DIRECTION, "Direction of the gradient (optional)", 0, None, 0))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        ExtentCSParameter.initParams(self)
+        self.addParameter(ParameterNumber(self.DIRECTION, "Direction of the gradient (optional)", minValue=0, defaultValue=0, optional=True))
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        mask = self.getParameterValue(self.MASK)
-        direction = self.getParameterValue(self.DIRECTION)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        ext = self.getParameterValue(self.EXTENT)
+        mask = MaskParameter.getParams(self, parameters, context)
+        direction = self.parameterAsInt(parameters, self.DIRECTION, context)
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
         
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
-        try:
-            ext = string.split(ext,",") # split 
-        except AttributeError: # Extent was empty, raise error
-            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
-        xmin = float(ext[0])
-        xmax = float(ext[1])
-        ymin = float(ext[2])
-        ymax = float(ext[3])
-        gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
         
-        cols = int( round( (xmax-xmin)/cs ) )
-        rows = int( round( (ymax-ymin)/cs ) )
-        
+        gt, cols, rows = ExtentCSParameter.getParams(self, parameters, context)
+
         # Do the calc
         result = nlmpy.planarGradient(rows, cols,direction,mask)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
-class EdgeGradient(QgsProcessingAlgorithm):
+class EdgeGradient(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):
     # Define constants
     DIRECTION = "DIRECTION"    
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    EXTENT = "EXTENT"
-    CS = "CS"
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
@@ -230,61 +257,33 @@ class EdgeGradient(QgsProcessingAlgorithm):
         return "Edge Gradient"
     def name(self):
         return "nlmpy:edgegradient"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
-        self.addParameter(ParameterNumber(self.DIRECTION, "Direction of the gradient (optional)", 0, None, 0))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
-
-    def processAlgorithm(self, progress):
+        ExtentCSParameter.initParams(self)
+        self.addParameter(ParameterNumber(self.DIRECTION, "Direction of the gradient (optional)", minValue=0,  defaultValue=0))
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        mask = self.getParameterValue(self.MASK)
-        direction = self.getParameterValue(self.DIRECTION)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        ext = self.getParameterValue(self.EXTENT)
+        mask = MaskParameter.getParams(self, parameters, context)
+        direction = self.parameterAsInt(parameters, self.DIRECTION, context)
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
         
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
-        try:
-            ext = string.split(ext,",") # split 
-        except AttributeError: # Extent was empty, raise error
-            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
-        xmin = float(ext[0])
-        xmax = float(ext[1])
-        ymin = float(ext[2])
-        ymax = float(ext[3])
-        gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
-        
-        cols = int( round( (xmax-xmin)/cs ) )
-        rows = int( round( (ymax-ymin)/cs ) )
+        gt, cols, rows = ExtentCSParameter.getParams(self, parameters, context)
         
         # Do the calc
         result = nlmpy.edgeGradient(rows, cols,direction,mask)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
-class DistanceGradient(QgsProcessingAlgorithm):
+class DistanceGradient(NeutralLandscapeAlgorithm, MaskParameter, SourceParameter):
     # Define constants
-    SOURCE = "SOURCE"
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
     CS = "CS"
@@ -297,58 +296,35 @@ class DistanceGradient(QgsProcessingAlgorithm):
         return "Distance Gradient"
     def name(self):
         return "nlmpy:distancegradient"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterRaster(self.SOURCE, "Source raster layer", True))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        SourceParameter.initParams(self)
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", minValue=10,  defaultValue=1))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        inputSource = self.getParameterValue(self.SOURCE)
-        mask = self.getParameterValue(self.MASK)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
+        inputSource = self.parameterAsRasterLayer(parameters, self.SOURCE, context).source()
+        mask = MaskParameter.getParams(self, parameters, context)
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
+        cs = self.parameterAsInt(parameters, self.CS, context)
         
         # Source 
-        src = gdal.Open(str(inputSource), gdalconst.GA_ReadOnly)
-        src_geotrans = src.GetGeoTransform()
-        cols = src.RasterXSize
-        rows = src.RasterYSize
-        nodata = src.GetRasterBand(1).GetNoDataValue() # keep the nodata value
-        array = src.GetRasterBand(1).ReadAsArray()  
-        
+        cols, rows, nodata, src_geotrans, array = SourceParameter.getParams(self, parameters, context)        
         # Do the calc
         result = nlmpy.distanceGradient(array,mask)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,src_geotrans)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
         
-class MidpointDisplacement(QgsProcessingAlgorithm):
-    
+class MidpointDisplacement(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):
     # Define constants
     SCOR = "SCOR"    
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    EXTENT = "EXTENT"
-    CS = "CS"
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
@@ -358,66 +334,38 @@ class MidpointDisplacement(QgsProcessingAlgorithm):
         return "Midpoint displacement"
     def name(self):
         return "nlmpy:mpd"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True)) 
-        self.addParameter(ParameterNumber(self.SCOR, "Level of Spatial Autocorrelation (0 - 1)", False,  True,0.5))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
-
-    def processAlgorithm(self, progress):
+        ExtentCSParameter.initParams(self)
+        self.addParameter(ParameterNumber(self.SCOR, "Level of Spatial Autocorrelation (0 - 1)", minValue=0, maxValue=1, defaultValue=0.5, type=ParameterNumber.Double))
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        mask = self.getParameterValue(self.MASK)
-        scor = self.getParameterValue(self.SCOR)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        ext = self.getParameterValue(self.EXTENT)
+        mask = MaskParameter.getParams(self, parameters, context)
+        scor = self.parameterAsDouble(parameters, self.SCOR, context)
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
         
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
-        try:
-            ext = string.split(ext,",") # split 
-        except AttributeError: # Extent was empty, raise error
-            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
+        
         # Create output layer
-        xmin = float(ext[0])
-        xmax = float(ext[1])
-        ymin = float(ext[2])
-        ymax = float(ext[3])
-        gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
-        
-        cols = int( round( (xmax-xmin)/cs ) )
-        rows = int( round( (ymax-ymin)/cs ) )
+        gt, cols, rows = ExtentCSParameter.getParams(self, parameters, context)
         
         # Do the calc
-        result = nlmpy.mpd(rows, cols,scor,mask)
+        result = nlmpy.mpd(rows, cols, scor, mask)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
         
-class RandomRectangularCluster(QgsProcessingAlgorithm):
+class RandomRectangularCluster(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):
     # Define constants
     MINL = "MINL"  
     MAXL = "MAXL"
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    EXTENT = "EXTENT"
-    CS = "CS"
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
@@ -427,140 +375,81 @@ class RandomRectangularCluster(QgsProcessingAlgorithm):
         return "Random rectangular cluster"
     def name(self):
         return "nlmpy:randomreccluster"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
-        self.addParameter(ParameterNumber(self.MINL, "Minimum length of each cluster)", 0, None, 1))
-        self.addParameter(ParameterNumber(self.MAXL, "Maximum length of each cluster", 0, None, 10))        
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        ExtentCSParameter.initParams(self)
+        self.addParameter(ParameterNumber(self.MINL, "Minimum length of each cluster)", minValue=0,  defaultValue=1))
+        self.addParameter(ParameterNumber(self.MAXL, "Maximum length of each cluster", minValue=0,  defaultValue=10))        
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        mask = self.getParameterValue(self.MASK)
-        minl = self.getParameterValue(self.MINL)
-        maxl = self.getParameterValue(self.MAXL)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        ext = self.getParameterValue(self.EXTENT)
+        mask = MaskParameter.getParams(self, parameters, context)
+        minl = self.parameterAsInt(parameters, self.MINL, context)
+        maxl = self.parameterAsInt(parameters, self.MAXL, context)
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
         
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
-        try:
-            ext = string.split(ext,",") # split 
-        except AttributeError: # Extent was empty, raise error
-            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
+             
         # Create output layer
-        xmin = float(ext[0])
-        xmax = float(ext[1])
-        ymin = float(ext[2])
-        ymax = float(ext[3])
-        gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
-        
-        cols = int( round( (xmax-xmin)/cs ) )
-        rows = int( round( (ymax-ymin)/cs ) )
+        gt, cols, rows = ExtentCSParameter.getParams(self, parameters, context)
         
         # Do the calc
         result = nlmpy.randomRectangularCluster(rows, cols,minl,maxl,mask)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
 
-class RandomElementNN(QgsProcessingAlgorithm):
+class RandomElementNN(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):
     # Define constants
     NELE = "NELE"    
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    EXTENT = "EXTENT"
-    CS = "CS"
-    
-    def createInstance(self):
-        return RandomElementNN()
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
-
 
     def displayName(self):
         return "Random element Nearest-neighbour"
     def name(self):
         return "nlmpy:randomelenn"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent", optional=True))
-        self.addParameter(ParameterNumber(self.NELE, "Number of elements randomly selected", 0, None, 3))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", optional=True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        ExtentCSParameter.initParams(self)
+        self.addParameter(ParameterNumber(self.NELE, "Number of elements randomly selected", minValue=0, defaultValue=3, type=ParameterNumber.Integer))
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        mask = self.getParameterValue(self.MASK)
-        nele = self.getParameterValue(self.NELE)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        ext = self.getParameterValue(self.EXTENT)
+        mask = MaskParameter.getParams(self, parameters, context)
+        nele = self.parameterAsInt(parameters, self.NELE, context)
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
         
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
-        try:
-            ext = string.split(ext,",") # split 
-        except AttributeError: # Extent was empty, raise error
-            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
-        xmin = float(ext[0])
-        xmax = float(ext[1])
-        ymin = float(ext[2])
-        ymax = float(ext[3])
-        gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
-        
-        cols = int( round( (xmax-xmin)/cs ) )
-        rows = int( round( (ymax-ymin)/cs ) )
+        gt, cols, rows = ExtentCSParameter.getParams(self, parameters, context)
         
         # Do the calc
         result = nlmpy.randomElementNN(rows, cols,nele,mask)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
-        
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+        return {self.OUTPUT_RASTER: output}
 
-class RandomClusterNN(QgsProcessingAlgorithm):
+
+class RandomClusterNN(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):
     # Define constants
     NCLU = "NCLU"
     NEIG = "NEIG"
     w = ['4-neighbourhood','8-neighbourhood','diagonal']    
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    EXTENT = "EXTENT"
-    CS = "CS"
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
@@ -570,62 +459,37 @@ class RandomClusterNN(QgsProcessingAlgorithm):
         return "Random cluster Nearest-neighbour"
     def name(self):
         return "nlmpy:randomclunn"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
-        self.addParameter(ParameterNumber(self.NCLU, "Proportions of elements to form cluster ( 0 - 1 )",False, True,0.5))
+        ExtentCSParameter.initParams(self)
+        self.addParameter(ParameterNumber(self.NCLU, "Proportions of elements to form cluster ( 0 - 1 )", minValue=0, maxValue=1, defaultValue=0.5, type=ParameterNumber.Double))
         self.addParameter(ParameterSelection(self.NEIG, "Neighbourhood structure", self.w, 0))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        mask = self.getParameterValue(self.MASK)
-        nclu = self.getParameterValue(self.NCLU)
-        what = self.w[self.getParameterValue(self.NEIG)]        
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        ext = self.getParameterValue(self.EXTENT)
+        mask = MaskParameter.getParams(self, parameters, context)
+        nclu = self.parameterAsDouble(parameters, self.NCLU, context)
+        what = self.w[self.parameterAsEnum(parameters, self.NEIG, context)]        
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
         
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
-        try:
-            ext = string.split(ext,",") # split 
-        except AttributeError: # Extent was empty, raise error
-            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
+        
         # Create output layer
-        xmin = float(ext[0])
-        xmax = float(ext[1])
-        ymin = float(ext[2])
-        ymax = float(ext[3])
-        gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
-        
-        cols = int( round( (xmax-xmin)/cs ) )
-        rows = int( round( (ymax-ymin)/cs ) )
+        gt, cols, rows = ExtentCSParameter.getParams(self, parameters, context)
         
         # Do the calc
         result = nlmpy.randomClusterNN(rows, cols,nclu,what,mask)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None      
         
-class LinearRescale01(QgsProcessingAlgorithm):
+class LinearRescale01(NeutralLandscapeAlgorithm, SourceParameter):
     # Define constants
-    SOURCE = "SOURCE"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
     CS = "CS"
@@ -638,50 +502,32 @@ class LinearRescale01(QgsProcessingAlgorithm):
         return "Linear rescale"
     def name(self):
         return "nlmpy:linearrescale"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterRaster(self.SOURCE, "Source raster layer", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        SourceParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", minValue=10,  defaultValue=1))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        inputSource = self.getParameterValue(self.SOURCE)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
+        inputSource = self.parameterAsRasterLayer(parameters, self.SOURCE, context).source()
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
+        cs = self.parameterAsInt(parameters, self.CS, context)
         
         # Source 
-        src = gdal.Open(str(inputSource), gdalconst.GA_ReadOnly)
-        src_geotrans = src.GetGeoTransform()
-        cols = src.RasterXSize
-        rows = src.RasterYSize
-        nodata = src.GetRasterBand(1).GetNoDataValue() # keep the nodata value
-        array = src.GetRasterBand(1).ReadAsArray()  
-        
+        cols, rows, nodata, src_geotrans, array = SourceParameter.getParams(self, parameters, context)        
         # Do the calc
         result = nlmpy.linearRescale01(array)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,src_geotrans)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None      
 
-class RandomUniformed01(QgsProcessingAlgorithm):
+class RandomUniformed01(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):
     # Define constants
-    MASK = "MASK"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
-    EXTENT = "EXTENT"
-    CS = "CS"
     
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
@@ -691,60 +537,34 @@ class RandomUniformed01(QgsProcessingAlgorithm):
         return "Random uniform"
     def name(self):
         return "nlmpy:randomuniform"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterExtent(self.EXTENT, "Output extent",True))
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        ExtentCSParameter.initParams(self)
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        mask = self.getParameterValue(self.MASK)        
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
-        ext = self.getParameterValue(self.EXTENT)
+        mask = MaskParameter.getParams(self, parameters, context)
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
         
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()           
-        try:
-            ext = string.split(ext,",") # split 
-        except AttributeError: # Extent was empty, raise error
-            raise QgsProcessingException("Please set an extent for the generated raster")  # Processing            
         # Create output layer
-        xmin = float(ext[0])
-        xmax = float(ext[1])
-        ymin = float(ext[2])
-        ymax = float(ext[3])
-        gt = (xmin,cs,0,ymax,0,-cs)
         nodata = -9999
-        
-        cols = int( round( (xmax-xmin)/cs ) )
-        rows = int( round( (ymax-ymin)/cs ) )
+        gt, cols, rows = ExtentCSParameter.getParams(self, parameters, context)
         
         # Do the calc
         result = nlmpy.randomUniform01(rows, cols, mask=mask)
 
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,gt)
-        
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None              
+        return {self.OUTPUT_RASTER: output}
         
         
-class MeanOfCluster(QgsProcessingAlgorithm):
+        
+class MeanOfCluster(NeutralLandscapeAlgorithm, SourceParameter):
     # Define constants
     CLUSTERARRAY = "CLUSTERARRAY"
-    SOURCE = "SOURCE"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
     CS = "CS"
@@ -757,101 +577,69 @@ class MeanOfCluster(QgsProcessingAlgorithm):
         return "Mean within cluster"
     def name(self):
         return "nlmpy:meanofcluster"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterRaster(self.CLUSTERARRAY, "Clustered raster layer", True))
-        self.addParameter(ParameterRaster(self.SOURCE, "Data raster layer", True))
+        self.addParameter(ParameterRaster(self.CLUSTERARRAY, "Clustered raster layer", optional=False))
+        SourceParameter.initParams(self)
         
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
+        NeutralLandscapeAlgorithm.initParams(self)
+        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", minValue=10,  defaultValue=1))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        clusterSource = self.getParameterValue(self.CLUSTERARRAY)        
-        inputSource = self.getParameterValue(self.SOURCE)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
+        clusterSource = self.parameterAsRasterLayer(parameters, self.CLUSTERARRAY, context)        .source()
+        inputSource = self.parameterAsRasterLayer(parameters, self.SOURCE, context).source()
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
+        cs = self.parameterAsInt(parameters, self.CS, context)
         
         # Cluster array
         src = gdal.Open(str(clusterSource), gdalconst.GA_ReadOnly)
         cl_array = src.GetRasterBand(1).ReadAsArray()  
         
         # Source 
-        src = gdal.Open(str(inputSource), gdalconst.GA_ReadOnly)
-        src_geotrans = src.GetGeoTransform()
-        cols = src.RasterXSize
-        rows = src.RasterYSize
-        nodata = src.GetRasterBand(1).GetNoDataValue() # keep the nodata value
-        array = src.GetRasterBand(1).ReadAsArray()  
-                
+        cols, rows, nodata, src_geotrans, array = SourceParameter.getParams(self, parameters, context)                
         # Do the calc
         result = nlmpy.meanOfCluster(cl_array,array)
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,src_geotrans)
+        return {self.OUTPUT_RASTER: output}
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None            
 
-class ClassifyArray(QgsProcessingAlgorithm):
+class ClassifyArray(NeutralLandscapeAlgorithm, MaskParameter, SourceParameter):
     # Define constants
-    SOURCE = "SOURCE"
     CLASSES = "CLASSES"
     # Output
     OUTPUT_RASTER = "OUTPUT_RASTER"
     CS = "CS"
-    MASK = "MASK"
 
     def icon(self):
         return QIcon(os.path.dirname(__file__) + os.sep+"icons"+os.sep+"img_nlmpy.png")
 
 
     def displayName(self):
-        return "Classfiy proportional Raster"
+        return "Classify proportional Raster"
     def name(self):
         return "nlmpy:classifyraster"
-    def group(self):
-        return "Neutral landscape model (NLMpy)"
-    def groupId(self):
-        return "Neutral landscape model (NLMpy)"
 
     def initAlgorithm(self, config):
-        self.addParameter(ParameterRaster(self.SOURCE, "Cluster raster layer", True))
-        self.addParameter(ParameterNumber(self.CLASSES, "Classify proportional raster to number of classes",2, None,2))
+        self.addParameter(ParameterRaster(self.SOURCE, "Cluster raster layer", optional=False))
+        self.addParameter(ParameterNumber(self.CLASSES, "Classify proportional raster to number of classes", minValue=2,  defaultValue=2))
+        MaskParameter.initParams(self)
+        NeutralLandscapeAlgorithm.initParams(self)
+        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", minValue=10,  defaultValue=1))
 
-    def initAlgorithm(self, config):
-        self.addParameter(ParameterRaster(self.MASK, "Mask (optional)", True))        
-        self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
-        self.addParameter(ParameterNumber(self.CS, "Output Cellsize", 10, None, 1))
-
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
-        ncla = self.getParameterValue(self.CLASSES)        
-        inputSource = self.getParameterValue(self.SOURCE)
-        output = self.getOutputValue(self.OUTPUT_RASTER)
-        cs = self.getParameterValue(self.CS)
+        ncla = self.parameterAsInt(parameters, self.CLASSES, context)        
+        inputSource = self.parameterAsRasterLayer(parameters, self.SOURCE, context).source()
+        output = NeutralLandscapeAlgorithm.getParams(self, parameters, context)
+        cs = self.parameterAsInt(parameters, self.CS, context)
         
-        mask = self.getParameterValue(self.MASK)        
-        if mask != None:
-            src = gdal.Open(str(mask), gdalconst.GA_ReadOnly)
-            mask = src.GetRasterBand(1).ReadAsArray()      
+        mask = MaskParameter.getParams(self, parameters, context)
         
         # Source 
-        src = gdal.Open(str(inputSource), gdalconst.GA_ReadOnly)
-        src_geotrans = src.GetGeoTransform()
-        cols = src.RasterXSize
-        rows = src.RasterYSize
-        nodata = src.GetRasterBand(1).GetNoDataValue() # keep the nodata value
-        array = src.GetRasterBand(1).ReadAsArray()  
-        
+        cols, rows, nodata, src_geotrans, array = SourceParameter.getParams(self, parameters, context)        
         # Classes
         cl = list(range(1,ncla+1))
                 
@@ -860,6 +648,7 @@ class ClassifyArray(QgsProcessingAlgorithm):
                     
         # Create output raster
         func.createRaster(output,cols,rows,result,nodata,src_geotrans)
+        return {self.OUTPUT_RASTER: output}
         
     def help(self):
         helppath = os.path.join(os.path.dirname(__file__), "sextante_info", self.cmdName + ".html")

@@ -33,8 +33,9 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterRasterLayer as ParameterRaster,
                        QgsProcessingParameterVectorLayer as ParameterVector,
                        QgsProcessingParameterMatrix as ParameterTable,
-                       QgsProcessingOutputFile as OutputTable,
+                       QgsProcessingOutputVectorLayer as OutputTable,
                        QgsProcessingParameterRasterDestination,
+                       QgsProcessingParameterFeatureSink,
                        QgsProcessingParameterField as ParameterTableField)
 
 
@@ -87,6 +88,10 @@ except ImportError:
 #if hasattr(ogr,"RegisterAll"):
 #    ogr.RegisterAll() # register all ogr drivers
 
+TYPES_PYTHON_QVARIANT = { 
+    int: QVariant.Int,
+    float: QVariant.Double
+}
 
 # Generic class containing commom methods for all algorithms
 class GenericProcessing(QgsProcessingAlgorithm):
@@ -242,7 +247,6 @@ class CreateRandomLandscape(LandscapePreparationAlgorithm):
                 
         # Create output raster
         func.createRaster(output,cols,rows,array,nodata,gt)
-
         return {self.OUTPUT_FILE: output}
 
     
@@ -433,8 +437,8 @@ class LandscapeStatistics(LandscapeStatisticsAlgorithm):
         with some other properties'''
         self.addParameter(ParameterRaster(self.LAND_GRID, "Landscape Grid", optional=False))
         self.addParameter(ParameterSelection(self.METRIC, "What to calculate", self.METRICsel, 0))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Output file"))  
-        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file"))
+        self.addParameter(QgsProcessingParameterFeatureSink(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))  
+        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))
 
     def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
@@ -443,7 +447,6 @@ class LandscapeStatistics(LandscapeStatisticsAlgorithm):
         rasterlayer = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context)
         inputFilename = rasterlayer.source()
         what = self.m[self.parameterAsEnum(parameters, self.METRIC, context)]
-        output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
 
         # Processing
         nodata = lcs.f_returnNoDataValue(inputFilename) # Get Nodata-value
@@ -466,9 +469,15 @@ class LandscapeStatistics(LandscapeStatisticsAlgorithm):
         cl_analys = lcs.LandCoverAnalysis(array,pixelSize,classes)
         res = []
         name, result = cl_analys.execLandMetric(what,nodata)                                    
-        res.append([name, result])
+        res.append([name, float(result.item())])
         # Create the output
-        func.saveToCSV(res,["Metric","Value"],output)
+        output = func.getSinkWithValues(self, 
+                                        parameters, 
+                                        self.OUTPUT_FILE, 
+                                        context, 
+                                        values = res, 
+                                        titles = ["Metric","Value"],
+                                        types = [QVariant.String, QVariant.Double])
         return {self.OUTPUT_FILE: output}
 
 
@@ -494,8 +503,8 @@ class CountRasterCells(LandscapeStatisticsAlgorithm):
         with some other properties'''
         self.addParameter(ParameterRaster(self.RASTER, "Raster layer", optional=False))
         self.addParameter(ParameterNumber(self.BAND, "Which Raster band (1 default)", type=ParameterNumber.Integer, defaultValue=1))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Result output"))  
-        self.addOutput(OutputTable(self.OUTPUT_FILE, "Result output"))
+        self.addParameter(QgsProcessingParameterFeatureSink(self.OUTPUT_FILE, "Result output", type=QgsProcessing.TypeVector))  
+        self.addOutput(OutputTable(self.OUTPUT_FILE, "Result output", type=QgsProcessing.TypeVector))
 
     def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
@@ -503,7 +512,6 @@ class CountRasterCells(LandscapeStatisticsAlgorithm):
         # Retrieve the values of the parameters entered by the user
         inputFilename = self.parameterAsRasterLayer(parameters, self.RASTER, context).source()
         band = self.parameterAsInt(parameters, self.BAND, context)
-        output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
 
         # Use GDAL to open the raster
         raster = gdal.Open(str(inputFilename))
@@ -511,7 +519,7 @@ class CountRasterCells(LandscapeStatisticsAlgorithm):
         try:
             array =  band.ReadAsArray() 
         except ValueError:
-            raise QgsProcessingException("Input Raster to big. Try to slize it up.")
+            raise QgsProcessingException("Input Raster to big. Try to slice it up.")
         nodata = band.GetNoDataValue() # Get Nodata-value
         raster = None # close gdal
 
@@ -532,10 +540,13 @@ class CountRasterCells(LandscapeStatisticsAlgorithm):
         for i in classes:
             arr = numpy.copy(array)
             arr[array!=i] = 0
-            res.append((i,func.count_nonzero(arr)))
+            res.append([i.item(), int(func.count_nonzero(arr))])
         
         # Create the output layer 
-        func.saveToCSV(res,("Value","Number"),output)
+        output = func.getSinkWithValues(self, parameters, self.OUTPUT_FILE, context, 
+                                        values = res, 
+                                        titles = ("Value","Number"),
+                                        types = [TYPES_PYTHON_QVARIANT[res[0][0].__class__], QVariant.Int])
         return {self.OUTPUT_FILE: output}
         
 
@@ -563,8 +574,8 @@ class PatchStatistics(LandscapeStatisticsAlgorithm):
         self.addParameter(ParameterNumber(self.LC_CLASS, "Choose Landscape Class", type=ParameterNumber.Integer, defaultValue=1))
 
         self.addParameter(ParameterSelection(self.METRIC, "What to calculate", self.METRICsel, 0))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Output file"))  
-        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file"))
+        self.addParameter(QgsProcessingParameterFeatureSink(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))  
+        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))
 
     def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
@@ -574,7 +585,6 @@ class PatchStatistics(LandscapeStatisticsAlgorithm):
         inputFilename = rasterlayer.source()
         cl = self.parameterAsInt(parameters, self.LC_CLASS, context)
         what = self.METRICsel[self.parameterAsEnum(parameters, self.METRIC, context)]
-        output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
 
         # Processing
         nodata = lcs.f_returnNoDataValue(inputFilename) # Get Nodata-value
@@ -606,9 +616,12 @@ class PatchStatistics(LandscapeStatisticsAlgorithm):
         cl_analys.f_ccl(cl_array) # CC-labeling
         res = []
         name, result = cl_analys.execSingleMetric(what,cl)                                    
-        res.append([name, result])
+        res.append([name, float(result)])
         # Create the output
-        func.saveToCSV(res,["Metric","Value"],output)
+        output = func.getSinkWithValues(self, parameters, self.OUTPUT_FILE, context, 
+                                        values = res, 
+                                        titles = ["Metric","Value"],
+                                        types = [QVariant.String, QVariant.Double])
         return {self.OUTPUT_FILE: output}
 
             
@@ -640,9 +653,9 @@ class ZonalStatistics(LandscapeStatisticsAlgorithm):
         self.addParameter(ParameterSelection(self.WHAT, "What to calculate", self.m, 0))
         
         self.addParameter(ParameterBoolean(self.CREATE_R, "Should a raster result be created?", False))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Output file"))  
+        self.addParameter(QgsProcessingParameterFeatureSink(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))  
         self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT_RASTER, "Raster output"))  
-        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file"))
+        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))
         # Optionally 
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Raster output"))
 
@@ -656,7 +669,6 @@ class ZonalStatistics(LandscapeStatisticsAlgorithm):
         zoneFilename = r2.source()
         what = self.m[self.parameterAsEnum(parameters, self.WHAT, context)]
         crR = self.parameterAsBool(parameters, self.CREATE_R, context) # should raster output be generated
-        outputT = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
         outputR = self.parameterAsOutputLayer(parameters, self.OUTPUT_RASTER, context)
 
         # Check for equal crs
@@ -721,10 +733,13 @@ class ZonalStatistics(LandscapeStatisticsAlgorithm):
                 out.append( len(numpy.unique(cl_array)-1) )
         
         for i in range(len(z_classes)):
-            res.append([z_classes[i],what,out[i]])
+            res.append([z_classes[i].item(),what,float(out[i])])
 
         # Create the output
-        func.saveToCSV(res,["Zone","Mode","Value"],outputT)
+        outputT = func.getSinkWithValues(self, parameters, self.OUTPUT_FILE, context, 
+                                         values = res, 
+                                         titles = ["Zone","Mode","Value"],
+                                         types = [TYPES_PYTHON_QVARIANT[res[0][0].__class__], QVariant.String, QVariant.Double])
         
         if crR: # Should raster be created as well            
             resr = z_array_orig
@@ -734,8 +749,11 @@ class ZonalStatistics(LandscapeStatisticsAlgorithm):
             
             # Export the raster
             func.exportRaster(resr,zoneFilename,outputR)
+            return {self.OUTPUT_RASTER: outputR, self.OUTPUT_FILE: outputT}
 
-        return {self.OUTPUT_RASTER: outputR, self.OUTPUT_FILE: outputT}
+        return {self.OUTPUT_FILE: outputT}
+
+        
         
 
 ## Polygon Batch Overlay
@@ -776,8 +794,8 @@ class RasterPolyOver(LandscapeVectorOverlayAlgorithm):
         self.addParameter(ParameterSelection(self.LMETRIC, "Metrics (landscape):", self.LMETRICsel, 0))
                 
         self.addParameter(ParameterBoolean(self.ADDTABLE, "Also add to attribute table (yes)", False))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Output file"))  
-        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file"))
+        self.addParameter(QgsProcessingParameterFeatureSink(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))  
+        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))
 
     def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
@@ -793,7 +811,7 @@ class RasterPolyOver(LandscapeVectorOverlayAlgorithm):
         whatL = self.m[self.parameterAsEnum(parameters, self.LMETRIC, context)]
         
         add2table = self.parameterAsBool(parameters, self.ADDTABLE, context)
-        output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
+        output = self.parameterAsVectorLayer(parameters, self.OUTPUT_FILE, context)
         
         # Make sure they have the same projection
         if rasterlayer.crs() != vectorlayer.crs():
@@ -872,8 +890,8 @@ class GetRasterValuesPoint(LandscapeVectorOverlayAlgorithm):
         self.addParameter(ParameterRaster(self.RASTER, "Raster layer", optional=False))
         self.addParameter(ParameterNumber(self.BAND, "Which Raster band (1 default)", type=ParameterNumber.Integer, defaultValue=1))    
         self.addParameter(ParameterVector(self.POINT, "Point layer", [QgsProcessing.TypeVectorPoint], optional=False))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Result output"))  
-        self.addOutput(OutputTable(self.OUTPUT_FILE, "Result output"))
+        self.addParameter(QgsProcessingParameterFeatureSink(self.OUTPUT_FILE, "Result output", type=QgsProcessing.TypeVector))  
+        self.addOutput(OutputTable(self.OUTPUT_FILE, "Result output", type=QgsProcessing.TypeVector))
 
     def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
@@ -884,7 +902,6 @@ class GetRasterValuesPoint(LandscapeVectorOverlayAlgorithm):
         band = self.parameterAsInt(parameters, self.BAND, context)
         v = self.parameterAsVectorLayer(parameters, self.POINT, context)
         point = v.source()
-        output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
         
         
         cr1 = v.crs()
@@ -916,10 +933,16 @@ class GetRasterValuesPoint(LandscapeVectorOverlayAlgorithm):
             if x < 0 or y < 0 or x >= array.shape[1] or y >= array.shape[0]:
                 raise QgsProcessingException("Point could not be queried or outside raster")
 
-            res.append((feat.GetFID(),array[y, x]))
+            res.append([feat.GetFID(), array.item(y, x)])
         
         # Create the output layer 
-        func.saveToCSV(res,("Point_ID","Value"),output)
+        output = func.getSinkWithValues(self, 
+                                        parameters = parameters, 
+                                        name = self.OUTPUT_FILE,
+                                        context = context, 
+                                        values = res, 
+                                        titles = ("Point_ID","Value"),
+                                        types = (QVariant.Int, TYPES_PYTHON_QVARIANT[res[0][1].__class__]))
         return {self.OUTPUT_FILE: output}
     
     def mapToPixel(self,geoMatrix, x, y):
@@ -976,8 +999,8 @@ class VectorPolyOver(LandscapeVectorOverlayAlgorithm):
         self.addParameter(ParameterSelection(self.CMETRIC, "Metrics (single class):", self.CMETRICsel, 0))
         self.addParameter(ParameterSelection(self.LMETRIC, "Metrics (landscape):", self.LMETRICsel, 0))
         self.addParameter(ParameterBoolean(self.ADDTABLE, "Also add to attribute table (yes)", default=False))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE, "Output file"))  
-        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file"))
+        self.addParameter(QgsProcessingParameterFeatureSink(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))  
+        self.addOutput(OutputTable(self.OUTPUT_FILE, "Output file", type=QgsProcessing.TypeVector))
 
     def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
@@ -992,7 +1015,7 @@ class VectorPolyOver(LandscapeVectorOverlayAlgorithm):
         whatL = self.m[self.parameterAsEnum(parameters, self.LMETRIC, context)]
         
         add2table = self.parameterAsBool(parameters, self.ADDTABLE, context)
-        output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
+        output = self.parameterAsVectorLayer(parameters, self.OUTPUT_FILE, context)
             
         landlayer = Processing.getObject(inputFilename)
         #vectorlayer = Processing.getObject(vectorFilename)
@@ -1132,7 +1155,7 @@ class NeighbourhoodAnalysis(LandscapeModificationAlgorithm):
         what = self.METHODsel[self.parameterAsEnum(parameters, self.METHOD, context)]
         mode = self.m[self.parameterAsEnum(parameters, self.MODE, context)]
         size = self.parameterAsInt(parameters, self.SIZE, context)
-        output = self.parameterAsFileOutput(parameters, self.OUTPUT_FILE, context)
+        output = self.parameterAsRasterLayer(parameters, self.OUTPUT_FILE, context)
 
         # Processing
         # Use GDAL to open the raster
