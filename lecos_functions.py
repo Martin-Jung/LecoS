@@ -271,6 +271,7 @@ def getLayerByName( layerName ):
 # Input = [[[ID,METRIC,VAL],[ID,METRIC,VAL]],[[ID,METRIC,VAL2],[ID,METRIC,VAL2]]]
 def addAttributesToLayer(layer,results):
   # Open a Shapefile, and get field names
+  layer.startEditing()
   provider = layer.dataProvider()
   caps = provider.capabilities()
   for metric in range(0,len(results)):
@@ -290,18 +291,19 @@ def addAttributesToLayer(layer,results):
     try:
       if ind == -1: # Already existing?
         if caps & QgsVectorDataProvider.AddAttributes:
-          res = provider.addAttributes( [ QgsField(name,QVariant.Double) ] )
+          newField = QgsField(name, QVariant.Double, len=20, prec=6)
+          res = provider.addAttributes( [ newField ] )
           if res == False:
             return res
     except:
       return False
     ind = provider.fieldNameIndex(name) # Check again if attribute is existing
     if ind != -1:
-      # Write values to newly created coloumn or to existing one
+      # Write values to newly created column or to existing one
       for ar in results[metric]:
         if caps & QgsVectorDataProvider.ChangeAttributeValues:
           try:
-            attrs = { ind : (round(ar[2],6)) }
+            attrs = { ind : (round(float(ar[2]),6)) }
           except:
             attrs = { ind : (ar[2]) }
           provider.changeAttributeValues({ ar[0] : attrs })
