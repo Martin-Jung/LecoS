@@ -278,7 +278,7 @@ def addAttributesToLayer(layer,results):
     # Name Formating
     cmd = str( results[metric][0][1] )
     cmd = string.capwords(cmd)
-    cmd = string.split(cmd)
+    cmd = str(cmd).split()
     name = ""
     for i in range(0,len(cmd)):
       if len(cmd) == 1:
