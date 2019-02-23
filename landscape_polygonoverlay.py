@@ -157,7 +157,7 @@ class BatchConverter(object):
             #ints = self.BBoxIntersect(self.extent,f_coord)
             #if ints: # Bounding Box intersecting ?
             array = self.getClipArray(poly)
-            if array.__class__ != None.__class__: # Multi polygon or no raster values below ?
+            if array is not None: # Multi polygon or no raster values below ?
                 classes = sorted(numpy.unique(array)) # get classes
                 for val in (self.nodata,0):# Remove raster nodata value and zeros from class list
                     try:
@@ -165,7 +165,7 @@ class BatchConverter(object):
                     except ValueError:
                         pass
                 # Classified Methods -> Use landscape_statistics module
-                if cl.__class__ != None.__class__:
+                if cl is not None:
                     cl_analys = lcs.LandCoverAnalysis(array,cellsize,classes)
                     cl_array = numpy.copy(array) # new working array
                     cl_array[cl_array!=cl] = 0
@@ -260,7 +260,7 @@ class BatchConverter(object):
                 a = numpy.fromstring(i.tobytes(),'b')   
             except SystemError:
                 a = None
-        if a.__class__ != None.__class__:
+        if a is not None:
             a.shape=i.im.size[1], i.im.size[0]
         return a
 
@@ -362,7 +362,7 @@ class BatchConverter(object):
                 mask = self.imageToArray(rasterPoly)
 
             # Do the actual clipping
-            if mask.__class__ != None.__class__:
+            if mask is not None:
                 try:
                     clip2 = numpy.choose(mask,(clip, 0),mode='raise').astype(self.srcArray.dtype)
                 except Exception:
