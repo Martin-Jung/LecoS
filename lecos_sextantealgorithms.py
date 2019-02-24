@@ -851,19 +851,20 @@ class RasterPolyOver(LandscapeVectorOverlayAlgorithm):
         
         # Create the output layer 
         title = ["PolygonFeatureID"]
+        fields = QgsFields()
+        fields.append(QgsField(title[0], QVariant.Int))
         for x in results:
-            title.append( str(x[0][1]) ) 
-        f = open(output, "wb" )
-        writer = csv.writer(f,delimiter=';',quotechar="'",quoting=csv.QUOTE_ALL)
-        writer.writerow(title)
+            fields.append(QgsField(str(x[0][1]), QVariant.Double, "", 20, 8))
+        sink, output = self.parameterAsSink(parameters, self.OUTPUT_FILE, context, fields, QgsWkbTypes.NoGeometry, QgsCoordinateReferenceSystem())
         # Get number of polygon features
         feat = list(range(0,len(results[0])))
         for feature in feat: # Write feature to new line
             r = [feature]
+            f = QgsFeature()
             for item in results:
-                r.append(item[feature][2])
-            writer.writerow(r)
-        f.close()        
+                r.append(float(item[feature][2]))
+            f.setAttributes(r)
+            sink.addFeature(f, QgsFeatureSink.FastInsert)        
         return {self.OUTPUT_FILE: output}
 
 
@@ -919,6 +920,8 @@ class GetRasterValuesPoint(LandscapeVectorOverlayAlgorithm):
         
         # Vector loading
         ds = ogr.Open(point)
+        if (not ds):
+            raise QgsProcessingException("Make sure Point layer is valid")
         lyr = ds.GetLayer()
         res = []
         for feat in lyr:
@@ -1015,7 +1018,6 @@ class VectorPolyOver(LandscapeVectorOverlayAlgorithm):
         whatL = self.m[self.parameterAsEnum(parameters, self.LMETRIC, context)]
         
         add2table = self.parameterAsBool(parameters, self.ADDTABLE, context)
-        output = self.parameterAsVectorLayer(parameters, self.OUTPUT_FILE, context)
             
         landlayer = Processing.getObject(inputFilename)
         #vectorlayer = Processing.getObject(vectorFilename)
@@ -1037,19 +1039,20 @@ class VectorPolyOver(LandscapeVectorOverlayAlgorithm):
         
         # Create the output layer 
         title = ["PolygonFeatureID"]
+        fields = QgsFields()
+        fields.append(QgsField(title[0], QVariant.Int))
         for x in results:
-            title.append( str(x[0][1]) ) 
-        f = open(output, "wb" )
-        writer = csv.writer(f,delimiter=';',quotechar="'",quoting=csv.QUOTE_ALL)
-        writer.writerow(title)
+            fields.append(QgsField(str(x[0][1]), QVariant.Double, "", 20, 8))
+        sink, output = self.parameterAsSink(parameters, self.OUTPUT_FILE, context, fields, QgsWkbTypes.NoGeometry, QgsCoordinateReferenceSystem())
         # Get number of polygon features
         feat = list(range(0,len(results[0])))
         for feature in feat: # Write feature to new line
             r = [feature]
+            f = QgsFeature()
             for item in results:
-                r.append(item[feature][2])
-            writer.writerow(r)
-        f.close()        
+                r.append(float(item[feature][2]))
+            f.setAttributes(r)
+            sink.addFeature(f, QgsFeatureSink.FastInsert)        
         return {self.OUTPUT_FILE: output}
 
 

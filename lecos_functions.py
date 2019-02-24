@@ -427,15 +427,18 @@ def createRaster(output,cols,rows,array,nodata,gt,d='GTiff'):
     # flush data to disk, set the NoData value
     band.FlushCache()
     try:
-      band.SetNoDataValue(nodata)
+        band.SetNoDataValue(nodata)
     except TypeError:
-      band.SetNoDataValue(-9999) # set -9999 in the meantime
+        band.SetNoDataValue(-9999) # set -9999 in the meantime
 
     # georeference the image and set the projection
     tDs.SetGeoTransform(gt)
 
-    # Then set projection of current active layer
-    epsg = QgsProject.instance().defaultCrsForNewLayers().authid() #mapCanvas().mapRenderer().destinationCrs().srsid()
+    # Set projection of the current active layer or the project
+    if qgis.utils.iface.activeLayer():
+        epsg = qgis.utils.iface.activeLayer().crs().authid()
+    else:
+        epsg = QgsProject.instance().defaultCrsForNewLayers().authid() #mapCanvas().mapRenderer().destinationCrs().srsid()
     coord_system = osr.SpatialReference()    
     coord_system.ImportFromEPSG( int(re.findall('\d+', epsg)[0]) )
     tDs.SetProjection(coord_system.ExportToWkt())
