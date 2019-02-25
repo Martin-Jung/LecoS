@@ -15,11 +15,8 @@ about=LecoS is based on metrics taken from FRAGSTATS: http://www.umass.edu/lande
 ; Start of changelog file
 changelog =
 	Version 3.0.0
-	- Code update and refactor for QGIS 3
-
-    Version 2.0.8
-    - Update branch to QGIS 3
-
+	- Code update and refactor for QGIS 3. All credits go to @caiohamamura
+	
 	Version 2.0.7
 	- Fixed a new bug that prevented landscape statistics from working
 
