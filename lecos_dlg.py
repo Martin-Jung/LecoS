@@ -163,7 +163,7 @@ class LecosDialog(QDialog, Ui_Lecos):
                     func.DisplayError(self.iface,"LecoS: Warning" ,"The cells in the layer %s are not square. Calculated values will be incorrect" % (rasterName),"WARNING")
 
             self.sp_cellsize.setEnabled( True )
-            self.sp_cellsize.setValue( pixelSize )
+            self.sp_cellsize.setValue( round( pixelSize ) )
 
 
     # Save radio button
