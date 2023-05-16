@@ -65,7 +65,7 @@ if hasattr(ogr,"RegisterAll"):
 # Save results to CSV
 def saveToCSV( results, titles, filePath ):
   f = open(filePath, "w", newline='')
-  writer = csv.writer(f,delimiter=';',quotechar="",quoting=csv.QUOTE_NONE)
+  writer = csv.writer(f,delimiter=';',quotechar='"',quoting=csv.QUOTE_NONE)
   writer.writerow(titles)
   for item in results:
     writer.writerow(item)
