@@ -10,7 +10,7 @@ name=LecoS - Landscape Ecology Statistics
 qgisMinimumVersion=3.0
 description=Contains several analytical functions for land cover analysis
 version=3.0.0
-about=LecoS is based on metrics taken from FRAGSTATS: http://www.umass.edu/landeco/research/fragstats/fragstats.html Functions include the calculation of metrics on rasters and vector layers. A polygon overlay tool is also available to ease up computation. Additionally LecoS provides some functionalities to manipulate classified raster images.
+about=LecoS is based on metrics taken from FRAGSTATS: https://www.fragstats.org/ Functions include the calculation of metrics on rasters and vector layers. A polygon overlay tool is also available to ease up computation. Additionally LecoS provides some functionalities to manipulate classified raster images.
 
 ; Start of changelog file
 changelog =
