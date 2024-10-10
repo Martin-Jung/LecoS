@@ -144,5 +144,5 @@ class LandscapeMod(object):
     # Remove smaller pixels in class raster
     def cleanRaster(self,n):
         s = ndimage.generate_binary_structure(2,1) # Taxicab struct
-        ras = ndimage.binary_opening(self.cl_array,s,iterations=n).astype(numpy.int)
+        ras = ndimage.binary_opening(self.cl_array,s,iterations=n).astype(numpy.int64)
         return(ras)
