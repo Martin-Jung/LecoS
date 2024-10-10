@@ -630,7 +630,7 @@ class LandCoverAnalysis(object):
 #         a = BatchConverter(rasterPath,landPath)
 #         print(a.go("LC_Sum",None))
 # 
-#         a = numpy.zeros((6,6), dtype=numpy.int) 
+#         a = numpy.zeros((6,6), dtype=int)
 #         a[1:5, 1:5] = 1;a[3,3] = 0 ; a[2,2] = 2
 # 
 #         s = ndimage.generate_binary_structure(2,2) # Binary structure
