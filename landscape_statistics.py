@@ -485,36 +485,36 @@ class LandCoverAnalysis(object):
     
     # Get average distance between landscape patches
     def f_returnAvgPatchDist(self,labeled_array,numpatches,metric = "euclidean"):
-        if numpatches == 0:
-            return numpy.nan
-        elif numpatches < 2:
-            return 0
-        else:
-            """
-            Takes a labeled array as returned by scipy.ndimage.label and 
-            returns an intra-feature distance matrix.
-            Solution by @morningsun at StackOverflow
-            """         
-            I, J = numpy.nonzero(labeled_array)
-            labels = labeled_array[I,J]
-            coords = numpy.column_stack((I,J))
+        if numpatches < 2:
+            return 0.0
+
+        # Calculate the center of mass (centroid) for each patch
+        # The output is a list of (row, col) coordinates for each patch label
+        patch_indices = numpy.arange(1, numpatches + 1)
+        centroids = ndimage.center_of_mass(labeled_array, labeled_array, patch_indices)
+
+        if not centroids: # Handle case where no centroids are found
+            return 0.0
+            
+        # 'centroids' is a list of tuples, convert it to a NumPy array
+        coords = numpy.array(centroids)
+
+        # Compute the pairwise distance between all patch centroids
+        # This creates a much smaller (numpatches x numpatches) matrix
+        dist_matrix = cdist(coords, coords, metric)
+
+        # Set the diagonal (distance to self) to NaN to exclude it from the mean
+        numpy.fill_diagonal(dist_matrix, numpy.nan)
+
+        # We only need the mean of the unique pairwise distances (lower triangle)
+        # However, for nearest-neighbor, we find the minimum distance for each patch
+        # and then average those minimums.
+        min_distances = numpy.nanmin(dist_matrix, axis=1)
         
-            sorter = numpy.argsort(labels)
-            labels = labels[sorter]
-            coords = coords[sorter]
-        
-            sq_dists = cdist(coords, coords, 'sqeuclidean')
-        
-            start_idx = numpy.flatnonzero(numpy.r_[1, numpy.diff(labels)])            
-            nonzero_vs_feat = numpy.minimum.reduceat(sq_dists, start_idx, axis=1)
-            feat_vs_feat = numpy.minimum.reduceat(nonzero_vs_feat, start_idx, axis=0)
-        
-            # Get lower triangle and zero distances to nan
-            b = numpy.tril( numpy.sqrt( feat_vs_feat ) )
-            b[b == 0 ] = numpy.nan
-            res = numpy.nanmean(b) * self.cellsize # Calculate mean and multiply with cellsize
-        
-            return res
+        # The result is the mean of the nearest-neighbor distances, scaled by the cellsize
+        avg_dist = numpy.nanmean(min_distances) * self.cellsize
+
+        return avg_dist
         
     # Get average Patch Perimeter of given landscape patch
     # FIXME: can't be right
