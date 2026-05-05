@@ -28,6 +28,22 @@ NLMPY_REQUIRED_MESSAGE = (
 )
 
 
+def import_optional_modules(module_names):
+    imported_modules = []
+    try:
+        for module_name in module_names:
+            imported_modules.append(importlib.import_module(module_name))
+    except Exception as error:
+        return None, error
+    return tuple(imported_modules), None
+
+
+def format_dependency_error_message(message, error):
+    if error is None:
+        return message
+    return "%s\n\nImport error: %s" % (message, error)
+
+
 def show_missing_dependency(message):
     QMessageBox.critical(QDialog(), "LecoS: Missing dependency", message)
 

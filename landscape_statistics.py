@@ -35,7 +35,10 @@ from qgis.gui import *
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 
-from .lecos_dependencies import SCIPY_REQUIRED_MESSAGE, require_runtime_dependency
+from .lecos_dependencies import (SCIPY_REQUIRED_MESSAGE,
+                                 format_dependency_error_message,
+                                 import_optional_modules,
+                                 require_runtime_dependency)
 
 # Import numpy and scipy
 import numpy
@@ -54,7 +57,22 @@ SCIPY_AVAILABLE = scipy is not None
 
 
 def ensure_runtime_dependencies():
-    require_runtime_dependency(SCIPY_AVAILABLE, SCIPY_REQUIRED_MESSAGE)
+    global scipy, ndimage, spatial, cdist, SCIPY_AVAILABLE
+
+    imported_modules, error = import_optional_modules(
+        ("scipy", "scipy.ndimage", "scipy.spatial", "scipy.spatial.distance")
+    )
+    if imported_modules is None:
+        SCIPY_AVAILABLE = False
+        require_runtime_dependency(
+            False,
+            format_dependency_error_message(SCIPY_REQUIRED_MESSAGE, error)
+        )
+        return
+
+    scipy, ndimage, spatial, spatial_distance = imported_modules
+    cdist = spatial_distance.cdist
+    SCIPY_AVAILABLE = True
 
 # Try to import functions from osgeo
 try:

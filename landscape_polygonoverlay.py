@@ -40,7 +40,10 @@ from qgis.gui import *
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 from os import path
 
-from .lecos_dependencies import POLYGON_OVERLAY_REQUIRED_MESSAGE, require_runtime_dependency
+from .lecos_dependencies import (POLYGON_OVERLAY_REQUIRED_MESSAGE,
+                                 format_dependency_error_message,
+                                 import_optional_modules,
+                                 require_runtime_dependency)
 
 # Import landscape functions
 from . import landscape_statistics as lcs
@@ -70,7 +73,32 @@ DEPENDENCIES_AVAILABLE = SCIPY_AVAILABLE and PIL_AVAILABLE
 
 
 def ensure_runtime_dependencies():
-    require_runtime_dependency(DEPENDENCIES_AVAILABLE, POLYGON_OVERLAY_REQUIRED_MESSAGE)
+    global scipy, ndimage, SCIPY_AVAILABLE
+    global Image, ImageDraw, PIL_AVAILABLE, DEPENDENCIES_AVAILABLE
+
+    imported_modules, scipy_error = import_optional_modules(("scipy", "scipy.ndimage"))
+    if imported_modules is None:
+        SCIPY_AVAILABLE = False
+    else:
+        scipy, ndimage = imported_modules
+        SCIPY_AVAILABLE = True
+
+    pil_error = None
+    if Image is None or ImageDraw is None:
+        imported_modules, pil_error = import_optional_modules(("PIL.Image", "PIL.ImageDraw"))
+        if imported_modules is not None:
+            Image, ImageDraw = imported_modules
+
+    PIL_AVAILABLE = Image is not None and ImageDraw is not None
+    DEPENDENCIES_AVAILABLE = SCIPY_AVAILABLE and PIL_AVAILABLE
+    if DEPENDENCIES_AVAILABLE:
+        return
+
+    error = scipy_error if not SCIPY_AVAILABLE else pil_error
+    require_runtime_dependency(
+        False,
+        format_dependency_error_message(POLYGON_OVERLAY_REQUIRED_MESSAGE, error)
+    )
 
 # Try to import functions from osgeo
 try:

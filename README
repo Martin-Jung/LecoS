@@ -1,5 +1,9 @@
 LecoS - Landscape Ecology Statistics
 
+[![Development stage](https://img.shields.io/badge/stage-stable-2d7d46)](https://plugins.qgis.org/plugins/LecoS)
+[![QGIS Plugin Repository](https://img.shields.io/badge/QGIS%20Plugin%20Repository-published-589632)](https://plugins.qgis.org/plugins/LecoS)
+[![Publication](https://img.shields.io/badge/publication-Ecological%20Informatics%202016-1f6feb)](https://doi.org/10.1016/j.ecoinf.2015.11.006)
+
 LecoS is a QGIS 3 plugin for landscape ecology analysis on raster and vector data.
 It converts classified raster layers to numpy arrays, derives patches, and
 calculates landscape metrics inspired by FRAGSTATS. The plugin also includes a
