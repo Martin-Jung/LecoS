@@ -41,6 +41,8 @@ from qgis.core import (QgsProcessing,
 
 from qgis.core import QgsProcessingException
 
+from .lecos_dependencies import POLYGON_OVERLAY_REQUIRED_MESSAGE, require_processing_dependency
+
 # For Processing update
 # Import PyQT bindings
 from qgis.PyQt.QtCore import *
@@ -63,10 +65,12 @@ from . import lecos_functions as func
 import numpy
 try:
     import scipy
+    from scipy import ndimage # import ndimage module seperately for easy access
 except ImportError:
-    QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
-    sys.exit(0)
-from scipy import ndimage # import ndimage module seperately for easy access
+    scipy = None
+    ndimage = None
+
+CORE_DEPENDENCIES_AVAILABLE = scipy is not None
 
 # Import GDAL and ogr
 try:
@@ -108,10 +112,11 @@ class GenericProcessing(QgsProcessingAlgorithm):
     def shortDescription(self):
         helpPath = self.helpPath()
         if (helpPath):
-            helpFile = open(helpPath, 'r')
-            htmlString = helpFile.read()
-            helpString = htmlString.split('<p>')[2].replace('</p>\n\n','')
-            return helpString
+            with open(helpPath, 'r', encoding='utf-8') as helpFile:
+                htmlString = helpFile.read()
+            paragraphs = htmlString.split('<p>')
+            if len(paragraphs) > 2:
+                return paragraphs[2].replace('</p>\n\n','').strip()
         return None
 
     def helpUrl(self):
@@ -758,6 +763,9 @@ class ZonalStatistics(LandscapeStatisticsAlgorithm):
 
 ## Polygon Batch Overlay
 from . import landscape_polygonoverlay as pov 
+POLYGON_OVERLAY_DEPENDENCIES_AVAILABLE = CORE_DEPENDENCIES_AVAILABLE and pov.DEPENDENCIES_AVAILABLE
+
+
 class RasterPolyOver(LandscapeVectorOverlayAlgorithm):
     # Define constants
     LAND_GRID = "LAND_GRID"
@@ -799,6 +807,10 @@ class RasterPolyOver(LandscapeVectorOverlayAlgorithm):
 
     def processAlgorithm(self, parameters, context, feedback):
         '''Here is where the processing itself takes place'''
+        require_processing_dependency(
+            POLYGON_OVERLAY_DEPENDENCIES_AVAILABLE,
+            POLYGON_OVERLAY_REQUIRED_MESSAGE,
+        )
         
         # Retrieve the values of the parameters entered by the user
         rasterlayer = self.parameterAsRasterLayer(parameters, self.LAND_GRID, context)

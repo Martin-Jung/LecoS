@@ -39,14 +39,18 @@ from qgis.core import (QgsProcessingAlgorithm,
                        QgsProcessingParameterRasterLayer as ParameterRaster,
                        QgsProcessingParameterRasterDestination)
 
+from .lecos_dependencies import (NLMPY_REQUIRED_MESSAGE,
+                                 load_optional_nlmpy_module,
+                                 require_processing_dependency)
+
 # Import numpy and scipy
 import numpy
 try:
     import scipy
+    from scipy import ndimage # import ndimage module seperately for easy access
 except ImportError:
-    QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
-    sys.exit(0)
-from scipy import ndimage # import ndimage module seperately for easy access
+    scipy = None
+    ndimage = None
 
 # Import GDAL and ogr
 try:
@@ -86,6 +90,7 @@ class NeutralLandscapeAlgorithm(GenericProcessing):
         self.addOutput(OutputRaster(self.OUTPUT_RASTER, "Result output"))
 
     def getParams(self, parameters, context):
+        require_processing_dependency(NLMPY_DEPENDENCIES_AVAILABLE, NLMPY_REQUIRED_MESSAGE)
         return self.parameterAsOutputLayer(parameters, self.OUTPUT_RASTER, context)
 
     def group(self):
@@ -160,10 +165,9 @@ class SourceParameter(QgsProcessingAlgorithm):
         array = src.GetRasterBand(1).ReadAsArray()
         return (cols, rows, nodata, src_geotrans, array)
 
-try:
-    from nlmpy import nlmpy
-except ImportError:
-    nlmpy = False
+nlmpy = load_optional_nlmpy_module()
+
+NLMPY_DEPENDENCIES_AVAILABLE = scipy is not None and nlmpy is not None
      
 ## Algorithms ##
 class SpatialRandom(NeutralLandscapeAlgorithm, ExtentCSParameter, MaskParameter):

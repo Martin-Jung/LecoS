@@ -41,8 +41,7 @@ import numpy
 try:
     import scipy
 except ImportError:
-    QMessageBox().critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
-    sys.exit(0)
+    scipy = None
 
 
 # Try to import functions from osgeo
@@ -64,12 +63,11 @@ if hasattr(ogr,"RegisterAll"):
 ## CODE START ##
 # Save results to CSV
 def saveToCSV( results, titles, filePath ):
-  f = open(filePath, "w", newline='')
-  writer = csv.writer(f,delimiter=';',quotechar='"',quoting=csv.QUOTE_NONE)
-  writer.writerow(titles)
-  for item in results:
-    writer.writerow(item)
-  f.close()
+  with open(filePath, "w", newline='', encoding='utf-8') as f:
+    writer = csv.writer(f,delimiter=';')
+    writer.writerow(titles)
+    for item in results:
+      writer.writerow(item)
 
 # Displays results in a table Dialog
 def ShowResultTableDialog( metric_names, results ):
@@ -243,18 +241,17 @@ def getAttributeList( vlayer, field):
   path = vlayer.source()
   datasource = ogr.Open(str(path))
   layer = datasource.GetLayer(0)
-  layerName = ( layer.GetName() )
   field = str(field)
   attr = [] # Output list
-  sql = ("SELECT %s FROM %s" % (field, layerName))
-  try:
-    d = datasource.ExecuteSQL(sql , dialect='SQLITE')
-  except TypeError as RuntimeError:
+  definition = layer.GetLayerDefn()
+  field_names = [definition.GetFieldDefn(i).GetName() for i in range(definition.GetFieldCount())]
+  if field not in field_names:
     QMessageBox.warning(QDialog(),"LecoS: Warning","Failed to query the vector layers attribute table")
     return
-  for i in range(0,d.GetFeatureCount()):
-    f = d.GetFeature(i)
-    attr.append(f.GetField(0))
+  layer.ResetReading()
+  for feature in layer:
+    attr.append(feature.GetField(field))
+  layer.ResetReading()
   return attr
 
 # General function to retrieve layers

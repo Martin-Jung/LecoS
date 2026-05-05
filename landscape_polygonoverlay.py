@@ -40,6 +40,8 @@ from qgis.gui import *
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 from os import path
 
+from .lecos_dependencies import POLYGON_OVERLAY_REQUIRED_MESSAGE, require_runtime_dependency
+
 # Import landscape functions
 from . import landscape_statistics as lcs
 
@@ -47,10 +49,10 @@ from . import landscape_statistics as lcs
 import numpy
 try:
     import scipy
+    from scipy import ndimage # import ndimage module seperately for easy access
 except ImportError:
-    QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
-    sys.exit(0)
-from scipy import ndimage # import ndimage module seperately for easy access
+    scipy = None
+    ndimage = None
 
 # Try to import PIL
 try:
@@ -59,8 +61,16 @@ try:
     except ImportError:
         from PIL import Image, ImageDraw
 except ImportError:
-    QMessageBox.critical(QDialog(),"LecoS: Warning","You need to have the image library PIL installed.")
-    sys.exit(0)
+    Image = None
+    ImageDraw = None
+
+SCIPY_AVAILABLE = scipy is not None
+PIL_AVAILABLE = Image is not None and ImageDraw is not None
+DEPENDENCIES_AVAILABLE = SCIPY_AVAILABLE and PIL_AVAILABLE
+
+
+def ensure_runtime_dependencies():
+    require_runtime_dependency(DEPENDENCIES_AVAILABLE, POLYGON_OVERLAY_REQUIRED_MESSAGE)
 
 # Try to import functions from osgeo
 try:
@@ -365,16 +375,13 @@ class BatchConverter(object):
             if mask is not None:
                 try:
                     clip2 = numpy.choose(mask,(clip, 0),mode='raise').astype(self.srcArray.dtype)
-                except Exception:
-                    self.error = self.error + 1
-                    clip2 = None # Shape mismatch or Memory Error
                 except ValueError:
                     # Cut the clipping features to the raster
                     rshp = list(mask.shape)
-                    if mask.shape[-2] != clip2.shape[-2]:
-                        rshp[0] = clip2.shape[-2]
-                    if mask.shape[-1] != clip2.shape[-1]:
-                        rshp[1] = clip2.shape[-1]
+                    if mask.shape[-2] != clip.shape[-2]:
+                        rshp[0] = clip.shape[-2]
+                    if mask.shape[-1] != clip.shape[-1]:
+                        rshp[1] = clip.shape[-1]
                     # Resize to the clip
                     mask.resize(*rshp, refcheck=False)
 
@@ -383,6 +390,9 @@ class BatchConverter(object):
                     except ValueError:
                         self.error = self.error + 1
                         clip2 = None # Shape mismatch or Memory Error
+                except Exception:
+                    self.error = self.error + 1
+                    clip2 = None # Shape mismatch or Memory Error
             else:
                 self.error = self.error + 1
                 clip2 = None # Image to array failed because polygon outside range
@@ -594,16 +604,6 @@ def listVectorStatistics():
 # The calculation works by using SQL-queries
 class VectorBatchConverter(object):
     def __init__(self,landscape,ID=None,classField=None,vectorPath=None,iface=None):
-#         landPath = "/home/martin/Downloads/qgis_testing/land_use_clipped.shp"
-#         ID = "Ponto"
-#         datasource = ogr.Open(str(landPath))
-#         layer = datasource.GetLayer(0)
-#         layerName = layer.GetName()
-#         d = datasource.ExecuteSQL("SELECT DISTINCT %s FROM %s" %(ID,layerName))
-#         groups = []
-#         for i in range(0,d.GetFeatureCount()):
-#            f = d.GetFeature(i)
-#            groups.append(f.GetField(0))
         landPath = landscape.source()
         self.ID = str( ID )
         self.datasource = ogr.Open(str(landPath))
@@ -616,11 +616,35 @@ class VectorBatchConverter(object):
 
         self.layerName = str( self.layer.GetName() )# Save the Layersname
         # Save the names of unique groups in an array
-        d = self.datasource.ExecuteSQL("SELECT DISTINCT %s FROM %s" % (self.ID,self.layerName))
         self.groups = []
-        for i in range(0,d.GetFeatureCount()):
-            f = d.GetFeature(i)
-            self.groups.append(f.GetField(0))
+        seen_groups = set()
+        self.layer.ResetReading()
+        for feature in self.layer:
+            group = feature.GetField(self.ID)
+            if group in seen_groups:
+                continue
+            seen_groups.add(group)
+            self.groups.append(group)
+        self.layer.ResetReading()
+
+    def _matches_group_value(self, field_value, expected_value):
+        if field_value is None or expected_value is None:
+            return False
+        if field_value == expected_value:
+            return True
+        return str(field_value) == str(expected_value)
+
+    def _iter_group_features(self,group,cl=None):
+        self.layer.ResetReading()
+        try:
+            for feature in self.layer:
+                if not self._matches_group_value(feature.GetField(self.ID), group):
+                    continue
+                if cl is not None and not self._matches_group_value(feature.GetField(self.classField), cl):
+                    continue
+                yield feature
+        finally:
+            self.layer.ResetReading()
 
     # Runs a defined metric
     def go(self,name,cl=None):
@@ -681,26 +705,16 @@ class VectorBatchConverter(object):
     ## Metrics functions
     # Returns a list with the area of all features within a given group
     def returnGroupArea(self,group,cl=None):
-        if cl == None:
-            layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE %s = '%s'" % (self.layerName, self.ID, group) )
-        else:
-            layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE (%s = '%s') AND (%s = '%s')" % (self.layerName, self.ID, group,self.classField,cl) )
         res = []
-        for i in range(0,layers.GetFeatureCount()):
-            f = layers.GetFeature(i)
+        for f in self._iter_group_features(group,cl):
             g = f.GetGeometryRef()
             res.append(g.Area())
         return res
 
     # Returns a list with the perimeters of all features within a given group
     def returnGroupPerimeter(self,group,cl=None):
-        if cl == None:
-            layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE %s = '%s'" % (self.layerName, self.ID, group) )
-        else:
-            layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE (%s = '%s') AND (%s = '%s')" % (self.layerName, self.ID, group,self.classField,cl) )
         res = []
-        for i in range(0,layers.GetFeatureCount()):
-            f = layers.GetFeature(i)
+        for f in self._iter_group_features(group,cl):
             ref_geometry = f.GetGeometryRef()
             pts = ref_geometry.GetGeometryRef(0)
             points = []
@@ -717,12 +731,10 @@ class VectorBatchConverter(object):
 
     # Returns the number of all patches within a given group with optional class
     def returnGroupPatchNumber(self,group,cl=None):
-        if cl == None:
-            layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE %s = '%s'" % (self.layerName, self.ID, group) )
-        else:
-            layers = self.datasource.ExecuteSQL("SELECT * FROM %s WHERE (%s = '%s') AND (%s = '%s')" % (self.layerName, self.ID, group,self.classField,cl) )
-
-        return layers.GetFeatureCount()
+        count = 0
+        for feature in self._iter_group_features(group,cl):
+            count += 1
+        return count
 
     # Get mean patch area for each group and optionally class
     def f_MeanPatchArea(self,cl=None,name="Mean patch area"):

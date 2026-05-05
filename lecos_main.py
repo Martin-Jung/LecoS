@@ -40,6 +40,7 @@ from .lecos_dlg import LecosDialog
 from .lecos_dlg import BatchDialog
 # Import RasterModifier Dialog
 from .lecos_dlg import LandMod
+from .lecos_dependencies import MissingDependencyError, show_missing_dependency
 # Import functions for about Dialog
 from . import lecos_functions as func
 
@@ -97,21 +98,33 @@ class LecoS( object ):
     # run method that performs all the real work
     def run(self):
         # create and show the dialog
-        dlg = LecosDialog( self.iface )
+        try:
+            dlg = LecosDialog( self.iface )
+        except MissingDependencyError as error:
+            show_missing_dependency(str(error))
+            return
         # show the dialog
         dlg.show()
-        result = dlg.exec_()
+        dlg.exec_()
     
     # Executes small Diversity gui
     def runBatch(self):
-        dlg = BatchDialog( self.iface )
+        try:
+            dlg = BatchDialog( self.iface )
+        except MissingDependencyError as error:
+            show_missing_dependency(str(error))
+            return
         dlg.show()
         #dlg.overrideWindowFlags(Qt.WA_DeleteOnClose)
-        result = dlg.exec_()
+        dlg.exec_()
         
     # Executes small LandscapeMod gui
     def runLMod(self):
-        dlg = LandMod( self.iface )
+        try:
+            dlg = LandMod( self.iface )
+        except MissingDependencyError as error:
+            show_missing_dependency(str(error))
+            return
         dlg.show()
-        result = dlg.exec_()
+        dlg.exec_()
     

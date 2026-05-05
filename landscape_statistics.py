@@ -35,16 +35,26 @@ from qgis.gui import *
 # Import base libraries
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 
+from .lecos_dependencies import SCIPY_REQUIRED_MESSAGE, require_runtime_dependency
+
 # Import numpy and scipy
 import numpy
 try:
     import scipy
+    from scipy import ndimage # import ndimage module seperately for easy access
+    from scipy import spatial # Import spatial for average distance
+    from scipy.spatial.distance import cdist
 except ImportError:
-    QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
-    sys.exit(0)
-from scipy import ndimage # import ndimage module seperately for easy access
-from scipy import spatial # Import spatial for average distance
-from scipy.spatial.distance import cdist
+    scipy = None
+    ndimage = None
+    spatial = None
+    cdist = None
+
+SCIPY_AVAILABLE = scipy is not None
+
+
+def ensure_runtime_dependencies():
+    require_runtime_dependency(SCIPY_AVAILABLE, SCIPY_REQUIRED_MESSAGE)
 
 # Try to import functions from osgeo
 try:

@@ -49,13 +49,6 @@ from . import landscape_modifier as lmod
 
 # Import numpy and scipy
 import numpy
-try:
-    import scipy
-except ImportError:
-    QMessageBox.critical(QDialog(),"LecoS: Warning","Please install scipy (http://scipy.org/) in your QGIS python path.")
-    sys.exit(0)
-
-from scipy import ndimage # import ndimage module seperately for easy access
 
 
 # Import GDAL and ogr
@@ -84,6 +77,7 @@ tmpdir = tempfile.gettempdir()
 class LecosDialog(QDialog, Ui_Lecos):
     def __init__(self, iface):
         # Initialize the Dialog
+        lcs.ensure_runtime_dependencies()
         QDialog.__init__( self )
         self.setupUi(self)
         self.iface = iface
@@ -421,8 +415,12 @@ class LecosDialog(QDialog, Ui_Lecos):
         self.progressBar.setValue( self.progressBar.value() + 1 )
         # Write results
         if self.rbSAVE.isChecked():
+            try:
+                func.saveToCSV(res,res_tit,dataPath)
+            except (OSError, csv.Error) as exc:
+                func.DisplayError(self.iface,"LecoS: Warning" ,"Results could not be saved to file: %s" % (exc),"WARNING")
+                return
             func.DisplayError(self.iface,"LecoS: Info" ,"Results were successfully saved to file!","INFO")
-            func.saveToCSV(res,res_tit,dataPath)
         else:
             func.DisplayError(self.iface,"LecoS: Info" ,"Calculations finished!","INFO")
             func.ShowResultTableDialog(res_tit, res)
@@ -432,6 +430,7 @@ class LecosDialog(QDialog, Ui_Lecos):
 # Gui for batch computing Landcover for vector features
 class BatchDialog(QDialog, Ui_BatchDialog):
     def __init__(self, iface):
+        pov.ensure_runtime_dependencies()
 
         # Initialize the Dialog
         QDialog.__init__( self )
@@ -965,27 +964,26 @@ class BatchDialog(QDialog, Ui_BatchDialog):
                 except IndexError:
                     func.DisplayError(self.iface,"LecoS: Warning" ,"Results couldn't be calculated. Please make sure all shapes are within the rasters extent!","WARNING")
                     return
-            f = open(self.FileSavePath, "w", newline='' )
-            writer = csv.writer(f,delimiter=';',quotechar="",quoting=csv.QUOTE_NONE)
-            writer.writerow(title)
-            # Get values of Overlay grouping ID
-            if type(self.landscape) == QgsRasterLayer:
-                if self.LandID != "" or None:
-                    attr = func.getAttributeList(self.vector,self.LandID)
-            # Get number of polygon features
-            feat = list(range(0,len(results[0])))
-            for feature in feat: # Write feature to new line
-                if type(self.landscape) == QgsVectorLayer:
-                    r = [results[0][feature][0]]
-                else:
-                    r = [feature]
-                    # Add Grouping Field value
+            with open(self.FileSavePath, "w", newline='', encoding='utf-8' ) as f:
+                writer = csv.writer(f,delimiter=';')
+                writer.writerow(title)
+                # Get values of Overlay grouping ID
+                if type(self.landscape) == QgsRasterLayer:
                     if self.LandID != "" or None:
-                        r.append(attr[feature])
-                for item in results:
-                    r.append(item[feature][2])
-                writer.writerow(r)
-            f.close()
+                        attr = func.getAttributeList(self.vector,self.LandID)
+                # Get number of polygon features
+                feat = list(range(0,len(results[0])))
+                for feature in feat: # Write feature to new line
+                    if type(self.landscape) == QgsVectorLayer:
+                        r = [results[0][feature][0]]
+                    else:
+                        r = [feature]
+                        # Add Grouping Field value
+                        if self.LandID != "" or None:
+                            r.append(attr[feature])
+                    for item in results:
+                        r.append(item[feature][2])
+                    writer.writerow(r)
             func.DisplayError(self.iface,"LecoS: Info" ,"Landcover statistics were successfully written to file","INFO")
 
         if (self.Add2Table == False) and (self.FileSave == False):
@@ -1010,6 +1008,7 @@ class BatchDialog(QDialog, Ui_BatchDialog):
 class LandMod(QDialog, Ui_LandMod):
     def __init__(self, iface):
         # Initialize the Dialog
+        lmod.ensure_runtime_dependencies()
         QDialog.__init__( self )
         self.setupUi(self)
         self.iface = iface
@@ -1052,11 +1051,11 @@ class LandMod(QDialog, Ui_LandMod):
         lastUsedDir = func.lastUsedDir()
         fileName, __ = QFileDialog.getSaveFileName( self, self.tr( "Save raster as" ),\
         lastUsedDir, "GeoTIFF files (*.tif *.TIF)" )
-        if fileName.isEmpty():
+        if not fileName:
             return
         func.setLastUsedDir( fileName )
         # ensure the user never ommited the extension from the file name
-        if not fileName.toLower().endsWith( ".tif" ):
+        if not fileName.lower().endswith( ".tif" ):
             fileName += ".tif"
         self.where2Save.setText( fileName )
         self.where2Save.setEnabled( True )

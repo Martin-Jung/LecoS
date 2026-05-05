@@ -7,3 +7,4 @@ deps
 *.plt
 .spyderworkspace
 *.pyc
+__pycache__/

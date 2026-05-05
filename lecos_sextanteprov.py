@@ -27,6 +27,7 @@ from qgis.PyQt.QtGui import *
 
 # Sextante bindings
 from qgis.core import QgsProcessingProvider as AlgorithmProvider
+from .lecos_dependencies import load_optional_nlmpy_module
 from .lecos_sextantealgorithms import *
 
 # Import modules
@@ -35,13 +36,18 @@ tmpdir = tempfile.gettempdir() # tempdir
 import os
 
 # NLMPY
-nlmpy = False
-try:
-    import nlmpy
-except ImportError:
-    nlmpy = True
-if nlmpy:
-    from .nlmpy_sextantewrapper import *
+nlmpy_module = load_optional_nlmpy_module()
+
+HAS_NLMPY = nlmpy_module is not None
+HAS_NLMPY_TOOLS = False
+nlmpy_algorithms = None
+if HAS_NLMPY:
+    try:
+        from . import nlmpy_sextantewrapper as nlmpy_algorithms
+    except Exception:
+        nlmpy_algorithms = None
+    else:
+        HAS_NLMPY_TOOLS = nlmpy_algorithms.NLMPY_DEPENDENCIES_AVAILABLE
 
 
 class LecoSAlgorithmsProv(AlgorithmProvider):
@@ -80,44 +86,45 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
         
         algs.append( MatchLandscapes() )
         algs.append( RasterWithRasterClip() )
-        
-        # Landscape statistics
-        algs.append( LandscapeStatistics() )
-        algs.append( PatchStatistics() )
         algs.append( CountRasterCells() )
-        algs.append( ZonalStatistics() )
-        
-        # Landscape Vector Overlay
-        algs.append( RasterPolyOver() )
         algs.append( GetRasterValuesPoint() )
-        #algs.append( VectorPolyOver() )
         
-                
-        # Landscape modifications
-        algs.append( LabelLandscapePatches() )
-        algs.append( NeighbourhoodAnalysis() )
-        algs.append( IncreaseLandPatch() )
-        algs.append( ExtractEdges() )
-        algs.append( IsolateExtremePatch() )
-        algs.append( CloseHoles() )
-        algs.append( CleanSmallPixels() )
+        if CORE_DEPENDENCIES_AVAILABLE:
+            # Landscape statistics
+            algs.append( LandscapeStatistics() )
+            algs.append( PatchStatistics() )
+            algs.append( ZonalStatistics() )
+
+            # Landscape Vector Overlay
+            if POLYGON_OVERLAY_DEPENDENCIES_AVAILABLE:
+                algs.append( RasterPolyOver() )
+            #algs.append( VectorPolyOver() )
+
+            # Landscape modifications
+            algs.append( LabelLandscapePatches() )
+            algs.append( NeighbourhoodAnalysis() )
+            algs.append( IncreaseLandPatch() )
+            algs.append( ExtractEdges() )
+            algs.append( IsolateExtremePatch() )
+            algs.append( CloseHoles() )
+            algs.append( CleanSmallPixels() )
         
         # TODO: Won't work
         # NLMPY if available
         
-        if nlmpy:
-            algs.append( RandomElementNN() )
-            algs.append( RandomClusterNN() )
-            algs.append( LinearRescale01() )
-            algs.append( RandomUniformed01() )
-            algs.append( SpatialRandom() )
-            algs.append( PlanarGradient() )
-            algs.append( EdgeGradient() )
-            algs.append( DistanceGradient() )
-            algs.append( MidpointDisplacement() )
-            algs.append( RandomRectangularCluster() )
-            algs.append( MeanOfCluster() )
-            algs.append( ClassifyArray() )
+        if HAS_NLMPY_TOOLS and nlmpy_algorithms is not None:
+            algs.append( nlmpy_algorithms.RandomElementNN() )
+            algs.append( nlmpy_algorithms.RandomClusterNN() )
+            algs.append( nlmpy_algorithms.LinearRescale01() )
+            algs.append( nlmpy_algorithms.RandomUniformed01() )
+            algs.append( nlmpy_algorithms.SpatialRandom() )
+            algs.append( nlmpy_algorithms.PlanarGradient() )
+            algs.append( nlmpy_algorithms.EdgeGradient() )
+            algs.append( nlmpy_algorithms.DistanceGradient() )
+            algs.append( nlmpy_algorithms.MidpointDisplacement() )
+            algs.append( nlmpy_algorithms.RandomRectangularCluster() )
+            algs.append( nlmpy_algorithms.MeanOfCluster() )
+            algs.append( nlmpy_algorithms.ClassifyArray() )
         return algs
     
     def loadAlgorithms(self):
@@ -126,4 +133,4 @@ class LecoSAlgorithmsProv(AlgorithmProvider):
         for a in self.algs:
             self.addAlgorithm(a)
     def tr(self, string, context=''):
-        pass
+        return QCoreApplication.translate(context or 'LecoSAlgorithmsProv', string)
